@@ -23,6 +23,13 @@ struct Request {
     long connect_timeout_ms = 5000;
     long read_timeout_ms = 2000;
     bool allow_http = false;
+    std::string ca_bundle;
+};
+
+struct UrlInfo {
+    std::string url;
+    std::string origin;
+    bool secure = false;
 };
 
 struct Response {
@@ -53,14 +60,14 @@ private:
     std::condition_variable condition_;
 };
 
-enum class EndReason { Complete, Cancelled, Timeout, Network, Rejected, ProtocolMismatch };
+enum class EndReason { Complete, Cancelled, Timeout, Network, Rejected, ProtocolMismatch, Certificate };
 
 struct Result {
     EndReason reason = EndReason::Network;
     int platform_code = 0;
 };
 
-// Probe-only internal seam. Callbacks run on execute's worker, never under an SDK lock.
+// Callbacks run on execute's worker, never under an SDK lock.
 // Data is borrowed until onData returns. Waiting sinks must observe Cancellation.
 class Sink {
 public:
@@ -74,11 +81,28 @@ public:
     virtual ~HttpTransport() = default;
     // Returning is the quiescence barrier: no later callbacks or buffer accesses.
     virtual Result execute(const Request& request, Sink& sink, Cancellation& cancellation) = 0;
+    virtual UrlInfo resolveUrl(const std::string& base, const std::string& location) = 0;
 };
 
-class CurlProbeTransport final : public HttpTransport {
+class CurlTransport final : public HttpTransport {
 public:
     Result execute(const Request& request, Sink& sink, Cancellation& cancellation) override;
+    UrlInfo resolveUrl(const std::string& base, const std::string& location) override;
 };
+
+inline std::string lowerAscii(std::string value) {
+    for (auto& c : value) if (c >= 'A' && c <= 'Z') c = static_cast<char>(c + ('a' - 'A'));
+    return value;
+}
+
+inline bool validHeader(const Header& header) {
+    if (header.name.empty() || header.name.size() > 256 || header.value.size() > 8192) return false;
+    for (unsigned char c : header.name) {
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) &&
+            std::string("!#$%&'*+-.^_`|~").find(static_cast<char>(c)) == std::string::npos) return false;
+    }
+    for (unsigned char c : header.value) if (c == 127 || (c < 32 && c != '\t')) return false;
+    return true;
+}
 
 }

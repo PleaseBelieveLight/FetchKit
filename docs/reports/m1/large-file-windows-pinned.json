@@ -1,0 +1,31 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "large_file": true,
+  "cases": [
+    {
+      "id": "large",
+      "passed": true,
+      "seconds": 35.172,
+      "state": 3,
+      "error": "Ok",
+      "bytes": 4295032835,
+      "generation": 1,
+      "requests": [
+        {
+          "path": "/m1/large",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    }
+  ],
+  "failures": [],
+  "large_file_bytes": 4295032835,
+  "sha256": "228f3903446aeb88363ccbf444258f060ac18c5653d978b4bb2f5b04956c757c"
+}

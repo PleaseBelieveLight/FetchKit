@@ -1,0 +1,170 @@
+#include "storage/staging_file.h"
+
+#include <cerrno>
+#include <algorithm>
+#include <limits>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
+namespace fetchkit::storage {
+namespace {
+
+[[noreturn]] void failIo(int code) {
+#ifdef _WIN32
+    const auto status = code == ERROR_DISK_FULL || code == ERROR_HANDLE_DISK_FULL ? FETCHKIT_DISK_FULL :
+        code == ERROR_ACCESS_DENIED ? FETCHKIT_PERMISSION_DENIED : FETCHKIT_IO_ERROR;
+#else
+    const auto status = code == ENOSPC || code == EDQUOT ? FETCHKIT_DISK_FULL :
+        code == EACCES || code == EPERM ? FETCHKIT_PERMISSION_DENIED : FETCHKIT_IO_ERROR;
+#endif
+    throw core::Failure(status, code);
+}
+
+}
+
+StagingFile::StagingFile(const std::filesystem::path& path, bool create) {
+#ifdef _WIN32
+    handle_ = CreateFileW(path.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+        create ? CREATE_NEW : OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (handle_ == INVALID_HANDLE_VALUE) {
+        handle_ = nullptr;
+        if (create && GetLastError() == ERROR_FILE_EXISTS) throw core::Failure(FETCHKIT_BUSY);
+        failIo(static_cast<int>(GetLastError()));
+    }
+    BY_HANDLE_FILE_INFORMATION info{};
+    if (!GetFileInformationByHandle(handle_, &info) || (info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
+        CloseHandle(handle_); handle_ = nullptr;
+        throw core::Failure(FETCHKIT_PERMISSION_DENIED);
+    }
+#else
+    static_assert(sizeof(off_t) >= 8, "64-bit file offsets required");
+    handle_ = ::open(path.c_str(), O_RDWR | O_CLOEXEC | O_NOFOLLOW | (create ? O_CREAT | O_EXCL : 0), 0600);
+    if (handle_ < 0) {
+        if (create && errno == EEXIST) throw core::Failure(FETCHKIT_BUSY);
+        failIo(errno);
+    }
+    struct stat info{};
+    if (::fstat(handle_, &info) != 0 || !S_ISREG(info.st_mode)) {
+        ::close(handle_); handle_ = -1;
+        throw core::Failure(FETCHKIT_PERMISSION_DENIED);
+    }
+#endif
+}
+
+StagingFile::~StagingFile() {
+#ifdef _WIN32
+    if (handle_) CloseHandle(handle_);
+#else
+    if (handle_ >= 0) ::close(handle_);
+#endif
+}
+
+std::uint64_t StagingFile::size() const {
+#ifdef _WIN32
+    LARGE_INTEGER value{};
+    if (!GetFileSizeEx(handle_, &value)) failIo(static_cast<int>(GetLastError()));
+    return static_cast<std::uint64_t>(value.QuadPart);
+#else
+    struct stat value{};
+    if (::fstat(handle_, &value) != 0) failIo(errno);
+    return static_cast<std::uint64_t>(value.st_size);
+#endif
+}
+
+void StagingFile::seek(std::uint64_t offset) {
+    if (offset > static_cast<std::uint64_t>(INT64_MAX)) throw core::Failure(FETCHKIT_PROTOCOL_MISMATCH);
+#ifdef _WIN32
+    LARGE_INTEGER value{}; value.QuadPart = static_cast<LONGLONG>(offset);
+    if (!SetFilePointerEx(handle_, value, nullptr, FILE_BEGIN)) failIo(static_cast<int>(GetLastError()));
+#else
+    if (::lseek(handle_, static_cast<off_t>(offset), SEEK_SET) < 0) failIo(errno);
+#endif
+}
+
+void StagingFile::truncate() {
+    seek(0);
+#ifdef _WIN32
+    if (!SetEndOfFile(handle_)) failIo(static_cast<int>(GetLastError()));
+#else
+    if (::ftruncate(handle_, 0) != 0) failIo(errno);
+#endif
+}
+
+void StagingFile::write(const std::uint8_t* data, std::size_t count) {
+    while (count) {
+#ifdef _WIN32
+        DWORD written = 0;
+        const auto block = static_cast<DWORD>(std::min<std::size_t>(count, 65536));
+        if (!WriteFile(handle_, data, block, &written, nullptr)) failIo(static_cast<int>(GetLastError()));
+#else
+        const auto written = ::write(handle_, data, count);
+        if (written < 0) { if (errno == EINTR) continue; failIo(errno); }
+#endif
+        if (written == 0) throw core::Failure(FETCHKIT_IO_ERROR);
+        data += written;
+        count -= static_cast<std::size_t>(written);
+    }
+}
+
+void StagingFile::sync() {
+#ifdef _WIN32
+    if (!FlushFileBuffers(handle_)) failIo(static_cast<int>(GetLastError()));
+#else
+    while (::fsync(handle_) != 0) { if (errno == EINTR) continue; failIo(errno); }
+#endif
+}
+
+StagingStore::StagingStore(const std::string& root) : root_(std::filesystem::absolute(std::filesystem::u8path(root))) {
+    if (root_.u8string().size() > 3500) throw core::Failure(FETCHKIT_INVALID_ARGUMENT);
+    std::error_code error;
+    std::filesystem::create_directories(root_ / "tmp", error);
+    if (error) throw core::Failure(FETCHKIT_PERMISSION_DENIED, error.value());
+    const auto lock_path = root_ / "fetchkit.lock";
+#ifdef _WIN32
+    lock_ = CreateFileW(lock_path.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS,
+        FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (lock_ == INVALID_HANDLE_VALUE) {
+        lock_ = nullptr;
+        if (GetLastError() == ERROR_SHARING_VIOLATION) throw core::Failure(FETCHKIT_BUSY);
+        failIo(static_cast<int>(GetLastError()));
+    }
+#else
+    lock_ = ::open(lock_path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+    if (lock_ < 0) failIo(errno);
+    if (::flock(lock_, LOCK_EX | LOCK_NB) != 0) {
+        const int code = errno;
+        ::close(lock_); lock_ = -1;
+        if (code == EWOULDBLOCK || code == EAGAIN) throw core::Failure(FETCHKIT_BUSY);
+        failIo(code);
+    }
+#endif
+}
+
+StagingStore::~StagingStore() {
+#ifdef _WIN32
+    if (lock_) CloseHandle(lock_);
+#else
+    if (lock_ >= 0) ::close(lock_);
+#endif
+}
+
+std::filesystem::path StagingStore::reserve() {
+    for (unsigned int attempt = 0; attempt < 100000; ++attempt) {
+        const auto path = root_ / "tmp" / (std::to_string(next_id_++) + ".part");
+        try { StagingFile file(path, true); return path; }
+        catch (const core::Failure& error) { if (error.code != FETCHKIT_BUSY) throw; }
+    }
+    throw core::Failure(FETCHKIT_BUSY);
+}
+
+}

@@ -6,8 +6,8 @@
 
 ## 项目结构与模块组织
 
-FetchKit 已建立 C++/Android 工程骨架，下载功能尚未实现。修改范围或架构前，先阅读 `README.md` 和
-`docs/v1-design.md`。
+FetchKit 已实现 M1 主机暂存下载器，Android 仍为工程骨架。持久化恢复、发布、调度和缓存尚未实现。
+修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md` 和 `docs/m1-host-api.md`。
 
 根目录 CMake 工程构建 `include/fetchkit/`、`src/core/` 和 `examples/cli/`。
 根目录 Gradle 配置将 `:sdk` 映射到 `platform/android/sdk/`，将 `:sample` 映射到
@@ -25,13 +25,16 @@ cmake -S . -B build/native-debug -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD
 cmake --build build/native-debug --parallel
 cmake -S . -B build/m0-host -G Ninja -DCMAKE_CXX_COMPILER=g++ -DFETCHKIT_BUILD_TESTS=ON -DFETCHKIT_BUILD_PROBES=ON -DFETCHKIT_WITH_CURL=ON
 cmake --build build/m0-host --parallel
-ctest --test-dir build/m0-host --output-on-failure
+ctest --test-dir build/m0-host --output-on-failure -LE large_file
 ```
 
 以上命令构建 AAR/APK、运行单元与设备测试，以及编译 native CLI。设备测试需要连接设备。
 执行 `build/native-debug/fetchkit_cli.exe --version` 验证 native 构建。
 M0 探针需要 Python 3.10+ 和 libcurl 7.85+ 开发文件；必要时设置 `CMAKE_PREFIX_PATH`。
 可选 Android 探针见 `tests/README.md`，体积测量见 `tools/size/README.md`。
+M1 参考构建可开启 `FETCHKIT_USE_PINNED_CURL`，Linux 验收入口为 `tools/ci/linux_m1.sh`。
+真实 >4 GiB 测试需开启 `FETCHKIT_BUILD_LARGE_FILE_TESTS=ON` 并选择 `large_file` 标签。
+不得用 Windows 证据代替 Linux 验收。
 
 ## 编码风格与命名规范
 
@@ -49,7 +52,7 @@ applicationId 保留为 `com.luofelix.fetchkit`。
 ## 测试要求
 
 Android 使用 JUnit4，示例设备测试验证安装标识和 SDK JNI 加载。
-CTest 已注册标准库服务器测试、版本烟测和可选 libcurl 契约探针。
+CTest 已注册服务器、纯 C ABI、假传输会话、版本、真实协议及可选 curl 契约/大文件测试。
 当前未配置第三方 C++ 测试框架或覆盖率门槛。协议测试使用 `resume_test.cpp` 等文件名和可控制行为的本地 HTTP 服务器。
 
 M0 实验源码和依赖不得进入普通 SDK 构建。Android 探针仅通过 `-Pfetchkit.probes=true` 开启，

@@ -1,0 +1,150 @@
+{
+  "date": "2026-10-26",
+  "base_commit": "3466326e923cbfe79f7516c3dcad36bdedb4797e",
+  "platform": "Windows 11 x64 10.0.26200",
+  "linux_executed": false,
+  "backend": "libcurl=8.20.0;tls=OpenSSL/3.6.4;async_dns=1;largefile=1;protocols=http,https",
+  "curl_pin": {
+    "version": "8.20.0",
+    "url": "https://curl.se/download/curl-8.20.0.tar.xz",
+    "sha256": "63fe2dc148ba0ceae89922ef838f7e5c946272c2e78b7c59fab4b79d3ce2b896",
+    "license": "curl",
+    "license_file": "licenses/curl.txt"
+  },
+  "validation": {
+    "pinned_ctest_regular": "6/6",
+    "fake_sessions": 9,
+    "server_unit_tests": 8,
+    "real_protocol_checks": 55,
+    "curl_contract_samples": 508,
+    "large_file_system": true,
+    "large_file_pinned": true,
+    "without_curl_unit_groups": "4/4",
+    "android_build_and_sample_unit_tests": true,
+    "device_instrumentation_rerun": false,
+    "linux_shell_syntax": true
+  },
+  "source_sha256": {
+    "cmake/pinned_curl.cmake": "c49f03bf81dc85a6ae940b731f0e2778bf1c9f763ef2e515e34c700cec467179",
+    "examples/cli/snapshot_json.h": "2462684921487a1e5ec4b20c67fd166d4b603f69cc3c9716dbff7b8a0a4a1004",
+    "include/fetchkit/fetchkit.h": "0c67749f8a0de8da04dd1cc306e69518458d142ad69edf0511e19d2083a99e17",
+    "include/fetchkit/fetchkit.hpp": "8dfa4cca6146ad349c1fc7c8c74438660510515fff55b671541dbe951b97f72a",
+    "src/core/c_api.cpp": "dcdf9353d4eb27e1e3a4465b2d2fb180af4149f4fbd5c67ad6402c622c8cb34f",
+    "src/core/download_session.cpp": "77265a962cd5899bf3d7360b2a0afe2072857e89fde7b4a42acda7e9fd770367",
+    "src/core/download_types.h": "26eec2a831447dc93012c976601443cd379dc71675048f78c473dce269ab4c0c",
+    "src/core/engine.cpp": "f630430457ba0d14d0e148d78b9d6ab129ba311ae299da78ac7426b44610f29d",
+    "src/core/engine.h": "5c7a1438121009bf53ae3b50d77c53c9253cda654c5238b27fd4d0f39138c9c3",
+    "src/storage/staging_file.cpp": "f0a76a462b537b7b9f049db0a7c26363bc717334ac18e284e3e96528034c707a",
+    "src/storage/staging_file.h": "93fab65aa76a375ce92bb1ae9095506525099f99cd9821b3781d9a267b9afd4a",
+    "src/transport/curl_transport.cpp": "a98022b3cd2b48e9d166fe58a3e59a67c50772f8b142d854a67d32f7ab92b96b",
+    "tests/protocol/download_driver.cpp": "3b901b799334c6ca3bcd41857653323c4d34d75d6f3ca50993a3a98da18b6ba2",
+    "tests/protocol/protocol_test.py": "f21c0cd731d968ea36ed693c3565220411c16e6727e73e3a9f8fa3f772d2fb84",
+    "tests/server/m1_fixture.py": "f088981ebb8fdf12ace6340e44f265232715093e4ee843e26ffe37dc1173ac7c",
+    "tests/unit/c_api_test.c": "6a1de50093f4a563f06f4943843c201b7ab55d3a3404e851e6c39f9ece25d690",
+    "tests/unit/download_session_test.cpp": "3dca08e12ddac057e69d6c89d8fb84874eab6e542f7429f7e9ddec9262ab9c4c",
+    "third_party/curl.lock.json": "18f1b5bf6e73af306f8f87d056201e98b43c24354c693571bcd7b88bac5349f5",
+    "tools/ci/linux_m1.sh": "5efc92b905b96467f15d9244cab5bcfe4be67980513972827a47b36b95bfe2c8",
+    "CMakeLists.txt": "5c8b0337d7318549139421f38572ba4784b510f449c4b7690b71c7130b54ae00",
+    "build.gradle.kts": "2973417f35c1f966030b7e537dd6e1b4da04055d867b253d34bd4b6952325458",
+    "examples/cli/main.cpp": "92c3f40f65d8a1100bb7a42ee26327edc810d0c6e875805eede4c9f68b747b94",
+    "gradle/libs.versions.toml": "97534c1935a180a73c6bac27142c0600b20db32779715ea613978b87cfb11efb",
+    "include/fetchkit/version.h": "ef6f584f8afc3e4bf50424fcd4f93b84fe96fbf44d8dcfe4b3b2f610ac290014",
+    "platform/android/sample/build.gradle.kts": "be20fba69a46d113e1bd81400cbe2ef51cf473b55845e89d762c79770145334a",
+    "platform/android/sample/src/androidTest/AndroidManifest.xml": "678647a824ef7ab16066708585790ab265135d32fdf84bcd918a4b050f8891b9",
+    "platform/android/sample/src/androidTest/java/com/luofelix/fetchkit/sample/SdkIntegrationTest.kt": "5ec962a00f866bbdaf16bd7124b5a9fd9c68c79716bc18ff8df12ce8c31b6d71",
+    "platform/android/sample/src/debug/AndroidManifest.xml": "18209bb744f98ddab547bda93bd640f20576a863284cfdfda56cc05eb70a4985",
+    "platform/android/sample/src/main/AndroidManifest.xml": "03ee03e436d7a6798fa8bbf33a295f9896db0752e4ab90c56d839ac778777bc3",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/MainActivity.kt": "b19d0e720992ec73f93c7c0889787e14a2e8b9571dca08d777e2813c0b3fc709",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/ui/theme/Color.kt": "b3ba53cfc56263d4ceeea2cca786259212829473ea9446d7b66cd582971c40dd",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/ui/theme/Theme.kt": "f0f7481096317c325863a2dfda31173efc86e0bde17d9f73baec6f574e640532",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/ui/theme/Type.kt": "3382fd52ad4cba3de6972b09d942fb89ff0c819ccbcb9ffb93ba888461662fd6",
+    "platform/android/sample/src/main/res/drawable/ic_launcher_background.xml": "ed423c73a6f40a4d2909f0901e60527b3a807cd59e1b5593bcaae1808b1c6321",
+    "platform/android/sample/src/main/res/drawable/ic_launcher_foreground.xml": "01d1a6a6c1234eb7fe270d097eb283d72b9c95ae5118886f1b6573aad280f1f7",
+    "platform/android/sample/src/main/res/mipmap-anydpi-v26/ic_launcher.xml": "88f7653499ef524126ea5018a99baf9cc3269e7e584d6205dfdd76db39f39cc0",
+    "platform/android/sample/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml": "88f7653499ef524126ea5018a99baf9cc3269e7e584d6205dfdd76db39f39cc0",
+    "platform/android/sample/src/main/res/values/colors.xml": "b5626527d503417f0d8e5b1e08f338de7b31173bf0e122815f03e64932adbd88",
+    "platform/android/sample/src/main/res/values/strings.xml": "208614b95e4346894f2621d4d361feb65a708ba6d0a91583c35dde1af7789234",
+    "platform/android/sample/src/main/res/values/themes.xml": "e7cb058d9198f597ff8fe2bee31e83aae2ed1a807437325eedd6e30a61d6fd46",
+    "platform/android/sample/src/main/res/xml/backup_rules.xml": "6cf1a27e6807b1d24e41d3fbe7ddc1bfe1f42226027964f6eaf477d71b43b283",
+    "platform/android/sample/src/main/res/xml/data_extraction_rules.xml": "cb1fc47ab4a984530ed60e0e6ee638929c3038290e7e7e0b4b03a3a30fbe7381",
+    "platform/android/sample/src/probeTest/java/com/luofelix/fetchkit/sample/PlatformProbeTest.kt": "3435c5795e59e6e970a5b7a9cdc6ae7f7fd903c803c5f60e32d25c4611c35a4c",
+    "platform/android/sample/src/test/java/com/luofelix/fetchkit/sample/ExampleUnitTest.kt": "c90ac263d03884caabf3c8885f24641e7a71486f684a9b0be48387ce7554fe91",
+    "platform/android/sdk/CMakeLists.txt": "e58d2881cf0a1bd1abdb8149e28e49f84a1780332be3120f1c7505869b036493",
+    "platform/android/sdk/build.gradle.kts": "aaef453a71e632c7cb81bd83463c8ec5c2c42f12aa734c2c04b47c450c79bcea",
+    "platform/android/sdk/consumer-rules.pro": "541447ecf6aee4166eb9da03483f83fd98d7e54cfe2cdeca0281c95f16a6b6fa",
+    "platform/android/sdk/src/main/AndroidManifest.xml": "daa0fb1f32ba7ea85a07ef6302ab3d58c3407d7fd2aa03ec132cb9e38e8d9849",
+    "platform/android/sdk/src/main/cpp/fetchkit_jni.cpp": "ae481e7420321fd4c61aa4ffb8c185d53b97f122e1c207c77287580fc0a84cbb",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/FetchKit.kt": "6a3e2d2b1c991f809441054b40af2458ffe8c8fbbf3d15a6ca83d9a1670766a8",
+    "platform/android/sdk/src/probe/cpp/platform_probe_jni.cpp": "41d2977768f57c041d610c83310e7c19b94a14af56527edf75fd58dc6ed035fc",
+    "platform/android/sdk/src/probe/java/com/luofelix/fetchkit/probe/PlatformProbe.kt": "fb2f5f3c090f10c39cbd87ba61f167495b80e1c4a783dd5ee6e6e97b6913222a",
+    "platform/android/sdk/src/probeOkHttp/java/com/luofelix/fetchkit/probe/ProbeBackend.kt": "80a44fd075a87bb47fa16aeb22ba599860b92bf7e7e252953e3b5eb789386714",
+    "platform/android/sdk/src/probePlatform/java/com/luofelix/fetchkit/probe/ProbeBackend.kt": "ae85acc0338c62d785ce7ec4ddd9055c48dba83de9e1d79d857ce18591202a50",
+    "settings.gradle.kts": "5dd4a8d264d8e25de44e7bce43d245eec30da62f1b518ee90ede209e746e3196",
+    "src/core/version.cpp": "22dbb4dff5b9da81298f282c18629aceaa6ae177ca2f07bd52230584510e63c7",
+    "src/transport/http_transport.h": "1177df2173f7d3eb9094ed72bd9de419601b62924cd742d50a8372df142ffebf",
+    "tests/contract/run_android_probe.py": "e6e192549157f83217d25cfc1316c3bdaef84f9133dd36b14a189698b1464f47",
+    "tests/contract/run_curl_probe.py": "7db8cc4820ed510c5c28ea7174a2367eb96e09e4b020a9941bcbf0f0251feecf",
+    "tests/contract/transport_probe.cpp": "ad1243102105efb141214df1203f46e221efde420e9749da09a8277794ac8ecb",
+    "tests/fixtures/m0_scenarios.json": "905ab4565eb1fa14e5b81dd868e3ed283bca52c82314aeeb134ced3fafd53c6a",
+    "tests/server/http_fixture.py": "0f9181147918e154e2c5c6ffee6e9dd57f5342a173e3b0f66d27cea2eb8d0cfe",
+    "tests/server/server_test.py": "10c060bf096c925e25ae30aa442be700ff1a34bab9c94e443b656f5c6331ea4e",
+    "tools/size/android-host/build.gradle.kts": "d98fe2352d83e9920c3148de24c262ce3198de4d4296069d096a48c5f95c61f3",
+    "tools/size/android-host/src/main/AndroidManifest.xml": "018d156294bd6c16491c0363cc388e82d0bf6060da93b9c4a9429ecc22a6d0b6",
+    "tools/size/android-host/src/main/java/com/luofelix/fetchkit/sizehost/MainActivity.java": "97d60fb7a360cc7ac617efb3fc7bc5125c5ef2d8cc1290c67caa49671a410122",
+    "tools/size/android-host/src/modes/bare/java/com/luofelix/fetchkit/sizehost/Integration.java": "7121843fe103cc998497488631958cec03953e3cc1f86e1d328fa16782e2c964",
+    "tools/size/android-host/src/modes/probe/java/com/luofelix/fetchkit/sizehost/Integration.java": "9cef810386e2d5b6a9a0e4cafade0237ac2ee9a264932371f83b4d2def098769",
+    "tools/size/android-host/src/modes/scaffold/java/com/luofelix/fetchkit/sizehost/Integration.java": "258400a4ec1bf6ad894d5b4e14883cc0d76eecc1383811a975eaa4d14f3c70d3",
+    "tools/size/measure.py": "b768926ffc2976b9f79462bc41caff011ab3cd5a48a550b0edd155dcc750c166"
+  },
+  "artifacts": {
+    "pinned_cli_debug": {
+      "file": "build/m1-pinned/fetchkit_cli.exe",
+      "bytes": 9055631,
+      "sha256": "8d9b8c3c45760964719e8d850a6cb4c84b9c75a11d59ec14451cd8aa8444ad5d"
+    },
+    "pinned_core_debug": {
+      "file": "build/m1-pinned/libfetchkit.a",
+      "bytes": 5260890,
+      "sha256": "44066a6799014f7bbd06b4bc3d4a75117ddddd5ee70ec16af96e720530ce2715"
+    },
+    "android_release_aar": {
+      "file": "platform/android/sdk/build/outputs/aar/sdk-release.aar",
+      "bytes": 140418,
+      "sha256": "4c07394876589eec2b516118291af83ddcd2d29a1e21d21728e898266cddbdb9"
+    },
+    "pinned_curl_debug": {
+      "file": "build/m1-pinned/_deps/fetchkit_curl-build/lib/libcurl-d.a",
+      "bytes": 6913178,
+      "sha256": "bf39092eca705bbaf21a9482fb1a01fde82e35bb2c20aa09c15e836abea1e226"
+    }
+  },
+  "external_libraries": [],
+  "cmake": "cmake version 4.0.1",
+  "ninja": "1.13.2",
+  "compiler": "g++ (Rev5, Built by MSYS2 project) 16.1.0",
+  "python": "Python 3.12.0",
+  "openssl": "OpenSSL 3.6.3 9 Jun 2026 (Library: OpenSSL 3.6.3 9 Jun 2026)",
+  "android_native": [
+    {
+      "path": "jni/arm64-v8a/libfetchkit_jni.so",
+      "bytes": 208736,
+      "sha256": "f3ca50fac7d0dfab08ea37a53680540f7b28f26c0076879cdafbee619552025e"
+    },
+    {
+      "path": "jni/x86_64/libfetchkit_jni.so",
+      "bytes": 208152,
+      "sha256": "6dc74c8c4e07852e9ad4596a51b698c2ac79be4498e0ef97517ef2a2d7548eb8"
+    }
+  ],
+  "android_aar_delta_from_m0": 0,
+  "android_runtime_dependencies": [
+    "\\--- org.jetbrains.kotlin:kotlin-stdlib:2.2.10",
+    "\\--- org.jetbrains:annotations:13.0"
+  ],
+  "notes": [
+    "Source checksums are the report-archive worktree, not a release ABI promise.",
+    "Debug archives/executables are not release size metrics; external OpenSSL/toolchain/libc are not pinned.",
+    "No Linux or new device-runtime acceptance was executed."
+  ],
+  "curl_license_sha256": "82f2f4427d6545ee5aaac4f0b80428da6cc8ba41c2cf5da3a03680ec327b9681"
+}

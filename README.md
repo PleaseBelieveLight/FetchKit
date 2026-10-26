@@ -3,10 +3,14 @@
 FetchKit 是面向 Android 与 Linux 的 C++ 网络资源下载
 SDK，以可靠、可扩展和控制接入体积为目标。首版围绕文件下载、断点续传、多任务调度和资源缓存建立基础能力，后续按需扩展下载能力。
 
-当前状态：已建立 C++ 核心、Android SDK 和演示 App 的工程骨架，支持版本查询。下载、续传、调度和缓存能力仍待实现。
+当前状态：主机端已实现 M1 单文件暂存下载、同进程暂停/恢复与续传协议校验，提供 alpha C ABI、C++ 包装和 CLI。
+Android 仍仅支持版本查询；持久化恢复、摘要校验、资源发布、多任务与缓存尚未实现。
 
 M0 已加入可控 HTTP 服务、主机/Android/JNI 探针、接口契约与体积对照工具。
 实测结论、后端调整和缺测项见 [M0 基线报告](docs/reports/m0-baseline.md)；实验接口不等于正式下载能力。
+
+M1 用法见 [主机 API 与 CLI](docs/m1-host-api.md)，验证范围见 [M1 报告](docs/reports/m1-baseline.md)。
+`TransferComplete` 只代表暂存传输完成，不能作为已发布资源使用。Linux/设备缺测项不由 Windows 结果代替。
 
 首版设计见 [docs/v1-design.md](docs/v1-design.md)。文档中的 API、默认参数和交付顺序均为实现基线，不表示已有能力或实测结果。
 
@@ -35,6 +39,8 @@ fetchkit/
 ├── CMakeLists.txt             # 独立 C++ 核心构建入口
 ├── include/fetchkit/          # 公共 C ABI 与 C++ 包装
 ├── src/core/                 # 核心实现
+├── src/storage/              # M1 暂存文件与目录锁
+├── src/transport/            # 传输契约与可选 libcurl 后端
 ├── examples/cli/             # 主机命令行示例
 ├── platform/android/
 │   ├── sdk/                  # :sdk，Kotlin API、JNI、AAR
@@ -47,8 +53,8 @@ fetchkit/
 Android Studio 直接打开仓库根目录。Gradle 模块通过 `projectDir` 映射到 `platform/android/`，无需再建立一套嵌套
 Gradle 工程。
 
-调用链：演示 App → `com.luofelix.fetchkit.FetchKit.version()` → JNI → C++ 核心。下载逻辑后续放在 C++
-核心，Android 模块负责平台适配。
+调用链：演示 App → `com.luofelix.fetchkit.FetchKit.version()` → JNI → C++ 核心。
+主机下载由 C++ 实现；Android 模块负责平台适配，下载桥接仍待 M4。
 
 ## 构建与运行
 
@@ -79,7 +85,9 @@ cmake --build build/native-debug --parallel
 ```
 
 Linux 可省略编译器参数，运行 `./build/native-debug/fetchkit_cli --version`。CLI
-当前仅展示工程状态和版本，不执行下载。可选 CTest 与 Android 探针运行方式见 [测试说明](tests/README.md)，
+默认不链接 curl，可查询版本；增加 `-DFETCHKIT_WITH_CURL=ON` 后 CLI 可下载与查询同进程任务。
+固定源码参考配置使用 `-DFETCHKIT_USE_PINNED_CURL=ON`，具体入口见 [依赖说明](third_party/README.md)。
+可选 CTest 与 Android 探针运行方式见 [测试说明](tests/README.md)，
 体积对照见 [测量工具说明](tools/size/README.md)。普通构建不会引入 M0 实验依赖。
 
 ## 首版目标

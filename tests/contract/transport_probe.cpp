@@ -22,6 +22,7 @@ const char* reasonName(EndReason reason) {
         case EndReason::Network: return "network";
         case EndReason::Rejected: return "rejected";
         case EndReason::ProtocolMismatch: return "protocol_mismatch";
+        case EndReason::Certificate: return "certificate";
     }
     return "unknown";
 }
@@ -98,7 +99,15 @@ int main(int argc, char** argv) {
     if (iterations < 1 || iterations > 1000) return 2;
     const bool cancel_mode = mode == "delayed-headers" || mode == "blocked-read" ||
         mode == "header-barrier" || mode == "backpressure" || mode == "close-race";
-    std::fprintf(stderr, "libcurl=%s\n", curl_version_info(CURLVERSION_NOW)->version);
+    const auto* info = curl_version_info(CURLVERSION_NOW);
+    std::string protocols;
+    for (auto protocol = info->protocols; protocol && *protocol; ++protocol) {
+        if (!protocols.empty()) protocols += ',';
+        protocols += *protocol;
+    }
+    std::fprintf(stderr, "libcurl=%s;tls=%s;async_dns=%d;largefile=%d;protocols=%s\n", info->version,
+        info->ssl_version ? info->ssl_version : "none", (info->features & CURL_VERSION_ASYNCHDNS) != 0,
+        (info->features & CURL_VERSION_LARGEFILE) != 0, protocols.c_str());
     for (int i = 0; i < iterations; ++i) {
         Cancellation cancellation;
         ProbeSink sink(mode);
@@ -111,7 +120,7 @@ int main(int argc, char** argv) {
         bool threw = false;
         std::thread worker([&] {
             try {
-                CurlProbeTransport transport;
+                CurlTransport transport;
                 result = transport.execute(request, sink, cancellation);
             } catch (...) {
                 threw = true;

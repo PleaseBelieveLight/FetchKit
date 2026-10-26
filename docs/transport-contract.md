@@ -4,6 +4,9 @@
 可选源码是验证此契约的实验接口，不是已发布下载
 API。实测范围与缺口见 [M0 报告](reports/m0-baseline.md)。
 
+M1 已将主机探针适配演进为 `CurlTransport`，并由 DownloadSession 控制响应接受、续传和重定向。
+当前实现与限制见 [M1 API](m1-host-api.md)；Android 部分仍为可选实验，历史 M0 报告按原提交保留。
+
 ## 单次请求与策略归属
 
 一次 operation 处理一个 HTTP/HTTPS GET。输入包含 URL、重复请求头、generation、连接超时、响应头/读空闲超时及显式

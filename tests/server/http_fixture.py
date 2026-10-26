@@ -20,8 +20,8 @@ class FixtureServer(ThreadingHTTPServer):
     daemon_threads = True
     block_on_close = False
 
-    def __init__(self, address=("127.0.0.1", 0)):
-        super().__init__(address, FixtureHandler)
+    def __init__(self, address=("127.0.0.1", 0), handler=None):
+        super().__init__(address, handler or FixtureHandler)
         self.stopping = threading.Event()
         self.requests = []
         self.requests_lock = threading.Lock()
@@ -67,10 +67,13 @@ class FixtureHandler(BaseHTTPRequestHandler):
         with self.server.requests_lock:
             self.server.requests.append({
                 "path": parsed.path,
+                "method": "GET",
                 "range": self.headers.get("Range"),
+                "if_range": self.headers.get("If-Range"),
                 "accept_encoding": self.headers.get("Accept-Encoding"),
                 "has_authorization": "Authorization" in self.headers,
                 "has_cookie": "Cookie" in self.headers,
+                "has_api_key": "X-Api-Key" in self.headers,
             })
         try:
             self.handle_get(parsed.path, query)
@@ -132,13 +135,16 @@ class FixtureHandler(BaseHTTPRequestHandler):
 
 
 class RunningFixture:
-    def __init__(self, host="127.0.0.1", port=0):
-        self.server = FixtureServer((host, port))
+    def __init__(self, host="127.0.0.1", port=0, handler=None, tls_context=None):
+        self.server = FixtureServer((host, port), handler)
+        self.scheme = "https" if tls_context else "http"
+        if tls_context:
+            self.server.socket = tls_context.wrap_socket(self.server.socket, server_side=True)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     @property
     def url(self):
-        return f"http://127.0.0.1:{self.server.server_port}"
+        return f"{self.scheme}://127.0.0.1:{self.server.server_port}"
 
     def __enter__(self):
         self.thread.start()

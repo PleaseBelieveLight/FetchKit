@@ -4,6 +4,10 @@
 `fetchkit_version()` 和 `FetchKit.version()`
 保持兼容。下载状态、线程和安全要求以 [v1-design.md](v1-design.md) 为基线。
 
+M1 实现状态见 [主机 API](m1-host-api.md)：当前只开放其明确列出的 alpha 子集，使用校验后的 64 位 opaque token、
+单任务与诊断快照；以下共享订阅、持久化、发布、租约等仍是后续契约，不能据此宣称已有完整 API。
+请求 provider 为网络 worker 上的协作式回调，截止时间不能强制打断任意宿主代码。
+
 ## ABI 与所有权
 
 - C ABI 只使用固定宽度整数、带长度的 UTF-8、opaque handle、结构大小/版本及预留字段；不跨边界暴露 C++
