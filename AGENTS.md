@@ -1,0 +1,69 @@
+# Repository Guidelines
+
+## Documentation Synchronization
+
+Chinese version: [AGENTS.zh-CN.md](AGENTS.zh-CN.md). Update both files together whenever either
+changes; keep requirements, examples, and commands equivalent.
+
+## Project Structure & Module Organization
+
+FetchKit has a C++/Android scaffold; downloads remain unimplemented. Read `README.md` and
+`docs/v1-design.md` before changing scope or architecture.
+
+The root CMake project builds `include/fetchkit/`, `src/core/`, and `examples/cli/`.
+Root Gradle settings map `:sdk` to `platform/android/sdk/` and `:sample` to
+`platform/android/sample/`. Keep JNI and Kotlin in the SDK; Compose UI belongs in the sample.
+Create storage, cache, transport, and protocol-test directories when implementing those capabilities.
+
+## Build, Test, and Development Commands
+
+From the repository root on Windows:
+
+```powershell
+.\gradlew.bat :sdk:assembleDebug :sample:assembleDebug :sample:testDebugUnitTest
+.\gradlew.bat :sample:connectedDebugAndroidTest
+cmake -S . -B build/native-debug -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/native-debug --parallel
+```
+
+These build AAR/APK artifacts, run unit/device tests, and compile the native CLI. Device tests
+require a connected device. Run `build/native-debug/fetchkit_cli.exe --version` for native verification.
+
+## Coding Style & Naming Conventions
+
+Use `fetchkit` for the root directory, repository, CMake project, and C++ namespace; name the CLI
+`fetchkit_cli` and prefix project build options with `FETCHKIT_`.
+
+The SDK package is fixed at `com.luofelix.fetchkit`. The sample namespace is
+`com.luofelix.fetchkit.sample`; its applicationId remains `com.luofelix.fetchkit`.
+
+For new code, use C++17, four-space indentation, `PascalCase` types, `lowerCamelCase` functions, and
+`snake_case` filenames and fields. Use RAII for ownership and 64-bit file offsets. Prevent
+exceptions from crossing C ABI or JNI boundaries.
+
+No formatter/linter is configured; include configuration when introducing one. Update design
+documents when architecture changes.
+
+## Testing Guidelines
+
+Android uses JUnit4. Sample instrumentation verifies application identity and SDK JNI loading.
+No C++ test framework, CTest registration, or coverage threshold exists yet. Future protocol tests
+should use filenames such as `resume_test.cpp` and a controllable local HTTP server.
+
+Cover ignored Range requests, invalid
+206/416 responses, resource changes, interrupted checkpoints, checksum failures, disk exhaustion,
+and cancellation races. Follow the acceptance checklist in `docs/v1-design.md`; distinguish process
+termination tests from reboot tests.
+
+## Commit & Pull Request Guidelines
+
+Use `type: description`, e.g. `refactor: separate SDK and sample`. Keep subjects focused on the resulting change.
+
+PRs explain behavior, scope, validation, and linked issues. Bug fixes summarize cause and repair.
+Report dependency/size changes with measurements. After code changes, suggest a commit message.
+
+## Architecture & Security
+
+Keep download policy and storage in C++; isolate platform networking and scheduling. Publish files
+only after required validation. Redact credentials and signed URLs. Measure package-size claims with
+all newly required dependencies included.

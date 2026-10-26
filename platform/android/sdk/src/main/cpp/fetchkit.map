@@ -1,0 +1,6 @@
+FETCHKIT {
+    global:
+        JNI_OnLoad;
+    local:
+        *;
+};

@@ -1,0 +1,21 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+**/build/
+.kotlin/
+CMakeUserPresets.json
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android Studio local project state
+/.idea/

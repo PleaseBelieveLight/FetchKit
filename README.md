@@ -1,0 +1,100 @@
+# FetchKit
+
+FetchKit 是面向 Android 与 Linux 的 C++ 网络资源下载
+SDK，以可靠、可扩展和控制接入体积为目标。首版围绕文件下载、断点续传、多任务调度和资源缓存建立基础能力，后续按需扩展下载能力。
+
+当前状态：已建立 C++ 核心、Android SDK 和演示 App 的工程骨架，支持版本查询。下载、续传、调度和缓存能力仍待实现。
+
+首版设计见 [docs/v1-design.md](docs/v1-design.md)。文档中的 API、默认参数和交付顺序均为实现基线，不表示已有能力或实测结果。
+
+## 项目命名
+
+| 项目                         | 统一名称                       |
+|------------------------------|--------------------------------|
+| 展示名称                     | FetchKit                       |
+| 根目录与 Git 仓库名          | `fetchkit`                     |
+| CMake 工程名与 C++ 命名空间  | `fetchkit`                     |
+| 公共头文件目录               | `include/fetchkit/`            |
+| 命令行目标                   | `fetchkit_cli`                 |
+| 项目构建选项前缀             | `FETCHKIT_`                    |
+| Android SDK 包名与 namespace | `com.luofelix.fetchkit`        |
+| 演示 App namespace           | `com.luofelix.fetchkit.sample` |
+| 演示 App applicationId       | `com.luofelix.fetchkit`        |
+
+演示界面使用独立子包，避免与 SDK 的资源和生成类冲突。SDK 包名固定为 `com.luofelix.fetchkit`。
+
+## 工程结构
+
+```text
+fetchkit/
+├── CMakeLists.txt             # 独立 C++ 核心构建入口
+├── include/fetchkit/          # 公共 C ABI 与 C++ 包装
+├── src/core/                 # 核心实现
+├── examples/cli/             # 主机命令行示例
+├── platform/android/
+│   ├── sdk/                  # :sdk，Kotlin API、JNI、AAR
+│   └── sample/               # :sample，Compose 演示 App
+├── gradle/                   # 现有 Wrapper、版本目录与 JVM 配置
+├── settings.gradle.kts       # 根目录 Gradle 工程入口
+└── docs/
+```
+
+Android Studio 直接打开仓库根目录。Gradle 模块通过 `projectDir` 映射到 `platform/android/`，无需再建立一套嵌套
+Gradle 工程。
+
+调用链：演示 App → `com.luofelix.fetchkit.FetchKit.version()` → JNI → C++ 核心。下载逻辑后续放在 C++
+核心，Android 模块负责平台适配。
+
+## 构建与运行
+
+沿用当前工程的 AGP、Gradle 与 Kotlin 版本，NDK 固定为 `28.2.13676358`、CMake 固定为 `3.22.1`，版本统一记录在
+`gradle/libs.versions.toml`。当前 Android 构建包含 `arm64-v8a` 和 `x86_64`，最低 API 24。
+
+在仓库根目录的 PowerShell 中执行：
+
+```powershell
+.\gradlew.bat :sdk:assembleDebug :sample:assembleDebug :sample:testDebugUnitTest
+```
+
+Android Studio 中选择 `sample` 运行，页面显示核心版本。AAR 位于
+`platform/android/sdk/build/outputs/aar/`，APK 位于 `platform/android/sample/build/outputs/apk/`。
+
+有可用设备或模拟器时，验证安装标识与 JNI 加载：
+
+```powershell
+.\gradlew.bat :sample:connectedDebugAndroidTest
+```
+
+独立 C++ 构建不依赖 Android SDK。本机 Windows 使用 Ninja 和 g++：
+
+```powershell
+cmake -S . -B build/native-debug -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/native-debug --parallel
+.\build\native-debug\fetchkit_cli.exe --version
+```
+
+Linux 可省略编译器参数，运行 `./build/native-debug/fetchkit_cli --version`。CLI
+当前仅展示工程状态和版本，不执行下载。尚未注册 CTest 测试。
+
+## 首版目标
+
+- 下载普通文件：视频文件、音频、图片、地图数据包、模型、游戏资源和压缩包等。
+- 支持暂停、恢复、取消、受控重试、进度通知和进程退出后的恢复。
+- 正确处理服务端不支持续传、资源发生变化、磁盘不足等情况。
+- 在文件完成必要校验并发布后，才向调用方提供可用资源。
+- 提供有配额、淘汰和保留能力的资源存储。
+- C++ 实现任务、续传、存储和缓存策略；网络传输通过后端适配。
+- Android 默认评估平台网络后端以控制新增依赖；Linux 使用 libcurl 后端。
+
+首版聚焦普通文件，HLS/DASH 清单与分片编排、DRM、多连接分段加速、差分更新及解压安装列入后续范围。
+
+## 交付顺序
+
+1. 验证网络后端契约、取消延迟与 Android 包体积基线。
+2. 完成 Linux 单文件下载和测试服务器，验证续传协议。
+3. 完成持久化、校验与崩溃恢复。
+4. 完成调度、资源存储、配额与淘汰。
+5. 完成 JNI、Kotlin API、后台调度示例与 Android 集成验证。
+6. 发布 Linux CLI、Android AAR、接入文档和实测体积报告。
+
+以故障测试的通过情况作为交付依据，具体场景见设计文档。
