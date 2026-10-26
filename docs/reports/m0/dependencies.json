@@ -1,0 +1,231 @@
+{
+  "note": "Resolved component/artifact snapshot, not a complete license audit or enforced dependency lock. Metadata-only modules redirect to selected variants.",
+  "android": [
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.10",
+      "repository": "https://repo.maven.apache.org/maven2/",
+      "files": [
+        {
+          "name": "kotlin-stdlib-2.2.10.jar",
+          "bytes": 1750374,
+          "sha256": "9c67cc79efd6b9215b49d2a4308f5f3433537376c7c88e89bdd6729bd096e61a",
+          "source": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.2.10/kotlin-stdlib-2.2.10.jar"
+        }
+      ],
+      "licenses_from_pom": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.21",
+      "repository": "https://repo.maven.apache.org/maven2/",
+      "files": [
+        {
+          "name": "kotlin-stdlib-2.2.21.jar",
+          "bytes": 1761445,
+          "sha256": "6558a3d233da56a20934b32159f9db5f86ed5816ef098f78a2c223dc6abb79dd",
+          "source": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.2.21/kotlin-stdlib-2.2.21.jar"
+        }
+      ],
+      "licenses_from_pom": []
+    },
+    {
+      "coordinate": "org.jetbrains:annotations:13.0",
+      "repository": "https://repo.maven.apache.org/maven2/",
+      "files": [
+        {
+          "name": "annotations-13.0.jar",
+          "bytes": 17536,
+          "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478",
+          "source": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar"
+        },
+        {
+          "name": "annotations-13.0.pom",
+          "bytes": 4930,
+          "sha256": "965aeb2bedff369819bdde1bf7a0b3b89b8247dd69c88b86375d76163bb8c397",
+          "source": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.pom"
+        }
+      ],
+      "licenses_from_pom": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.squareup.okhttp3:okhttp:5.5.1",
+      "repository": "https://repo.maven.apache.org/maven2/",
+      "files": [
+        {
+          "name": "okhttp-5.5.1.pom",
+          "bytes": 1862,
+          "sha256": "a834a8f02cbcaaf6a3968b439596e14d528a32160d4b235d95f2ab51163bbf2f",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp/5.5.1/okhttp-5.5.1.pom"
+        },
+        {
+          "name": "okhttp-5.5.1.module",
+          "bytes": 5883,
+          "sha256": "1c5b0837a46d13aec4493b97066c896f0f8f26e5c6b3535bec4355bce2a8e1bb",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp/5.5.1/okhttp-5.5.1.module"
+        }
+      ],
+      "licenses_from_pom": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.squareup.okhttp3:okhttp-android:5.5.1",
+      "repository": "https://repo.maven.apache.org/maven2/",
+      "files": [
+        {
+          "name": "okhttp-android-5.5.1.pom",
+          "bytes": 2270,
+          "sha256": "d9aa6a615a54146f08ce0e298b382e79ebe310161992040b07ed52ed29de8c3b",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp-android/5.5.1/okhttp-android-5.5.1.pom"
+        },
+        {
+          "name": "okhttp-android-5.5.1.module",
+          "bytes": 4355,
+          "sha256": "67a1f222960668845bb00002aa63424ff804584000bde84f1269ae188184e496",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp-android/5.5.1/okhttp-android-5.5.1.module"
+        },
+        {
+          "name": "okhttp.aar",
+          "bytes": 949648,
+          "sha256": "ce00fd7751cf7e4f28ba73a0287b3cc0c62b8b83f038e428592eeef189513ee1",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp-android/5.5.1/okhttp.aar"
+        }
+      ],
+      "licenses_from_pom": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.squareup.okio:okio:3.18.1",
+      "repository": "https://repo.maven.apache.org/maven2/",
+      "files": [
+        {
+          "name": "okio-3.18.1.module",
+          "bytes": 37605,
+          "sha256": "1616f212eabcb6c1c2d04ff5c80d9132c0e5f4e408c659d5ee47aef28ebc5d10",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okio/okio/3.18.1/okio-3.18.1.module"
+        },
+        {
+          "name": "okio-3.18.1.pom",
+          "bytes": 1703,
+          "sha256": "3320a24236b2b43db1515b56587b18a8a1cdf238f4465e20e3e19e5f4fd10214",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okio/okio/3.18.1/okio-3.18.1.pom"
+        }
+      ],
+      "licenses_from_pom": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.squareup.okio:okio-jvm:3.18.1",
+      "repository": "https://repo.maven.apache.org/maven2/",
+      "files": [
+        {
+          "name": "okio-jvm-3.18.1.module",
+          "bytes": 3346,
+          "sha256": "3581865143cbe7556e1975be4c823834a7b775534de856d0b355c77af946027b",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okio/okio-jvm/3.18.1/okio-jvm-3.18.1.module"
+        },
+        {
+          "name": "okio-jvm-3.18.1.pom",
+          "bytes": 1715,
+          "sha256": "6457712bf7dfdfa0d1b25a303600288c34a1ff8613d55c24c8c99bcc63301dd0",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okio/okio-jvm/3.18.1/okio-jvm-3.18.1.pom"
+        },
+        {
+          "name": "okio-jvm-3.18.1.jar",
+          "bytes": 392463,
+          "sha256": "b97b640557a650d15411f2be29aef558c4e422a83653cb18ba494311dbed18be",
+          "source": "https://repo.maven.apache.org/maven2/com/squareup/okio/okio-jvm/3.18.1/okio-jvm-3.18.1.jar"
+        }
+      ],
+      "licenses_from_pom": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.annotation:annotation:1.10.0",
+      "repository": "https://dl.google.com/dl/android/maven2/",
+      "files": [],
+      "licenses_from_pom": [],
+      "metadata_only": true
+    },
+    {
+      "coordinate": "androidx.annotation:annotation-jvm:1.10.0",
+      "repository": "https://dl.google.com/dl/android/maven2/",
+      "files": [
+        {
+          "name": "annotation-jvm-1.10.0.jar",
+          "bytes": 62171,
+          "sha256": "ddd072ddbb553178e205517ce777b2f05aa9e412982d9ecb4eedc74f1212f697",
+          "source": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.10.0/annotation-jvm-1.10.0.jar"
+        }
+      ],
+      "licenses_from_pom": []
+    },
+    {
+      "coordinate": "androidx.startup:startup-runtime:1.2.0",
+      "repository": "https://dl.google.com/dl/android/maven2/",
+      "files": [
+        {
+          "name": "startup-runtime-1.2.0.aar",
+          "bytes": 24073,
+          "sha256": "f51d361d17b30b09cfb9e2aebf301d113f99437cbf462a066092795fb60eddd2",
+          "source": "https://dl.google.com/dl/android/maven2/androidx/startup/startup-runtime/1.2.0/startup-runtime-1.2.0.aar"
+        }
+      ],
+      "licenses_from_pom": []
+    },
+    {
+      "coordinate": "androidx.tracing:tracing:1.0.0",
+      "repository": "https://dl.google.com/dl/android/maven2/",
+      "files": [
+        {
+          "name": "tracing-1.0.0.aar",
+          "bytes": 4444,
+          "sha256": "07b8b6139665b884a162eccf97891ca50f7f56831233bf25168ae04f7b568612",
+          "source": "https://dl.google.com/dl/android/maven2/androidx/tracing/tracing/1.0.0/tracing-1.0.0.aar"
+        }
+      ],
+      "licenses_from_pom": []
+    }
+  ],
+  "host": {
+    "libcurl_version": "8.20.0",
+    "source": "https://curl.se/download/curl-8.20.0.tar.xz",
+    "provider": "Installed MSYS2 UCRT64 package; not bundled in Android",
+    "files": [
+      {
+        "name": "curlver.h",
+        "bytes": 3052,
+        "sha256": "760bcae8a363829c008b82f6c927f23352d2151ae60cfc749feaa51ad86d0983"
+      },
+      {
+        "name": "libcurl-4.dll",
+        "bytes": 1307084,
+        "sha256": "4637c506f0058d5ecb10f44a76aa63b491830b9ea4d4c34542aba0a553a6af6e"
+      },
+      {
+        "name": "LICENSE",
+        "bytes": 1088,
+        "sha256": "82f2f4427d6545ee5aaac4f0b80428da6cc8ba41c2cf5da3a03680ec327b9681"
+      }
+    ]
+  }
+}

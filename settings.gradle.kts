@@ -26,3 +26,9 @@ rootProject.name = "FetchKit"
 include(":sdk", ":sample")
 project(":sdk").projectDir = file("platform/android/sdk")
 project(":sample").projectDir = file("platform/android/sample")
+
+// Measurement-only host; absent from normal builds and SDK dependency graphs.
+if (providers.gradleProperty("fetchkit.sizeMode").isPresent) {
+    include(":size-host")
+    project(":size-host").projectDir = file("tools/size/android-host")
+}

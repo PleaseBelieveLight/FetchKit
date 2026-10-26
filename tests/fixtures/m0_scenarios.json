@@ -1,0 +1,19 @@
+{
+  "format_version": 1,
+  "content": {"size": 262144, "pattern": "byte[i] = i % 251", "etag": "\"fetchkit-m0-v1\""},
+  "scenarios": [
+    {"id": "bytes", "path": "/bytes", "status": 200, "bytes": 262144},
+    {"id": "range", "path": "/range", "headers": {"Range": "bytes=1024-"}, "status": 206, "bytes": 261120},
+    {"id": "headers", "path": "/headers", "status": 200, "bytes": 262144},
+    {"id": "gzip", "path": "/gzip", "status": 200, "result": "rejected", "bytes": 0},
+    {"id": "redirect", "path": "/redirect", "status": 302, "bytes": 0},
+    {"id": "reject", "path": "/bytes", "status": 200, "result": "rejected", "bytes": 0},
+    {"id": "truncated", "path": "/truncated", "status": 200, "result": "network", "bytes": 1024},
+    {"id": "timeout", "path": "/stall-body?ms=5000", "status": 200, "result": "timeout", "bytes": 1024},
+    {"id": "delayed-headers", "path": "/delay-headers?ms=5000", "cancel": true},
+    {"id": "blocked-read", "path": "/stall-body?ms=5000", "cancel": true},
+    {"id": "header-barrier", "path": "/bytes", "cancel": true},
+    {"id": "backpressure", "path": "/bytes", "cancel": true},
+    {"id": "close-race", "path": "/bytes", "cancel": true}
+  ]
+}

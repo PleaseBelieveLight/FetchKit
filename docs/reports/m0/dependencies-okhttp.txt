@@ -1,0 +1,17 @@
+\--- project ':sdk'
+     +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.10 -> 2.2.21
+     |    \--- org.jetbrains:annotations:13.0
+     \--- com.squareup.okhttp3:okhttp:5.5.1
+          \--- com.squareup.okhttp3:okhttp-android:5.5.1
+               +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.21 -> 2.2.21 (*)
+               +--- com.squareup.okio:okio:3.18.1
+               |    \--- com.squareup.okio:okio-jvm:3.18.1
+               |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.1.21 -> 2.2.21 (*)
+               +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.21 (*)
+               +--- androidx.annotation:annotation:1.10.0
+               |    \--- androidx.annotation:annotation-jvm:1.10.0
+               |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.2.21 (*)
+               \--- androidx.startup:startup-runtime:1.2.0
+                    +--- androidx.annotation:annotation:1.8.1 -> 1.10.0 (*)
+                    \--- androidx.tracing:tracing:1.0.0
+                         \--- androidx.annotation:annotation:1.1.0 -> 1.10.0 (*)

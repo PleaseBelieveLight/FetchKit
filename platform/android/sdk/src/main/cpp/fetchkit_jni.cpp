@@ -2,6 +2,10 @@
 
 #include <jni.h>
 
+#ifdef FETCHKIT_ENABLE_PLATFORM_PROBE
+bool registerPlatformProbe(JNIEnv* env) noexcept;
+#endif
+
 namespace {
 
 jstring nativeVersion(JNIEnv* env, jobject) noexcept {
@@ -31,5 +35,13 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
     };
     const jint result = env->RegisterNatives(sdk_class, methods, 1);
     env->DeleteLocalRef(sdk_class);
-    return result == JNI_OK ? JNI_VERSION_1_6 : JNI_ERR;
+    if (result != JNI_OK) {
+        return JNI_ERR;
+    }
+#ifdef FETCHKIT_ENABLE_PLATFORM_PROBE
+    if (!registerPlatformProbe(env)) {
+        return JNI_ERR;
+    }
+#endif
+    return JNI_VERSION_1_6;
 }

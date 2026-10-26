@@ -1,0 +1,48 @@
+{
+  "backend": "HttpURLConnection M0 probe",
+  "run_id": "659948f3-09fe-4470-b4bd-dc632c8af98d",
+  "api": 31,
+  "abi": "x86_64",
+  "model": "sdk_gphone64_x86_64",
+  "fingerprint": "google/sdk_gphone64_x86_64/emulator64_x86_64_arm64:12/SE1A.211212.001.B1/8023802:user/release-keys",
+  "summary": {
+    "delayed-headers": {
+      "count": 100,
+      "p95_ms": 2.883,
+      "max_ms": 5.0233
+    },
+    "blocked-read": {
+      "count": 100,
+      "p95_ms": 2.6941,
+      "max_ms": 3.5448
+    },
+    "header-barrier": {
+      "count": 100,
+      "p95_ms": 2.0505,
+      "max_ms": 3.2009
+    },
+    "backpressure": {
+      "count": 100,
+      "p95_ms": 1.9739,
+      "max_ms": 3.6072
+    },
+    "close-race": {
+      "count": 100,
+      "p95_ms": 1.9582,
+      "max_ms": 2.1588
+    }
+  },
+  "ambient_cookie_sent": true,
+  "ambient_auth_calls": 1,
+  "ambient_auth_status": 200,
+  "failures": [
+    "HttpURLConnection cannot isolate the host CookieHandler",
+    "HttpURLConnection performed authentication outside core policy"
+  ],
+  "gate_passed": false,
+  "instrumentation_exit_code": 0,
+  "fixture_requests": 411,
+  "identity_request_failures": 0,
+  "samples_file": "android-platform-api31.samples.jsonl",
+  "sample_count": 508
+}

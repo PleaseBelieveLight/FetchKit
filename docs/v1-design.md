@@ -5,6 +5,9 @@
 当前结构以根目录 Gradle 工程管理 `:sdk`（`platform/android/sdk`）和 `:sample`（
 `platform/android/sample`），根目录 CMake 单独构建 C++ 核心及主机 CLI。已打通版本查询链路，本文的下载能力和里程碑仍是实现目标。
 
+M0 的可执行探针与阶段证据见 [M0 基线报告](reports/m0-baseline.md)，细化契约见
+[传输契约](transport-contract.md) 和 [API/存储契约](api-contract.md)。探针不等于正式下载 API；阶段缺测项仍须补齐。
+
 ## 1. 产品定位与边界
 
 FetchKit 定位为可扩展的 C++ 网络资源下载 SDK。首版提供“可靠的 HTTP/HTTPS 文件下载 +
@@ -63,10 +66,13 @@ Android      libcurl   TaskJournal   CacheManager
 
 ### 2.1 网络后端
 
-Android 默认方案是通过 JNI 使用 `HttpURLConnection` / `HttpsURLConnection`，Linux 采用
-libcurl。其目的是复用平台 TLS 和证书能力，减少 SDK 必须携带的网络依赖；实际体积收益必须通过样例工程测量。平台
-API 的 HTTPS
-与编码行为见 [Android HttpURLConnection 文档](https://developer.android.com/reference/java/net/HttpURLConnection)。
+M0 后 Android 默认实现方向调整为通过 JNI 接入独立配置的 OkHttp 客户端，Linux 采用 libcurl。
+Android 仍复用平台 TLS 和证书能力，但必须计入 OkHttp、Okio、Kotlin 标准库及其他传递依赖的实际接入成本。
+当前仅交付可选实验，正式适配仍在 M4 完成，版本和体积证据见 [M0 报告](reports/m0-baseline.md)。
+
+最初候选 `HttpURLConnection` / `HttpsURLConnection` 在 API 31 探针中会使用宿主全局 CookieHandler 和
+Authenticator，绕过核心凭证与鉴权策略，因此不能直接作为默认后端。不能通过临时替换宿主全局处理器规避该问题。
+独立客户端必须显式关闭自动重试、重定向、Cookie、Authenticator 和缓存，并使用 identity 编码；M1/M4 继续验证完整协议。
 
 Android 中需要统一 native 网络栈的集成方，可以选择后续适配的 libcurl 构建配置。首版不要求交付 Android
 的两个后端。
@@ -101,8 +107,15 @@ M0 必须实测“阻塞读取时取消”的行为。仅设置取消标记不�
 `pause` 请求发出后，应等到进入 Paused 才认为检查点完成。取消默认清理未完成数据；已完成资源由显式删除
 API 管理。
 
+M0 将共享控制细化为：pause/resume 对共享 task 生效；cancel 只撤销指定订阅，最后一个订阅显式取消时才取消共享下载。
+普通订阅释放在最后一个订阅退出时停止 I/O、尽力提交并保留暂停任务；engine 关闭同样保留恢复信息。
+恢复任务需由宿主重新订阅并给予执行许可，不复活旧回调。读取租约可保留最小存储上下文及目录锁至其释放。
+
 建议错误类型：Network、Timeout、HttpStatus、AuthRequired、ProtocolMismatch、IntegrityMismatch、DiskFull、PermissionDenied、CacheQuotaExceeded、Busy、Cancelled。原始
 HTTP 状态和平台错误作为附加诊断信息保留。
+
+M0 另细化 InvalidArgument、NotFound、Closed、UnsupportedMetadata 和 SubscriptionOverflow 等本地错误，
+明确共享控制、事件容量及租约关闭行为，见 [API 契约](api-contract.md)。这些类型尚未形成已发布 API。
 
 ## 3. 资源身份与请求信息
 
@@ -162,6 +175,9 @@ Running 可进入 Pausing → Paused，或 RetryWaiting；活动状态可进入 
 Running 恢复为可恢复的待调度状态，是否启动取决于宿主策略。
 
 每份资源采用暂存数据文件与独立元数据记录。记录包含格式版本、有限长度字段和记录校验值；写入通过临时文件和同目录原子替换进行。首版采用可扫描的独立记录，避免强制引入数据库，任务数量较大时再评估索引。
+
+M0 将编码方向细化为有界二进制 TLV，记录使用 CRC32 检测损坏，字段上限和版本隔离见 API 契约。
+M2 固定字节格式、黄金样本、平台 zlib 依赖与同步实现后再交付，记录校验不能代替可信内容摘要。
 
 检查点写入顺序：
 

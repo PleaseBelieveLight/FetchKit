@@ -16,6 +16,7 @@ CMakeUserPresets.json
 .externalNativeBuild
 .cxx
 local.properties
+__pycache__/
 
 # Android Studio local project state
 /.idea/

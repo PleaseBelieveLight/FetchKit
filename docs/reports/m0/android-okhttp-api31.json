@@ -1,0 +1,45 @@
+{
+  "backend": "OkHttp 5.5.1 isolated M0 probe",
+  "run_id": "222e1b46-869c-45d0-ac82-a6bb7ecb8642",
+  "api": 31,
+  "abi": "x86_64",
+  "model": "sdk_gphone64_x86_64",
+  "fingerprint": "google/sdk_gphone64_x86_64/emulator64_x86_64_arm64:12/SE1A.211212.001.B1/8023802:user/release-keys",
+  "summary": {
+    "delayed-headers": {
+      "count": 100,
+      "p95_ms": 3.0504,
+      "max_ms": 4.1909
+    },
+    "blocked-read": {
+      "count": 100,
+      "p95_ms": 3.1758,
+      "max_ms": 5.1862
+    },
+    "header-barrier": {
+      "count": 100,
+      "p95_ms": 7.7047,
+      "max_ms": 9.5831
+    },
+    "backpressure": {
+      "count": 100,
+      "p95_ms": 3.4435,
+      "max_ms": 12.4631
+    },
+    "close-race": {
+      "count": 100,
+      "p95_ms": 2.0696,
+      "max_ms": 2.2554
+    }
+  },
+  "ambient_cookie_sent": false,
+  "ambient_auth_calls": 0,
+  "ambient_auth_status": 401,
+  "failures": [],
+  "gate_passed": true,
+  "instrumentation_exit_code": 0,
+  "fixture_requests": 410,
+  "identity_request_failures": 0,
+  "samples_file": "android-okhttp-api31.samples.jsonl",
+  "sample_count": 508
+}

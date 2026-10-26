@@ -24,10 +24,15 @@ From the repository root on Windows:
 .\gradlew.bat :sample:connectedDebugAndroidTest
 cmake -S . -B build/native-debug -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/native-debug --parallel
+cmake -S . -B build/m0-host -G Ninja -DCMAKE_CXX_COMPILER=g++ -DFETCHKIT_BUILD_TESTS=ON -DFETCHKIT_BUILD_PROBES=ON -DFETCHKIT_WITH_CURL=ON
+cmake --build build/m0-host --parallel
+ctest --test-dir build/m0-host --output-on-failure
 ```
 
 These build AAR/APK artifacts, run unit/device tests, and compile the native CLI. Device tests
 require a connected device. Run `build/native-debug/fetchkit_cli.exe --version` for native verification.
+M0 probes require Python 3.10+ and libcurl 7.85+ development files; set `CMAKE_PREFIX_PATH` if needed.
+See `tests/README.md` for opt-in Android probes and `tools/size/README.md` for size measurements.
 
 ## Coding Style & Naming Conventions
 
@@ -47,8 +52,13 @@ documents when architecture changes.
 ## Testing Guidelines
 
 Android uses JUnit4. Sample instrumentation verifies application identity and SDK JNI loading.
-No C++ test framework, CTest registration, or coverage threshold exists yet. Future protocol tests
-should use filenames such as `resume_test.cpp` and a controllable local HTTP server.
+CTest now registers the stdlib fixture-server tests, version smoke test and optional libcurl contract
+probe. No third-party C++ test framework or coverage threshold is configured. Protocol tests should
+use filenames such as `resume_test.cpp` and the controllable local HTTP server.
+
+Keep M0 experiment sources and dependencies out of ordinary SDK builds. Android probes are enabled
+only with `-Pfetchkit.probes=true`; an experimental backend is selected with `fetchkit.probeBackend`.
+Report failed contract gates and missing environments explicitly instead of weakening assertions.
 
 Cover ignored Range requests, invalid
 206/416 responses, resource changes, interrupted checkpoints, checksum failures, disk exhaustion,

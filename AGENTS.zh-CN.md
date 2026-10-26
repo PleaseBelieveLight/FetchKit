@@ -23,10 +23,15 @@ FetchKit 已建立 C++/Android 工程骨架，下载功能尚未实现。修改�
 .\gradlew.bat :sample:connectedDebugAndroidTest
 cmake -S . -B build/native-debug -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/native-debug --parallel
+cmake -S . -B build/m0-host -G Ninja -DCMAKE_CXX_COMPILER=g++ -DFETCHKIT_BUILD_TESTS=ON -DFETCHKIT_BUILD_PROBES=ON -DFETCHKIT_WITH_CURL=ON
+cmake --build build/m0-host --parallel
+ctest --test-dir build/m0-host --output-on-failure
 ```
 
 以上命令构建 AAR/APK、运行单元与设备测试，以及编译 native CLI。设备测试需要连接设备。
 执行 `build/native-debug/fetchkit_cli.exe --version` 验证 native 构建。
+M0 探针需要 Python 3.10+ 和 libcurl 7.85+ 开发文件；必要时设置 `CMAKE_PREFIX_PATH`。
+可选 Android 探针见 `tests/README.md`，体积测量见 `tools/size/README.md`。
 
 ## 编码风格与命名规范
 
@@ -44,8 +49,11 @@ applicationId 保留为 `com.luofelix.fetchkit`。
 ## 测试要求
 
 Android 使用 JUnit4，示例设备测试验证安装标识和 SDK JNI 加载。
-当前尚无 C++ 测试框架、CTest 注册或覆盖率门槛。后续协议测试使用 `resume_test.cpp` 等文件名和
-可控制行为的本地 HTTP 服务器。
+CTest 已注册标准库服务器测试、版本烟测和可选 libcurl 契约探针。
+当前未配置第三方 C++ 测试框架或覆盖率门槛。协议测试使用 `resume_test.cpp` 等文件名和可控制行为的本地 HTTP 服务器。
+
+M0 实验源码和依赖不得进入普通 SDK 构建。Android 探针仅通过 `-Pfetchkit.probes=true` 开启，
+使用 `fetchkit.probeBackend` 选择实验后端。明确报告契约门槛失败和缺失环境，不能放宽断言以宣称通过。
 
 覆盖服务端忽略 Range、无效的 206/416
 响应、资源变化、检查点写入中断、摘要校验失败、磁盘耗尽和取消竞态。遵循 `docs/v1-design.md`

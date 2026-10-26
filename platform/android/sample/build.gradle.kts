@@ -40,6 +40,15 @@ android {
     }
 }
 
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        if (providers.gradleProperty("fetchkit.probes").orNull == "true") {
+            variant.androidTest?.sources?.kotlin?.addStaticSourceDirectory("src/probeTest/java")
+            variant.androidTest?.sources?.assets?.addStaticSourceDirectory("../../../tests/fixtures")
+        }
+    }
+}
+
 dependencies {
     implementation(project(":sdk"))
     implementation(platform(libs.androidx.compose.bom))

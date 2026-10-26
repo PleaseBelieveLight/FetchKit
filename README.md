@@ -5,6 +5,9 @@ SDK，以可靠、可扩展和控制接入体积为目标。首版围绕文件�
 
 当前状态：已建立 C++ 核心、Android SDK 和演示 App 的工程骨架，支持版本查询。下载、续传、调度和缓存能力仍待实现。
 
+M0 已加入可控 HTTP 服务、主机/Android/JNI 探针、接口契约与体积对照工具。
+实测结论、后端调整和缺测项见 [M0 基线报告](docs/reports/m0-baseline.md)；实验接口不等于正式下载能力。
+
 首版设计见 [docs/v1-design.md](docs/v1-design.md)。文档中的 API、默认参数和交付顺序均为实现基线，不表示已有能力或实测结果。
 
 分阶段工作包、工程落点、依赖关系和验收门槛见 [首版落地计划](docs/v1-implementation-plan.md)。
@@ -76,7 +79,8 @@ cmake --build build/native-debug --parallel
 ```
 
 Linux 可省略编译器参数，运行 `./build/native-debug/fetchkit_cli --version`。CLI
-当前仅展示工程状态和版本，不执行下载。尚未注册 CTest 测试。
+当前仅展示工程状态和版本，不执行下载。可选 CTest 与 Android 探针运行方式见 [测试说明](tests/README.md)，
+体积对照见 [测量工具说明](tools/size/README.md)。普通构建不会引入 M0 实验依赖。
 
 ## 首版目标
 

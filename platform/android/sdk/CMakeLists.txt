@@ -8,6 +8,11 @@ add_subdirectory(
 )
 
 add_library(fetchkit_jni SHARED src/main/cpp/fetchkit_jni.cpp)
+option(FETCHKIT_ENABLE_PLATFORM_PROBE "Include the opt-in M0 Android/JNI probe" OFF)
+if(FETCHKIT_ENABLE_PLATFORM_PROBE)
+    target_sources(fetchkit_jni PRIVATE src/probe/cpp/platform_probe_jni.cpp)
+    target_compile_definitions(fetchkit_jni PRIVATE FETCHKIT_ENABLE_PLATFORM_PROBE=1)
+endif()
 target_link_libraries(fetchkit_jni PRIVATE fetchkit::core)
 target_compile_options(fetchkit_jni PRIVATE
     -fvisibility=hidden

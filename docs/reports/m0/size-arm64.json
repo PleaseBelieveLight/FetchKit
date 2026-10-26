@@ -1,0 +1,221 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "abi": "arm64-v8a",
+  "build_type": "Release",
+  "r8": false,
+  "signed": false,
+  "kotlin_in_bare_host": false,
+  "modes": {
+    "bare": {
+      "apk": {
+        "file": "host.apk",
+        "bytes": 2420,
+        "sha256": "7049a5d79bbe17ee58a7025a699deb4db2a6980828fce626fac7c387606228f7",
+        "native": []
+      },
+      "command": [
+        ":size-host:assembleRelease",
+        "-Pfetchkit.sizeMode=bare",
+        "-Pfetchkit.probes=false",
+        "-Pfetchkit.abis=arm64-v8a",
+        "-Pfetchkit.probeBackend=platform"
+      ],
+      "apk_delta_from_bare": 0
+    },
+    "scaffold": {
+      "apk": {
+        "file": "host.apk",
+        "bytes": 862376,
+        "sha256": "49a648b3e6d6cab36c64c6e04b32de6e29737ee5eceeab59e32ad2aac9b162f1",
+        "native": [
+          {
+            "path": "lib/arm64-v8a/libfetchkit_jni.so",
+            "bytes": 208736,
+            "zip_bytes": 208736
+          }
+        ]
+      },
+      "command": [
+        ":size-host:assembleRelease",
+        ":sdk:assembleRelease",
+        "-Pfetchkit.sizeMode=scaffold",
+        "-Pfetchkit.probes=false",
+        "-Pfetchkit.abis=arm64-v8a",
+        "-Pfetchkit.probeBackend=platform"
+      ],
+      "aar": {
+        "file": "sdk.aar",
+        "bytes": 70946,
+        "sha256": "3fd3a171f696e3e49e1c703870209a5675bb4ec8f20bad8dcff5f71a346e7a5b",
+        "native": [
+          {
+            "path": "jni/arm64-v8a/libfetchkit_jni.so",
+            "bytes": 208736,
+            "zip_bytes": 68657
+          }
+        ]
+      },
+      "native_profile": {
+        "cmake_build_type": "RelWithDebInfo",
+        "core_static_archive_bytes": 3170,
+        "core_static_archive_sha256": "12023bafedc89e5a7b14a41fc21097fbef22f36d0ff7acae16f74ab8b103d45d",
+        "cxx_flags": "",
+        "configuration_flags": "-O2 -g -DNDEBUG"
+      },
+      "apk_delta_from_bare": 859956,
+      "exported_functions": [
+        "JNI_OnLoad@@FETCHKIT"
+      ]
+    },
+    "probe": {
+      "apk": {
+        "file": "host.apk",
+        "bytes": 863392,
+        "sha256": "9b77ce7f502ab936bcda06f341f2d87f93ec296f168ce1382a83dbc36cefeaf7",
+        "native": [
+          {
+            "path": "lib/arm64-v8a/libfetchkit_jni.so",
+            "bytes": 209752,
+            "zip_bytes": 209752
+          }
+        ]
+      },
+      "command": [
+        ":size-host:assembleRelease",
+        ":sdk:assembleRelease",
+        "-Pfetchkit.sizeMode=probe",
+        "-Pfetchkit.probes=true",
+        "-Pfetchkit.abis=arm64-v8a",
+        "-Pfetchkit.probeBackend=platform"
+      ],
+      "aar": {
+        "file": "sdk.aar",
+        "bytes": 85244,
+        "sha256": "9b4765a6e028c60cd063d4f3b46b9a9b534c52bec5945618bf4636e8d66ad73b",
+        "native": [
+          {
+            "path": "jni/arm64-v8a/libfetchkit_jni.so",
+            "bytes": 209752,
+            "zip_bytes": 69140
+          }
+        ]
+      },
+      "native_profile": {
+        "cmake_build_type": "RelWithDebInfo",
+        "core_static_archive_bytes": 3170,
+        "core_static_archive_sha256": "4bc82c3784d1db70878cdd4174ce18b5c90c24f150a211700effdfddcad22d9b",
+        "cxx_flags": "",
+        "configuration_flags": "-O2 -g -DNDEBUG"
+      },
+      "apk_delta_from_bare": 860972,
+      "exported_functions": [
+        "JNI_OnLoad@@FETCHKIT"
+      ]
+    },
+    "okhttp": {
+      "apk": {
+        "file": "host.apk",
+        "bytes": 1402540,
+        "sha256": "a897c726d7bc79adb62e0a35edabdf39c0596ee859c1d7e4424dcbd13bfc62df",
+        "native": [
+          {
+            "path": "lib/arm64-v8a/libfetchkit_jni.so",
+            "bytes": 209752,
+            "zip_bytes": 209752
+          }
+        ]
+      },
+      "command": [
+        ":size-host:assembleRelease",
+        ":sdk:assembleRelease",
+        "-Pfetchkit.sizeMode=okhttp",
+        "-Pfetchkit.probes=true",
+        "-Pfetchkit.abis=arm64-v8a",
+        "-Pfetchkit.probeBackend=okhttp"
+      ],
+      "aar": {
+        "file": "sdk.aar",
+        "bytes": 86322,
+        "sha256": "aa2858f7cac95757f47ecc15660a12f664cd2f647688e679a5ef0d38dd5f27ec",
+        "native": [
+          {
+            "path": "jni/arm64-v8a/libfetchkit_jni.so",
+            "bytes": 209752,
+            "zip_bytes": 69140
+          }
+        ]
+      },
+      "native_profile": {
+        "cmake_build_type": "RelWithDebInfo",
+        "core_static_archive_bytes": 3170,
+        "core_static_archive_sha256": "4bc82c3784d1db70878cdd4174ce18b5c90c24f150a211700effdfddcad22d9b",
+        "cxx_flags": "",
+        "configuration_flags": "-O2 -g -DNDEBUG"
+      },
+      "apk_delta_from_bare": 1400120,
+      "exported_functions": [
+        "JNI_OnLoad@@FETCHKIT"
+      ]
+    }
+  },
+  "base_commit": "770afaefb4f4d698273a01b0c3031c3bf296dd95",
+  "working_tree": " M .gitignore\n M AGENTS.md\n M AGENTS.zh-CN.md\n M CMakeLists.txt\n M README.md\n M docs/v1-design.md\n M docs/v1-implementation-plan.md\n M gradle/libs.versions.toml\n M platform/android/sample/build.gradle.kts\n M platform/android/sdk/CMakeLists.txt\n M platform/android/sdk/build.gradle.kts\n M platform/android/sdk/consumer-rules.pro\n M platform/android/sdk/src/main/cpp/fetchkit_jni.cpp\n M settings.gradle.kts\n?? docs/api-contract.md\n?? docs/reports/\n?? docs/transport-contract.md\n?? platform/android/sample/src/androidTest/AndroidManifest.xml\n?? platform/android/sample/src/debug/\n?? platform/android/sample/src/probeTest/\n?? platform/android/sdk/src/probe/\n?? platform/android/sdk/src/probeOkHttp/\n?? platform/android/sdk/src/probePlatform/\n?? src/transport/\n?? tests/\n?? tools/\n",
+  "launcher_java": "openjdk version \"25.0.4\" 2026-07-21\nOpenJDK Runtime Environment JBR-25.0.4+1-508.27-nomod (build 25.0.4+1-b508.27)\nOpenJDK 64-Bit Server VM JBR-25.0.4+1-508.27-nomod (build 25.0.4+1-b508.27, mixed mode, sharing)\n",
+  "source_sha256": {
+    "platform/android/sample/src/probeTest/java/com/luofelix/fetchkit/sample/PlatformProbeTest.kt": "3435c5795e59e6e970a5b7a9cdc6ae7f7fd903c803c5f60e32d25c4611c35a4c",
+    "platform/android/sdk/src/probe/cpp/platform_probe_jni.cpp": "41d2977768f57c041d610c83310e7c19b94a14af56527edf75fd58dc6ed035fc",
+    "platform/android/sdk/src/probe/java/com/luofelix/fetchkit/probe/PlatformProbe.kt": "fb2f5f3c090f10c39cbd87ba61f167495b80e1c4a783dd5ee6e6e97b6913222a",
+    "platform/android/sdk/src/probeOkHttp/java/com/luofelix/fetchkit/probe/ProbeBackend.kt": "80a44fd075a87bb47fa16aeb22ba599860b92bf7e7e252953e3b5eb789386714",
+    "platform/android/sdk/src/probePlatform/java/com/luofelix/fetchkit/probe/ProbeBackend.kt": "ae85acc0338c62d785ce7ec4ddd9055c48dba83de9e1d79d857ce18591202a50",
+    "src/transport/curl_probe_transport.cpp": "1f2951f056a88c96fdb25c574532341fdc07ed75da373419c9e25fc31743149e",
+    "src/transport/http_transport.h": "77838e441a635c9906fb7623380073f55ab19da73b179dbaed03b6e44256a8a6",
+    "tests/contract/run_android_probe.py": "e6e192549157f83217d25cfc1316c3bdaef84f9133dd36b14a189698b1464f47",
+    "tests/contract/run_curl_probe.py": "7db8cc4820ed510c5c28ea7174a2367eb96e09e4b020a9941bcbf0f0251feecf",
+    "tests/contract/transport_probe.cpp": "3abeaa35567ed03faaf31c185ee18b8855da1dee1b8a819e32c555bc113655c8",
+    "tests/fixtures/m0_scenarios.json": "905ab4565eb1fa14e5b81dd868e3ed283bca52c82314aeeb134ced3fafd53c6a",
+    "tests/server/http_fixture.py": "5bd3e13443caf896c162cd54f80e149abd0d0ec9c5f279092818020caf917b0f",
+    "tests/server/server_test.py": "10c060bf096c925e25ae30aa442be700ff1a34bab9c94e443b656f5c6331ea4e",
+    "tools/size/android-host/build.gradle.kts": "d98fe2352d83e9920c3148de24c262ce3198de4d4296069d096a48c5f95c61f3",
+    "tools/size/measure.py": "b768926ffc2976b9f79462bc41caff011ab3cd5a48a550b0edd155dcc750c166",
+    "CMakeLists.txt": "d377216afa1d8ad84b14f88ffaf28e7a39f1e65f2f6e3436fc5c1326f9643e69",
+    "build.gradle.kts": "2973417f35c1f966030b7e537dd6e1b4da04055d867b253d34bd4b6952325458",
+    "examples/cli/main.cpp": "5e1d5fe03c9ab378002bf6cc715b2d20b28ad0f8fb54bb6ba0bf2a39ef0ddc92",
+    "gradle/libs.versions.toml": "97534c1935a180a73c6bac27142c0600b20db32779715ea613978b87cfb11efb",
+    "include/fetchkit/version.h": "ef6f584f8afc3e4bf50424fcd4f93b84fe96fbf44d8dcfe4b3b2f610ac290014",
+    "platform/android/sample/build.gradle.kts": "be20fba69a46d113e1bd81400cbe2ef51cf473b55845e89d762c79770145334a",
+    "platform/android/sample/src/androidTest/java/com/luofelix/fetchkit/sample/SdkIntegrationTest.kt": "5ec962a00f866bbdaf16bd7124b5a9fd9c68c79716bc18ff8df12ce8c31b6d71",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/MainActivity.kt": "b19d0e720992ec73f93c7c0889787e14a2e8b9571dca08d777e2813c0b3fc709",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/ui/theme/Color.kt": "b3ba53cfc56263d4ceeea2cca786259212829473ea9446d7b66cd582971c40dd",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/ui/theme/Theme.kt": "f0f7481096317c325863a2dfda31173efc86e0bde17d9f73baec6f574e640532",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/ui/theme/Type.kt": "3382fd52ad4cba3de6972b09d942fb89ff0c819ccbcb9ffb93ba888461662fd6",
+    "platform/android/sample/src/test/java/com/luofelix/fetchkit/sample/ExampleUnitTest.kt": "c90ac263d03884caabf3c8885f24641e7a71486f684a9b0be48387ce7554fe91",
+    "platform/android/sdk/CMakeLists.txt": "e58d2881cf0a1bd1abdb8149e28e49f84a1780332be3120f1c7505869b036493",
+    "platform/android/sdk/build.gradle.kts": "aaef453a71e632c7cb81bd83463c8ec5c2c42f12aa734c2c04b47c450c79bcea",
+    "platform/android/sdk/src/main/cpp/fetchkit_jni.cpp": "ae481e7420321fd4c61aa4ffb8c185d53b97f122e1c207c77287580fc0a84cbb",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/FetchKit.kt": "6a3e2d2b1c991f809441054b40af2458ffe8c8fbbf3d15a6ca83d9a1670766a8",
+    "settings.gradle.kts": "5dd4a8d264d8e25de44e7bce43d245eec30da62f1b518ee90ede209e746e3196",
+    "src/core/version.cpp": "22dbb4dff5b9da81298f282c18629aceaa6ae177ca2f07bd52230584510e63c7",
+    "tools/size/android-host/src/main/java/com/luofelix/fetchkit/sizehost/MainActivity.java": "97d60fb7a360cc7ac617efb3fc7bc5125c5ef2d8cc1290c67caa49671a410122",
+    "tools/size/android-host/src/modes/bare/java/com/luofelix/fetchkit/sizehost/Integration.java": "7121843fe103cc998497488631958cec03953e3cc1f86e1d328fa16782e2c964",
+    "tools/size/android-host/src/modes/probe/java/com/luofelix/fetchkit/sizehost/Integration.java": "9cef810386e2d5b6a9a0e4cafade0237ac2ee9a264932371f83b4d2def098769",
+    "tools/size/android-host/src/modes/scaffold/java/com/luofelix/fetchkit/sizehost/Integration.java": "258400a4ec1bf6ad894d5b4e14883cc0d76eecc1383811a975eaa4d14f3c70d3"
+  },
+  "full_abi_scaffold_aar": {
+    "file": "sdk.aar",
+    "bytes": 140418,
+    "sha256": "4c07394876589eec2b516118291af83ddcd2d29a1e21d21728e898266cddbdb9",
+    "native": [
+      {
+        "path": "jni/arm64-v8a/libfetchkit_jni.so",
+        "bytes": 208736,
+        "zip_bytes": 68657
+      },
+      {
+        "path": "jni/x86_64/libfetchkit_jni.so",
+        "bytes": 208152,
+        "zip_bytes": 69238
+      }
+    ]
+  },
+  "archive_note": "Export checks and unchanged Java measurement-host source hashes added while archiving evidence."
+}
