@@ -2,6 +2,10 @@
 
 日期：2026-10-23。状态：工程骨架已建立，下载、续传和缓存能力待实现。
 
+2026-10-27 M3 进展：多任务、独立订阅、持久化重试、配额/LRU/pin/过期及读取保护已有主机实现，
+见 [M3 API](m3-host-api.md)、[v2 记录](storage-record-v2.md) 和 [报告](reports/m3-baseline.md)。
+宿主在自己的 executor 上主动分发有界事件；Android 正式接入仍待 M4，Linux/sanitizer 等缺测不由 Windows 代替。
+
 2026-10-27 M2 进展：已增加检查点、跨进程重新绑定、可信 SHA-256、发布恢复与最小只读租约。
 当前实现与同步边界见 [M2 存储](m2-storage.md)、[记录格式](storage-record-v1.md) 和 [报告](reports/m2-baseline.md)。
 Linux/重启/掉电尚无执行证据；完整阶段门槛仍受这些缺测项约束。以下保留原始设计和阶段目标。
@@ -117,7 +121,8 @@ API 管理。
 
 M1 alpha 接口仅提供单个活动任务、同进程暂停/恢复和 TransferComplete 暂存结果，未交付发布/读取 API。
 此阶段 Paused 只确认数据文件同步与内存偏移，不能承诺跨进程恢复。M2 才形成完整持久化检查点；
-多订阅、回调 executor、总配额与缓存生命周期在 M3 补齐，详见 M1 API 的边界说明。
+多订阅、回调 executor、总配额与缓存生命周期已由 M3 主机实现补齐，详见 [M3 API](m3-host-api.md)。
+缓存策略放在 `src/storage/storage_policy.cpp`，与记录变更、删除和租约共用事务及保护锁。
 
 M0 将共享控制细化为：pause/resume 对共享 task 生效；cancel 只撤销指定订阅，最后一个订阅显式取消时才取消共享下载。
 普通订阅释放在最后一个订阅退出时停止 I/O、尽力提交并保留暂停任务；engine 关闭同样保留恢复信息。

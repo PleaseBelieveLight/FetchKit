@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
     config.ca_bundle = fetchkit::stringView(ca);
     config.allow_http = 1;
     config.max_download_bytes = scenario == "unknown-limit" ? 4096 : 8ULL * 1024 * 1024 * 1024;
+    config.storage_capacity_bytes=16ULL*1024*1024*1024;config.staging_retention_ms=86400000;config.max_retries=0;
     config.read_timeout_ms = scenario == "timeout" ? 150 : 3000;
     config.max_requests = 64;
     Provider provider{base, scenario, argv[5]};

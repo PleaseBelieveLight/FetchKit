@@ -1,5 +1,6 @@
 #include "core/engine.h"
 #include "storage/fault.h"
+#include "core/retry_policy.h"
 
 #include <algorithm>
 #include <set>
@@ -76,7 +77,7 @@ public:
             request_ = task_.request.request;
             prepare(FETCHKIT_REQUEST_INITIAL, {}, 0);
             std::set<std::string> visited{current_.url};
-            std::uint32_t redirects = 0, refreshes = 0;
+            std::uint32_t redirects = 0;
             for (std::uint32_t count = 0; count < config_.max_requests; ++count) {
                 if (cancellation_.isCancelled()) throw Failure(FETCHKIT_CANCELLED);
                 request_offset_ = task_.saved.offset;
@@ -98,6 +99,7 @@ public:
                 }
                 {
                     std::lock_guard<std::mutex> lock(task_.mutex);
+                    if(task_.snapshot.request_count>=config_.max_requests) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
                     ++task_.snapshot.request_count;
                 }
                 const auto result = transport_.execute(request, *this, cancellation_);
@@ -122,7 +124,9 @@ public:
                     continue;
                 }
                 if (action_ == Action::Refresh) {
-                    if (!task_.request.provider || refreshes++ != 0) throw Failure(FETCHKIT_AUTH_REQUIRED);
+                    if (!task_.request.provider || task_.record.auth_refreshes != 0) throw Failure(FETCHKIT_AUTH_REQUIRED);
+                    ++task_.record.auth_refreshes;
+                    if(const auto store=task_.store.lock()) store->save(task_.record);
                     const auto old = current_;
                     prepare(FETCHKIT_REQUEST_AUTH_REFRESH, old.origin, response_status_);
                     if (old.secure && !current_.secure) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
@@ -148,6 +152,7 @@ public:
         } catch (const Failure& error) {
             try {
                 task_.saved.offset = file_.size();
+                if(const auto store=task_.store.lock()) store->observeSize(task_.record.id,task_.saved.offset);
                 task_.progress(task_.saved.offset, task_.saved.total);
                 if (task_.stop.load() == StopReason::Pause) {
                     std::lock_guard<std::mutex> lock(task_.mutex);
@@ -176,7 +181,10 @@ public:
                 if (!request_offset_) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
                 action_ = Action::Restart; return false;
             }
-            if (response.status != 200 && response.status != 206) throw Failure(FETCHKIT_HTTP_STATUS);
+            if (response.status != 200 && response.status != 206) {
+                if(const auto retry=oneHeader(response,"retry-after")) task_.retry_after_ms=retryAfter(*retry,config_.clock->nowMs());
+                throw Failure(FETCHKIT_HTTP_STATUS);
+            }
             const auto encoding = oneHeader(response, "content-encoding");
             if (encoding && transport::lowerAscii(*encoding) != "identity") throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
             const auto length = contentLength(response);
@@ -204,6 +212,7 @@ public:
                     action_ = Action::Restart; return false;
                 }
             }
+            if(const auto store=task_.store.lock()) store->reserve(task_.record.id,task_.saved.offset,task_.saved.total);
             file_.seek(task_.saved.offset);
             task_.progress(task_.saved.offset, task_.saved.total);
             return true;
@@ -217,10 +226,12 @@ public:
             if (expected_body_ && size > *expected_body_ - body_received_) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
             if (task_.saved.total && (task_.saved.offset > *task_.saved.total ||
                 size > *task_.saved.total - task_.saved.offset)) throw Failure(FETCHKIT_INTEGRITY_MISMATCH);
+            if(const auto store=task_.store.lock()) store->reserve(task_.record.id,task_.saved.offset+size,task_.saved.total);
             storage::faultPoint("data_write_before");
             file_.write(data, size);
             storage::faultPoint("data_write_after");
             task_.saved.offset += size;
+            if(const auto store=task_.store.lock()) store->observeSize(task_.record.id,task_.saved.offset);
             body_received_ += size;
             task_.progress(task_.saved.offset, task_.saved.total);
             if (task_.saved.offset-task_.record.committed>=config_.checkpoint_bytes ||
@@ -257,6 +268,7 @@ private:
         storage::faultPoint("reset_commit_after");
         file_.truncate();
         file_.sync();
+        if(const auto store=task_.store.lock()) store->observeSize(task_.record.id,0);
         task_.progress(0, task_.saved.total);
     }
     void prepare(std::uint32_t reason, const std::string& previous_origin, std::uint32_t status) {
@@ -264,6 +276,7 @@ private:
         std::optional<transport::UrlInfo> proposed;
         if (!request_.url.empty()) proposed = transport_.resolveUrl("", request_.url);
         request_.explicitly_set_headers.clear();
+        request_.origin_before_provider.clear();
         if (task_.request.provider) {
             ProviderContext context{reason, task_.snapshot.task_id, task_.snapshot.generation, status, previous_origin, task_.request.reference};
             const auto start = std::chrono::steady_clock::now();
@@ -271,6 +284,7 @@ private:
             if (std::chrono::steady_clock::now() - start > std::chrono::milliseconds(config_.provider_timeout_ms)) throw Failure(FETCHKIT_TIMEOUT);
         }
         if (cancellation_.isCancelled()) throw Failure(FETCHKIT_CANCELLED);
+        if(!request_.origin_before_provider.empty()) proposed=transport_.resolveUrl("",request_.origin_before_provider);
         validateHeaders(request_.headers);
         current_ = transport_.resolveUrl("", request_.url);
         if (!current_.secure && !config_.allow_http) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);

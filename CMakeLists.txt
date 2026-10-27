@@ -22,9 +22,12 @@ add_library(fetchkit_core STATIC
     src/core/c_api.cpp
     src/core/engine.cpp
     src/core/download_session.cpp
+    src/core/subscription.cpp
+    src/core/retry_policy.cpp
     src/storage/staging_file.cpp
     src/storage/record.cpp
     src/storage/resource_store.cpp
+    src/storage/storage_policy.cpp
     src/storage/verifier.cpp
     src/storage/fault.cpp
 )
@@ -62,7 +65,7 @@ endif()
 option(FETCHKIT_BUILD_CLI "Build the FetchKit command-line example" ${fetchkit_cli_default})
 option(FETCHKIT_BUILD_SIZE_PROBE "Build isolated baseline/digest native size targets" OFF)
 if(FETCHKIT_BUILD_SIZE_PROBE)
-    foreach(mode IN ITEMS baseline digest)
+    foreach(mode IN ITEMS baseline digest engine)
         add_library(fetchkit_${mode}_measure SHARED tools/size/native_measure.cpp)
         target_include_directories(fetchkit_${mode}_measure PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
         target_link_libraries(fetchkit_${mode}_measure PRIVATE fetchkit::core)
@@ -75,6 +78,8 @@ if(FETCHKIT_BUILD_SIZE_PROBE)
         endif()
         if(mode STREQUAL "digest")
             target_compile_definitions(fetchkit_${mode}_measure PRIVATE FETCHKIT_MEASURE_DIGEST=1)
+        elseif(mode STREQUAL "engine")
+            target_compile_definitions(fetchkit_${mode}_measure PRIVATE FETCHKIT_MEASURE_ENGINE=1)
         endif()
     endforeach()
 endif()
@@ -157,8 +162,13 @@ if(FETCHKIT_BUILD_TESTS)
     target_include_directories(fetchkit_storage_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(fetchkit_storage_test PRIVATE fetchkit::core)
     add_test(NAME storage COMMAND fetchkit_storage_test "${CMAKE_CURRENT_BINARY_DIR}/storage-unit"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/record-v1.hex")
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/record-v1.hex" "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/record-v2.hex")
     set_tests_properties(storage PROPERTIES LABELS "unit" TIMEOUT 90)
+    add_executable(fetchkit_scheduler_test tests/unit/scheduler_test.cpp)
+    target_include_directories(fetchkit_scheduler_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(fetchkit_scheduler_test PRIVATE fetchkit::core)
+    add_test(NAME scheduler_storage COMMAND fetchkit_scheduler_test "${CMAKE_CURRENT_BINARY_DIR}/scheduler-unit")
+    set_tests_properties(scheduler_storage PROPERTIES LABELS "unit;scheduler" TIMEOUT 180)
     if(FETCHKIT_WITH_CURL AND FETCHKIT_BUILD_CLI)
         add_executable(fetchkit_download_driver tests/protocol/download_driver.cpp)
         target_link_libraries(fetchkit_download_driver PRIVATE fetchkit::core)
@@ -168,6 +178,10 @@ if(FETCHKIT_BUILD_TESTS)
             --driver "$<TARGET_FILE:fetchkit_download_driver>" --cli "$<TARGET_FILE:fetchkit_cli>"
             --work-root "${CMAKE_CURRENT_BINARY_DIR}/protocol" --report "${CMAKE_CURRENT_BINARY_DIR}/reports/m1-protocol.json")
         set_tests_properties(download_protocol PROPERTIES LABELS "protocol" TIMEOUT 180)
+        add_test(NAME m3_protocol COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/protocol/m3_test.py" --cli "$<TARGET_FILE:fetchkit_cli>"
+            --work-root "${CMAKE_CURRENT_BINARY_DIR}/m3-protocol" --report "${CMAKE_CURRENT_BINARY_DIR}/reports/m3-protocol.json")
+        set_tests_properties(m3_protocol PROPERTIES LABELS "protocol;scheduler" TIMEOUT 240)
         if(FETCHKIT_ENABLE_FAULT_INJECTION)
             add_executable(fetchkit_recovery_driver tests/recovery/recovery_driver.cpp)
             target_include_directories(fetchkit_recovery_driver PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/examples/cli")

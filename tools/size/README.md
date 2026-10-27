@@ -1,5 +1,9 @@
 # Android 接入体积基线
 
+M3 完整主机核心/ABI 的独立 arm64 测量在同一入口增加 `--include-engine --output build/m3-size-arm64`。
+engine 目标保留 Scheduler、存储、Verifier 和公开 C ABI，使用确定性假传输占位；不包含 Android 网络后端或 JNI 下载桥。
+与 baseline/digest 使用相同导出列表、静态 STL、优化和 strip。该口径与普通 JNI 版本入口、最终 AAR/APK 接入成本分别报告。
+
 M2 摘要与文件读取的独立测量：
 
 ```powershell

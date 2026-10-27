@@ -56,7 +56,8 @@ def shell_case(cli, fixture, root):
         raise AssertionError("CLI state deadline")
     try:
         task = command(f'enqueue "shell" "{fixture.url}/m1/resume-shell"')["accepted"]
-        check(command(f'enqueue "busy" "{fixture.url}/m1/normal"').get("error") == "Busy", "M1 must reject a second active task")
+        other = command(f'enqueue "parallel" "{fixture.url}/m1/normal"')["accepted"]
+        check(await_state(other, 9)["published"], "M3 second task must make progress beside a stalled task")
         end = time.monotonic() + 5
         while time.monotonic() < end:
             if command(f"query {task}")["received_bytes"] >= 1024:

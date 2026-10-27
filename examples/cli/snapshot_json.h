@@ -23,6 +23,9 @@ inline void printSnapshot(std::ostream& output, const fetchkit_task_snapshot& sn
         << ",\"request_count\":" << snapshot.request_count
         << ",\"committed_offset\":" << snapshot.committed_offset << ",\"integrity\":" << snapshot.integrity
         << ",\"persistent_id\":" << jsonString(snapshot.persistent_id)
+        << ",\"retry_count\":" << snapshot.retry_count << ",\"next_retry_at_ms\":" << snapshot.next_retry_at_ms
+        << ",\"subscriber_count\":" << snapshot.subscriber_count << ",\"available\":" << (snapshot.available ? "true" : "false")
+        << ",\"pinned\":" << (snapshot.pinned ? "true" : "false") << ",\"expires_at_ms\":" << snapshot.expires_at_ms
         << ",\"published\":" << (snapshot.state==FETCHKIT_COMPLETED ? "true" : "false") << ",\"staging_path\":"
         << jsonString(snapshot.staging_path) << '}';
 }

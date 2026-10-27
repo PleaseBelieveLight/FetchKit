@@ -16,6 +16,14 @@ int main(int argc, char** argv) {
     CHECK(fetchkit_engine_create(&config, &engine) == FETCHKIT_INVALID_ARGUMENT && engine == 0);
     config.storage_root = view(argv[1]);
     config.max_download_bytes = 1048576;
+    config.storage_capacity_bytes=16777216;config.staging_retention_ms=86400000;
+    {
+        fetchkit_engine_config invalid=config;
+        invalid.storage_capacity_bytes=0;CHECK(fetchkit_engine_create(&invalid,&engine)==FETCHKIT_INVALID_ARGUMENT);
+        invalid=config;invalid.staging_retention_ms=0;CHECK(fetchkit_engine_create(&invalid,&engine)==FETCHKIT_INVALID_ARGUMENT);
+        invalid=config;invalid.max_active_downloads=17;CHECK(fetchkit_engine_create(&invalid,&engine)==FETCHKIT_INVALID_ARGUMENT);
+        invalid=config;invalid.max_retries=17;CHECK(fetchkit_engine_create(&invalid,&engine)==FETCHKIT_INVALID_ARGUMENT);
+    }
 #ifdef FETCHKIT_TEST_CURL
     CHECK(fetchkit_engine_create(&config, &engine) == FETCHKIT_OK && engine != 0);
     CHECK(fetchkit_engine_create(&config, &second) == FETCHKIT_BUSY && second == 0);
@@ -29,6 +37,8 @@ int main(int argc, char** argv) {
     CHECK(fetchkit_enqueue(engine, &request, &task) == FETCHKIT_INVALID_ARGUMENT);
     request.expected_sha256 = view("bad");
     CHECK(fetchkit_enqueue(engine, &request, &task) == FETCHKIT_INVALID_ARGUMENT);
+    request.expected_sha256=view("");request.require_digest=0;request.pin_on_create=2;
+    CHECK(fetchkit_enqueue(engine,&request,&task)==FETCHKIT_INVALID_ARGUMENT);
     {
         uint32_t count = 9;
         fetchkit_lease lease = 9;

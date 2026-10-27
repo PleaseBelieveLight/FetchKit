@@ -2,6 +2,7 @@
 
 #include "fetchkit/fetchkit.h"
 #include "transport/http_transport.h"
+#include "core/clock.h"
 
 #include <functional>
 #include <limits>
@@ -21,6 +22,7 @@ struct RequestData {
     std::string url;
     std::vector<transport::Header> headers;
     std::vector<std::string> explicitly_set_headers;
+    std::string origin_before_provider; // Internal provenance, never exposed to host setters.
 };
 
 struct ProviderContext {
@@ -38,6 +40,8 @@ struct DownloadRequest {
     std::optional<std::uint64_t> expected_length;
     std::string expected_sha256;
     bool require_digest = false;
+    std::uint64_t expires_at_ms = 0;
+    bool pin_on_create = false;
     std::function<void(const ProviderContext&, RequestData&, transport::Cancellation&)> provider;
 };
 
@@ -49,6 +53,11 @@ struct EngineConfig {
     bool allow_http = false;
     std::uint64_t checkpoint_bytes = 4ULL * 1024 * 1024;
     std::uint32_t checkpoint_interval_ms = 1000;
+    std::uint64_t capacity_bytes = 0, staging_retention_ms = 0;
+    std::uint32_t max_active = 3, max_queued = 1024, max_retries = 3;
+    std::uint32_t retry_base_ms = 1000, retry_max_ms = 30000;
+    std::uint64_t random_seed = 0;
+    std::shared_ptr<Clock> clock = std::make_shared<SystemClock>();
 };
 
 inline bool protectedHeader(const std::string& name) {
@@ -71,7 +80,7 @@ inline void validateHeaders(const std::vector<transport::Header>& headers) {
 
 inline bool stoppedState(std::uint32_t state) {
     return state == FETCHKIT_PAUSED || state == FETCHKIT_TRANSFER_COMPLETE ||
-        state == FETCHKIT_FAILED || state == FETCHKIT_TASK_CANCELLED || state == FETCHKIT_COMPLETED;
+        state == FETCHKIT_FAILED || state == FETCHKIT_TASK_CANCELLED || state == FETCHKIT_COMPLETED || state == FETCHKIT_REMOVED;
 }
 
 }

@@ -1,5 +1,23 @@
 # FetchKit 主机与平台验证
 
+## M3 调度、重试、配额与竞态
+
+参考构建开启 `FETCHKIT_BUILD_TESTS`、`FETCHKIT_BUILD_PROBES`、`FETCHKIT_WITH_CURL`、
+`FETCHKIT_USE_PINNED_CURL`、`FETCHKIT_ENABLE_FAULT_INJECTION`，执行常规 CTest（排除 `large_file`）。
+`scheduler_storage` 含 21 组确定性会话，覆盖 3 活动任务/保留控制通道、共享订阅、provider 生命周期、事件背压与重入、
+重试时钟/预算恢复、已知/未知长度配额、LRU/pin/expiry/lease、暂存年龄、旧订阅隔离、排队 generation 和 20 轮并发控制/关闭。
+`m3_protocol` 通过公共 C ABI 的 CLI 执行 HTTP 重试/日期、重开等待、共享句柄、存储策略、v1 迁移、分页/索引和进程内存测试。
+
+内存测试同时运行 3 个 256 KiB 文件与 3 个 32 MiB 文件，采样自身子进程 RSS/峰值和线程数；
+另外在 128 个任务上记录索引增量。Windows 使用只读进程指标，Linux 使用 /proc，不依赖额外 Python 包。
+内存结果是该工具链和请求规模的证据，不能把数据缓冲预算当作总 RSS。
+批量关闭包含必要的记录同步；索引专项给 128 个任务较长关闭窗口，不跳过持久化断言。
+
+恢复矩阵增加 Removed tombstone 中断；校验阶段的暂停/取消用协作式确定性屏障，避免轮询碰巧赶在发布之后。
+M2 的 >4 GiB 实测保留历史证据；M3 另有 64 位空间预留/回滚单测，不能把它称为新的 >4 GiB 实际传输。
+大文件仍可显式开启原测试标签。
+Linux 入口为 `tools/ci/linux_m3.sh`，ASan/UBSan 与 TSan 分开配置；缺少环境必须报告。
+
 ## M2 恢复与校验
 
 主机配置增加 `-DFETCHKIT_ENABLE_FAULT_INJECTION=ON -DFETCHKIT_BUILD_TESTS=ON`，然后执行

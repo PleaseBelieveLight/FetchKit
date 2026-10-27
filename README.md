@@ -3,15 +3,15 @@
 FetchKit 是面向 Android 与 Linux 的 C++ 网络资源下载
 SDK，以可靠、可扩展和控制接入体积为目标。首版围绕文件下载、断点续传、多任务调度和资源缓存建立基础能力，后续按需扩展下载能力。
 
-当前状态：主机端已实现单文件下载、持久化检查点、跨进程恢复、可选可信 SHA-256、原子发布与只读租约，
-提供 alpha C ABI、C++ 包装和 CLI。Android 仍仅支持版本查询；多任务、配额、LRU 和 Android 下载接入尚未实现。
+当前状态：主机端已实现多任务调度、独立订阅、持久化重试、检查点/恢复、可选可信 SHA-256、原子发布、
+配额、LRU、pin/过期和只读租约，提供 alpha C ABI、C++ 包装和 CLI。Android 仍仅支持版本查询，下载接入留待 M4。
 
 M0 已加入可控 HTTP 服务、主机/Android/JNI 探针、接口契约与体积对照工具。
 实测结论、后端调整和缺测项见 [M0 基线报告](docs/reports/m0-baseline.md)；实验接口不等于正式下载能力。
 
-当前用法见 [M2 存储与恢复](docs/m2-storage.md)，验证范围见 [M2 报告](docs/reports/m2-baseline.md)。
+当前用法见 [M3 主机 API](docs/m3-host-api.md)，验证范围见 [M3 报告](docs/reports/m3-baseline.md)。
 已发布的 Completed 通过 lease 读取，TransportComplete 与 DigestVerified 是独立的完整性结果。
-[M1 API](docs/m1-host-api.md) 与 [M1 报告](docs/reports/m1-baseline.md) 保留阶段历史；Linux/设备缺测项不由 Windows 结果代替。
+[M1 API](docs/m1-host-api.md)、[M2 存储](docs/m2-storage.md) 和对应报告保留阶段历史；Linux/设备缺测项不由 Windows 结果代替。
 
 首版设计见 [docs/v1-design.md](docs/v1-design.md)。文档中的 API、默认参数和交付顺序均为实现基线，不表示已有能力或实测结果。
 

@@ -11,7 +11,7 @@
 #endif
 
 namespace fetchkit::storage {
-void faultPoint(const char* name) {
+void faultPoint(const char* name, transport::Cancellation* cancellation) {
 #ifdef FETCHKIT_ENABLE_FAULT_INJECTION
     const auto point = std::getenv("FETCHKIT_FAULT_POINT");
     if (!point || std::strcmp(point, name)) return;
@@ -26,11 +26,16 @@ void faultPoint(const char* name) {
     if (action && std::strcmp(action, "disk_full") == 0) throw core::Failure(FETCHKIT_DISK_FULL);
     if (action && std::strcmp(action, "permission") == 0) throw core::Failure(FETCHKIT_PERMISSION_DENIED);
     if (action && std::strcmp(action, "io") == 0) throw core::Failure(FETCHKIT_IO_ERROR);
+    if(action && std::strcmp(action,"wait_cancel")==0 && cancellation) {
+        while(!cancellation->isCancelled()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        return;
+    }
     std::fprintf(stdout, "{\"fault_barrier\":\"%s\"}\n", name);
     std::fflush(stdout);
     for (;;) std::this_thread::sleep_for(std::chrono::milliseconds(20));
 #else
     (void)name;
+    (void)cancellation;
 #endif
 }
 

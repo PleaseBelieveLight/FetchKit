@@ -15,7 +15,7 @@ void vector(const std::filesystem::path& path,const std::string& content,const s
 }
 int main(int argc,char** argv) {
     try {
-        require(argc==3);
+        require(argc==4);
         const auto root=std::filesystem::u8path(argv[1])/std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
         StagingStore store(root.u8string());
         vector(root/"empty","","e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
@@ -41,13 +41,20 @@ int main(int argc,char** argv) {
         constexpr char digits[]="0123456789abcdef";std::string actual;
         for(auto byte:bytes) {actual+=digits[byte>>4];actual+=digits[byte&15];}
         require(actual==hex);
+        r.format_version=2;r.retry_count=1;r.next_retry_at_ms=1700000005000ULL;r.auth_refreshes=1;
+        r.updated_at_ms=1700000000000ULL;r.access_order=7;r.expires_at_ms=1800000000000ULL;r.pinned=true;
+        const auto v2=encodeRecord(r);const auto restored=decodeRecord(v2);
+        require(restored.pinned && restored.retry_count==1 && restored.next_retry_at_ms==r.next_retry_at_ms && restored.auth_refreshes==1);
+        std::ifstream golden_v2(argv[3]);std::string hex_v2;golden_v2>>hex_v2;std::string actual_v2;
+        for(auto byte:v2) {actual_v2+=digits[byte>>4];actual_v2+=digits[byte&15];}
+        require(actual_v2==hex_v2);
         auto damaged=bytes;damaged.back()^=1;
         bool rejected=false;
         try {decodeRecord(damaged);}catch(const core::Failure& error){rejected=error.code==FETCHKIT_INTEGRITY_MISMATCH;}
         require(rejected);
-        damaged=bytes;damaged[8]=2;rejected=false;
+        damaged=bytes;damaged[8]=3;rejected=false;
         try {decodeRecord(damaged);}catch(const core::Failure& error){rejected=error.code==FETCHKIT_UNSUPPORTED_METADATA;}
         require(rejected);
-        std::cout<<"4 SHA-256 vectors, 64-bit offsets and record golden/corruption/version passed\n";return 0;
+        std::cout<<"4 SHA-256 vectors, 64-bit offsets and v1/v2 goldens/corruption/version passed\n";return 0;
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

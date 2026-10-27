@@ -47,6 +47,9 @@ public:
     fetchkit_status pause() { return fetchkit_task_pause(handle_); }
     fetchkit_status resume() { return fetchkit_task_resume(handle_); }
     fetchkit_status cancel() { return fetchkit_task_cancel(handle_); }
+    std::uint32_t dispatch(fetchkit_event_callback callback,void* user,std::uint32_t maximum=64) {
+        std::uint32_t count=0;checkStatus(fetchkit_task_dispatch(handle_,callback,user,maximum,&count));return count;
+    }
     fetchkit_task nativeHandle() const noexcept { return handle_; }
 private:
     fetchkit_task handle_ = 0;
@@ -96,6 +99,15 @@ public:
         fetchkit_lease lease=0;checkStatus(fetchkit_resource_acquire(handle_,stringView(persistent_id),&lease));return ResourceLease(lease);
     }
     fetchkit_engine nativeHandle() const noexcept { return handle_; }
+    fetchkit_status close() {
+        if(!handle_) return FETCHKIT_CLOSED;
+        const auto status=fetchkit_engine_close(handle_);if(status==FETCHKIT_OK) handle_=0;return status;
+    }
+    void pin(const std::string& id,bool value=true) {checkStatus(fetchkit_resource_pin(handle_,stringView(id),value));}
+    void setExpiry(const std::string& id,std::uint64_t expires_at_ms) {checkStatus(fetchkit_resource_set_expiry(handle_,stringView(id),expires_at_ms));}
+    void remove(const std::string& id) {checkStatus(fetchkit_resource_remove(handle_,stringView(id)));}
+    void trimTo(std::uint64_t bytes) {checkStatus(fetchkit_storage_trim(handle_,bytes));}
+    void collectStaging() {checkStatus(fetchkit_storage_collect_staging(handle_));}
 private:
     fetchkit_engine handle_ = 0;
 };

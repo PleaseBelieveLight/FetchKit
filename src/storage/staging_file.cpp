@@ -242,7 +242,11 @@ void removeFile(const std::filesystem::path& path) {
     if (!regularFile(path)) return;
     std::error_code error;
     std::filesystem::remove(path, error);
-    if (error) throw core::Failure(FETCHKIT_IO_ERROR, error.value());
+    if(error) {
+        if(error==std::errc::permission_denied || error==std::errc::operation_not_permitted) throw core::Failure(FETCHKIT_PERMISSION_DENIED,error.value());
+        if(error==std::errc::no_space_on_device) throw core::Failure(FETCHKIT_DISK_FULL,error.value());
+        throw core::Failure(FETCHKIT_IO_ERROR,error.value());
+    }
     syncDirectory(path.parent_path());
 }
 

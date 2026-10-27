@@ -30,3 +30,7 @@ M2 acceptance: `bash tools/ci/linux_m2.sh`. Run `FETCHKIT_SANITIZERS=address,und
 `FETCHKIT_SANITIZERS=thread` separately for memory/undefined-behavior and concurrency diagnostics.
 `FETCHKIT_RUN_LARGE_FILE=1` also enables real >4 GiB recovery and SDK digest verification; optimized
 builds are recommended for this CPU-intensive test. No script installs software or changes the OS.
+
+M3 uses the same external dependencies and adds no SDK runtime library. Run `bash tools/ci/linux_m3.sh`
+for scheduling/cache acceptance. Retry-After parsing uses bounded ASCII fields and UTC arithmetic;
+it does not change global locale/timezone or add a date/serialization dependency.

@@ -39,6 +39,7 @@ Exchange full(std::string body, std::string etag = "\"v1\"", bool stall = false)
 
 void runCase(const std::string& root, int mode) {
     EngineConfig config; config.root = root; config.max_bytes = 32; config.allow_http = true;
+    config.capacity_bytes=4*1024*1024;config.staging_retention_ms=86400000;config.max_retries=0;
     auto transport = std::make_shared<FakeTransport>();
     const std::string content = "0123456789abcdef";
     const bool resume = (mode >= 1 && mode <= 5) || mode == 8;
@@ -56,7 +57,8 @@ void runCase(const std::string& root, int mode) {
     auto engine = std::make_shared<Engine>(config, transport);
     DownloadRequest request; request.resource_namespace = "unit"; request.resource_key = std::to_string(mode);
     request.version = "1"; request.request.url = "http://fixture/resource";
-    const auto task = engine->enqueue(request, 1);
+    const auto subscription = engine->enqueue(request, 1);
+    const auto task=subscription->task;
     if (resume) {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
         while (snapshot(task, false).received_bytes < 4 && std::chrono::steady_clock::now() < deadline) std::this_thread::yield();

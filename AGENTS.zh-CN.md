@@ -6,9 +6,9 @@
 
 ## 项目结构与模块组织
 
-FetchKit 已实现 M2 主机下载器，包括持久化检查点、SHA-256 校验、发布和读取租约，Android 仍为工程骨架。
-调度、配额和缓存尚未实现。修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md`、
-`docs/m2-storage.md` 和 `docs/storage-record-v1.md`。
+FetchKit 已实现 M3 主机下载器，包括有界调度、独立订阅、持久化重试、配额/LRU/pin/过期管理、校验发布和读取租约。
+Android 仍为工程骨架。修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md`、
+`docs/m3-host-api.md` 和 `docs/storage-record-v2.md`。
 
 根目录 CMake 工程构建 `include/fetchkit/`、`src/core/` 和 `examples/cli/`。
 根目录 Gradle 配置将 `:sdk` 映射到 `platform/android/sdk/`，将 `:sample` 映射到
@@ -40,6 +40,8 @@ M2 恢复测试还需在主机测试构建中开启 `FETCHKIT_ENABLE_FAULT_INJEC
 `tools/ci/linux_m2.sh` 包含恢复验证；Linux 上分别使用 `FETCHKIT_SANITIZERS=address,undefined` 和
 `FETCHKIT_SANITIZERS=thread` 执行诊断。主机需要 zlib 开发文件，Android 使用系统 libz。
 PicoSHA2 的固定哈希与 MIT 许可证位于 `third_party/`。
+M3 的 Linux 验收使用 `tools/ci/linux_m3.sh`。主机协议测试仅检查自己启动的子进程内存/线程指标。
+宿主通过 `fetchkit_task_dispatch` 在自己的 executor 上分发事件；不得引入无界队列或在 SDK 锁下调用宿主代码。
 
 ## 编码风格与命名规范
 
@@ -68,6 +70,9 @@ M0 实验源码和依赖不得进入普通 SDK 构建。Android 探针仅通过 
 的验收清单，分别记录进程终止测试与系统重启测试。
 仅 Completed 对象可 acquire。禁止从记录恢复回调/凭证；数据与记录同步完成前不得推进 committed 偏移。
 保留未知版本数据。
+使用记录 v2 保存重试/pin/过期语义，迁移 v1，不得静默丢弃关键字段。
+写入前申请配额，计入元数据及未知文件，删除时保护租约和活动任务。
+取消只撤销当前订阅；最后一个显式取消才清理共享的未完成任务。
 
 ## 提交与 Pull Request 要求
 

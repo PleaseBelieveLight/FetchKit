@@ -1,0 +1,167 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "abi": "arm64-v8a",
+  "api": 24,
+  "build_type": "Release -Os",
+  "lto": false,
+  "strip": "--strip-unneeded",
+  "stl": "c++_static (included in binaries)",
+  "commands": [
+    [
+      "D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe",
+      "-S",
+      "D:\\work-path\\android\\fetchkit",
+      "-B",
+      "D:\\work-path\\android\\fetchkit\\build\\m3-size-arm64",
+      "-G",
+      "Ninja",
+      "-DCMAKE_MAKE_PROGRAM=D:/Android/Sdk/cmake/3.22.1/bin/ninja.exe",
+      "-DCMAKE_TOOLCHAIN_FILE=D:/Android/Sdk/ndk/28.2.13676358/build/cmake/android.toolchain.cmake",
+      "-DANDROID_ABI=arm64-v8a",
+      "-DANDROID_PLATFORM=android-24",
+      "-DANDROID_STL=c++_static",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DFETCHKIT_BUILD_CLI=OFF",
+      "-DFETCHKIT_BUILD_SIZE_PROBE=ON",
+      "-DCMAKE_CXX_FLAGS_RELEASE=-Os -DNDEBUG -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden",
+      "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--gc-sections"
+    ],
+    [
+      "D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe",
+      "--build",
+      "D:\\work-path\\android\\fetchkit\\build\\m3-size-arm64",
+      "--target",
+      "fetchkit_baseline_measure",
+      "fetchkit_digest_measure",
+      "fetchkit_engine_measure",
+      "--parallel",
+      "2"
+    ]
+  ],
+  "complete_android_download_cost": false,
+  "base_commit": "d90ffcac26e40e2108d3a63cb9636067efd6ed54",
+  "compiler": "Android (13624864, based on r530567e) clang version 19.0.1 (https://android.googlesource.com/toolchain/llvm-project 97a699bf4812a18fb657c2779f5296a4ab2694d2)\nTarget: x86_64-w64-windows-gnu\nThread model: posix\nInstalledDir: D:/Android/Sdk/ndk/28.2.13676358/toolchains/llvm/prebuilt/windows-x86_64/bin",
+  "picosha2": {
+    "repository": "https://github.com/okdshin/PicoSHA2",
+    "commit": "161cb3fc4170fa7a3eca9e582cebd27cc4d1fe29",
+    "license": "MIT",
+    "files": {
+      "picosha2/picosha2.h": "b13c180161ffac8d0adc81e033e493c409457c4d1258ab9781ac80579ba3bdd8",
+      "licenses/picosha2.txt": "6c30eb1f37554ec4199cb82a8c86d9e7a852da78a757832bebb03ac9ddc44ff1"
+    }
+  },
+  "targets": {
+    "baseline": {
+      "bytes": 208000,
+      "sha256": "c795e5cbc666810abd5865795447b6277a55e9ff8dc1dbf8235c6ee64123711e",
+      "needed": [
+        "libz.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    "digest": {
+      "bytes": 225256,
+      "sha256": "4ef234c47e55937bf102c65ba6c18ba5d08753ba9177ae9e10b20c3a18aef1ff",
+      "needed": [
+        "libz.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    "engine": {
+      "bytes": 489784,
+      "sha256": "a09f0d7f50b4ee7b40287804c219a52d15c6b9f421b38c01beaf001fa91a2b1b",
+      "needed": [
+        "libz.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    }
+  },
+  "file_verifier_delta_bytes": 17256,
+  "engine_delta_bytes": 281784,
+  "engine_scope": "Scheduler/storage/C ABI with fake transport; platform network and JNI download bridge excluded",
+  "core_static_archive": {
+    "bytes": 9115546,
+    "sha256": "d9d17ac5b92a124077661474e2affd425b7d2966555a7be647f26115335dc7e4"
+  },
+  "ordinary_aar": {
+    "bytes": 140409,
+    "sha256": "381ac091d7f97d26e6920727aa70a1a080fdb6a5688f0b949fed75407fd0af8c",
+    "version_api_only": true,
+    "native": [
+      {
+        "path": "jni/arm64-v8a/libfetchkit_jni.so",
+        "bytes": 208768,
+        "sha256": "be54ca9e773639a2fb2f754c544ff2f2245db07fb3325fb7a8e635a0cb16a344",
+        "needed": [
+          "libz.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      {
+        "path": "jni/x86_64/libfetchkit_jni.so",
+        "bytes": 208168,
+        "sha256": "cbf052dd9ffb5b5f0afc07a086284480d28c95a1905b0070d59b26070cc56d07",
+        "needed": [
+          "libz.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      }
+    ]
+  },
+  "source_sha256": {
+    "src/core/clock.h": "44472caa4abda51ee11cbd8bfcc0e49ab628bfd32bf3bb8a19cf8b68807837d3",
+    "src/core/retry_policy.cpp": "1a413f9c26515c9042ec75dafdd22be0348e3da3ed65feab0647505cc9b4cfd6",
+    "src/core/retry_policy.h": "ea46aeccf7f97f158d94fd27045ba2ce165a48ef8b82ed50059762fd21f42e99",
+    "src/core/subscription.cpp": "d2d7774bea6016651420259f9802ed97263f1ffde0b97dff0907944462ea3c27",
+    "src/storage/storage_policy.cpp": "4fc1973b2ec899e806a9be417a3e7ef423b76da209acec236d04457e485e6438",
+    "CMakeLists.txt": "6c56e8e1b93df919618640dc746869a2cce6525785be4b69a163e0eb801f5d1b",
+    "include/fetchkit/fetchkit.h": "8b6989c6f4db27f0148c5f7d1472ef164056bf47d2cfaad5b259537f91f5b004",
+    "include/fetchkit/fetchkit.hpp": "e68580cb75156f279b415d953e590184638087da03aeccd4b72d7c76f284853d",
+    "include/fetchkit/version.h": "ef6f584f8afc3e4bf50424fcd4f93b84fe96fbf44d8dcfe4b3b2f610ac290014",
+    "src/core/c_api.cpp": "03ad72590100b45fccd3267e7fbf43a1a77b98c8dddb713ba6d096d1727700b7",
+    "src/core/download_session.cpp": "44cee08887f4b319ca6ac02269ec2a3499728d9ba26b5e3f45e25b6f819206f5",
+    "src/core/download_types.h": "b0cafb21a5b9b09c1e31efe2afe1e0d835aea5d6c7da28b50eb2ae2f5b479ce4",
+    "src/core/engine.cpp": "122e22af658d91e0df21be915a7f802dbb5645b99d0dbd6b091aa2fbc35377ad",
+    "src/core/engine.h": "d689194beace3cd0b682f1b60986bbd0ace64a15b2b01fca70137ad4d00ea1bf",
+    "src/core/version.cpp": "22dbb4dff5b9da81298f282c18629aceaa6ae177ca2f07bd52230584510e63c7",
+    "src/storage/fault.cpp": "b33ced838edc78b977fb3b328f3403c6e45662b026d23b0f068bc792270e99a8",
+    "src/storage/fault.h": "29bbd749069d8e9efb4982777a7e718a6bb199d79499cf6996efe130853aebf2",
+    "src/storage/record.cpp": "62ca8f60d1f798cd59b99a38aa213d89345bca14570196c723ce9e35daac1e49",
+    "src/storage/record.h": "5b76a21619afa119799191c5bdde3a5e2ed1d867a2d2b4f3ce91a46fd6354051",
+    "src/storage/resource_store.cpp": "8954c70879a48777b33a9dc3c4f52d04b3f785526f7da18d592dcf554f7fb0c3",
+    "src/storage/resource_store.h": "ccf78b353dae0f02e7eac689ad593985830855c676d17c283fb34524c88900f3",
+    "src/storage/sha256.h": "47736acfe1232e7bbabdedd05e5136a3e7e3dcc5997a4463ea89d4640bdb00b6",
+    "src/storage/staging_file.cpp": "af37cb743a6305474721e9266e36c5a167369ce2a2642a0162f04d3b2cb267a1",
+    "src/storage/staging_file.h": "a72a62cc0b83d128506709bab810aab2e06c1c41fe652120cc47ff1d75f6ef64",
+    "src/storage/verifier.cpp": "a63c9cbe34be65641eedede6286706d37f70e890eaf053ede856698bf5fe624a",
+    "src/transport/curl_transport.cpp": "a98022b3cd2b48e9d166fe58a3e59a67c50772f8b142d854a67d32f7ab92b96b",
+    "src/transport/http_transport.h": "1177df2173f7d3eb9094ed72bd9de419601b62924cd742d50a8372df142ffebf",
+    "third_party/README.md": "10eba8ab0f69735f7de082b07a3e5a39de8bf78870a2354843675831aafd313b",
+    "third_party/curl.lock.json": "18f1b5bf6e73af306f8f87d056201e98b43c24354c693571bcd7b88bac5349f5",
+    "third_party/licenses/curl.txt": "82f2f4427d6545ee5aaac4f0b80428da6cc8ba41c2cf5da3a03680ec327b9681",
+    "third_party/licenses/picosha2.txt": "6c30eb1f37554ec4199cb82a8c86d9e7a852da78a757832bebb03ac9ddc44ff1",
+    "third_party/picosha2.lock.json": "ae066e89b413635692f9d294ccb4276e80b7ce352b64075a72df784bb44e8208",
+    "third_party/picosha2/picosha2.h": "b13c180161ffac8d0adc81e033e493c409457c4d1258ab9781ac80579ba3bdd8",
+    "tools/size/README.md": "7d059c16ea2ee92d71d4d3c5cbb5ec0be8a023981016962c984ebbc396064477",
+    "tools/size/android-host/build.gradle.kts": "d98fe2352d83e9920c3148de24c262ce3198de4d4296069d096a48c5f95c61f3",
+    "tools/size/android-host/src/main/AndroidManifest.xml": "018d156294bd6c16491c0363cc388e82d0bf6060da93b9c4a9429ecc22a6d0b6",
+    "tools/size/android-host/src/main/java/com/luofelix/fetchkit/sizehost/MainActivity.java": "97d60fb7a360cc7ac617efb3fc7bc5125c5ef2d8cc1290c67caa49671a410122",
+    "tools/size/android-host/src/modes/bare/java/com/luofelix/fetchkit/sizehost/Integration.java": "7121843fe103cc998497488631958cec03953e3cc1f86e1d328fa16782e2c964",
+    "tools/size/android-host/src/modes/probe/java/com/luofelix/fetchkit/sizehost/Integration.java": "9cef810386e2d5b6a9a0e4cafade0237ac2ee9a264932371f83b4d2def098769",
+    "tools/size/android-host/src/modes/scaffold/java/com/luofelix/fetchkit/sizehost/Integration.java": "258400a4ec1bf6ad894d5b4e14883cc0d76eecc1383811a975eaa4d14f3c70d3",
+    "tools/size/measure.map": "172802da3eab42f08de2e54233c6a538af11b548c17a7d74524aae2ad20c8c6a",
+    "tools/size/measure.py": "b768926ffc2976b9f79462bc41caff011ab3cd5a48a550b0edd155dcc750c166",
+    "tools/size/measure_m2.py": "cd01316bb9b2d0a70bea7d59d123b4b483cb1a72d265cb777b3fb7c9eac1dabc",
+    "tools/size/native_measure.cpp": "ecbce23ca6b8a3a408710807da5478f7d7341854e5fcdcf05089df187af6c7fe"
+  }
+}

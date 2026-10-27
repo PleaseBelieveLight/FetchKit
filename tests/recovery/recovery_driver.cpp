@@ -12,6 +12,7 @@ int main(int argc,char** argv) {
     const std::string ns="recovery",version="1",reference="business-reference";
     fetchkit_engine_config config{};fetchkit_engine_config_init(&config);
     config.storage_root=stringView(root);config.max_download_bytes=8ULL*1024*1024*1024;config.allow_http=1;
+    config.storage_capacity_bytes=16ULL*1024*1024*1024;config.staging_retention_ms=86400000;config.max_retries=0;
     config.checkpoint_bytes=std::stoull(argv[6]);config.checkpoint_interval_ms=static_cast<std::uint32_t>(std::stoul(argv[7]));
     config.read_timeout_ms=3000;
     fetchkit_engine engine=0;
@@ -63,6 +64,7 @@ int main(int argc,char** argv) {
         }
         fetchkit_lease lease=0;
         const std::string id=snapshot.persistent_id;
+        if(mode=="remove") checkStatus(fetchkit_resource_remove(engine,stringView(id)));
         const auto acquired=engine ? fetchkit_resource_acquire(engine,stringView(id),&lease) : FETCHKIT_CLOSED;
         if(engine) checkStatus(fetchkit_engine_close(engine));
         engine=0;

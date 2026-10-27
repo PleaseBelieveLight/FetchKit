@@ -1,0 +1,30 @@
+Testing: scheduler_storage
+5/10 Test: scheduler_storage
+Command: "D:/work-path/android/fetchkit/build/m3-pinned/fetchkit_scheduler_test.exe" "D:/work-path/android/fetchkit/build/m3-pinned/scheduler-unit"
+Directory: D:/work-path/android/fetchkit/build/m3-pinned
+"scheduler_storage" start time: Oct 27 11:56 �й���׼ʱ��
+Output:
+----------------------------------------------------------
+parallelism-and-control: passed
+shared-subscriptions: passed
+provider-lifetime: passed
+event-backpressure: passed
+slow-callback-close: passed
+persistent-retry: passed
+retry-budget: passed
+quota-reservations: passed
+unknown-length-quota: passed
+lru-pin-expiry-lease: passed
+staging-recount-retention: passed
+retry-date-policy: passed
+expired-pinned-refresh: passed
+retained-subscription-bound: passed
+callback-reentrancy: passed
+64-bit-ledger: passed
+cancel-pause-release-close-races: passed
+stale-subscription-isolation: passed
+queued-generation-checkpoint: passed
+monotonic-retry-clock: passed
+closed-storage-write-barrier: passed
+21 scheduler/storage suites passed
+<end of output>

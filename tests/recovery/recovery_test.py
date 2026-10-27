@@ -69,7 +69,7 @@ def read_record(path):
     return fields
 
 
-def write_record(path, fields, version=1):
+def write_record(path, fields, version=2):
     payload = b"".join(struct.pack("<HHI", tag, flags, len(value))+value for tag, (flags, value) in fields.items())
     header = b"FKREC01\0"+struct.pack("<II", version, len(payload))
     path.write_bytes(header+struct.pack("<I", zlib.crc32(header+payload))+payload)
@@ -181,6 +181,9 @@ def main():
                 if corrupt:
                     with files[0].open("r+b") as stream:stream.write(b"corrupt")
                 inspected=run(root,mode="inspect")
+                if mode=="remove":
+                    check(not inspected["records"] and not list((root/"objects").glob("*.obj")), "removed object resurrected")
+                    return {"fault":point,"recovered_state":"removed"}
                 state=inspected["records"][0]["state"]
                 if mode=="cancel":
                     check(state==5 and not list((root/"tmp").glob("*.part")), "cancel cleanup not repaired")
@@ -209,6 +212,10 @@ def main():
                 return checkpoint_crash(root,"reset_commit_after",endpoint="ignore")
             case("kill-reset-before-truncate",reset_crash)
             case("kill-cancel-before-cleanup",lambda r:checkpoint_crash(r,"cancel_commit_after",endpoint="stall",mode="cancel"))
+            def remove_crash(root):
+                finish(root)
+                return checkpoint_crash(root,"remove_commit_after",mode="remove")
+            case("kill-remove-before-cleanup",remove_crash)
 
             def mutate_prefix(root, short):
                 data=run(root,mode="pause",endpoint="stall");snap=data["snapshot"]
@@ -237,7 +244,7 @@ def main():
                 fields=read_record(path)
                 if kind=="crc":
                     raw=bytearray(path.read_bytes());raw[-1]^=1;path.write_bytes(raw)
-                elif kind=="future":write_record(path,fields,2)
+                elif kind=="future":write_record(path,fields,3)
                 elif kind=="truncated":path.write_bytes(path.read_bytes()[:13])
                 elif kind=="oversized":path.write_bytes(b"X"*65557)
                 elif kind=="overflow":fields[9]=(1,struct.pack("<Q",2**63));write_record(path,fields)
@@ -258,7 +265,7 @@ def main():
                 case("record-"+kind,lambda r,k=kind:corruption(r,k))
             def future_without_data(root):
                 run(root,mode="pause",endpoint="stall");path=record_path(root)
-                write_record(path,read_record(path),2)
+                write_record(path,read_record(path),3)
                 for part in (root/"tmp").glob("*.part"):part.unlink()
                 check(run(root,mode="inspect")["unsupported"]==1, "future record not isolated")
                 check(run(root).get("enqueue_error")=="Busy", "quarantined future identity overwritten")
@@ -338,7 +345,8 @@ def main():
                 check(run(root,mode="inspect")["records"][0]["state"]==5, "cancel resurrected")
             case("cancel-tombstone",cancel)
             def verify_control(root, mode):
-                data=run(root,mode=mode)
+                env=os.environ.copy();env.update(FETCHKIT_FAULT_POINT="verify_before",FETCHKIT_FAULT_ACTION="wait_cancel")
+                data=run(root,mode=mode,env=env)
                 check(data["snapshot"]["state"]==(5 if mode=="cancel-verify" else 2) and data["acquire"]=="NotFound", "verification control race")
                 if mode=="pause-verify":finish(root)
             case("cancel-during-verification",lambda r:verify_control(r,"cancel-verify"))

@@ -1,0 +1,32 @@
+Test project D:/work-path/android/fetchkit/build/m3-pinned
+      Start  1: fixture_server
+ 1/10 Test  #1: fixture_server ...................   Passed    0.92 sec
+      Start  2: c_api
+ 2/10 Test  #2: c_api ............................   Passed    0.36 sec
+      Start  3: download_session
+ 3/10 Test  #3: download_session .................   Passed   23.53 sec
+      Start  4: storage
+ 4/10 Test  #4: storage ..........................   Passed    1.04 sec
+      Start  5: scheduler_storage
+ 5/10 Test  #5: scheduler_storage ................   Passed  100.69 sec
+      Start  6: download_protocol
+ 6/10 Test  #6: download_protocol ................   Passed  117.79 sec
+      Start  7: m3_protocol
+ 7/10 Test  #7: m3_protocol ......................   Passed   91.76 sec
+      Start  8: download_recovery
+ 8/10 Test  #8: download_recovery ................   Passed  171.32 sec
+      Start  9: core_version
+ 9/10 Test  #9: core_version .....................   Passed    0.02 sec
+      Start 10: curl_contract
+10/10 Test #10: curl_contract ....................   Passed   23.87 sec
+
+100% tests passed, 0 tests failed out of 10
+
+Label Time Summary:
+contract     =  23.87 sec*proc (1 test)
+protocol     = 209.55 sec*proc (2 tests)
+recovery     = 171.32 sec*proc (1 test)
+scheduler    = 192.45 sec*proc (2 tests)
+unit         = 126.57 sec*proc (6 tests)
+
+Total Test time (real) = 531.73 sec

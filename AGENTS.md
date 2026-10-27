@@ -7,9 +7,9 @@ changes; keep requirements, examples, and commands equivalent.
 
 ## Project Structure & Module Organization
 
-FetchKit has an M2 host downloader with persistent checkpoints, SHA-256 verification, publication
-and read leases, plus an Android scaffold. Scheduling, quotas and caching remain unimplemented.
-Read `README.md`, `docs/v1-design.md`, `docs/m2-storage.md` and `docs/storage-record-v1.md`
+FetchKit has an M3 host downloader with bounded scheduling, independent subscriptions, persisted
+retries, quota/LRU/pin/expiry management, verified publication and read leases. Android remains a scaffold.
+Read `README.md`, `docs/v1-design.md`, `docs/m3-host-api.md` and `docs/storage-record-v2.md`
 before changing scope or architecture.
 
 The root CMake project builds `include/fetchkit/`, `src/core/`, and `examples/cli/`.
@@ -43,6 +43,9 @@ ordinary SDK builds must keep it off. `tools/ci/linux_m2.sh` includes recovery; 
 `FETCHKIT_SANITIZERS=address,undefined` and `FETCHKIT_SANITIZERS=thread` runs on Linux.
 Host builds require zlib development files; Android uses the system libz. Vendored PicoSHA2
 is hash-pinned with its MIT license in `third_party/`.
+M3 Linux acceptance uses `tools/ci/linux_m3.sh`. Host protocol tests inspect only their own child
+processes for memory/thread metrics. The event executor is host-pumped through `fetchkit_task_dispatch`;
+do not introduce unbounded queues or call host code under SDK locks.
 
 ## Coding Style & Naming Conventions
 
@@ -77,6 +80,9 @@ and cancellation races. Follow the acceptance checklist in `docs/v1-design.md`; 
 termination tests from reboot tests.
 Only Completed objects may be acquired. Do not restore callbacks/credentials from records or
 advance committed offsets before data and record synchronization. Retain unknown-version data.
+Use record v2 for retry/pin/expiry semantics; migrate v1 and never silently discard critical fields.
+Reserve quota before writes, count metadata and unknown files, and protect leases/active tasks from removal.
+Cancellation revokes one subscription; only the last explicit cancellation cleans the shared unfinished task.
 
 ## Commit & Pull Request Guidelines
 

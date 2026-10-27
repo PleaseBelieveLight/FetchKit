@@ -19,7 +19,7 @@ struct Registry {
     std::mutex mutex;
     std::uint64_t next_id = 1;
     std::unordered_map<std::uint64_t, std::shared_ptr<Engine>> engines;
-    std::unordered_map<std::uint64_t, std::shared_ptr<Task>> tasks;
+    std::unordered_map<std::uint64_t, std::shared_ptr<Subscription>> tasks;
     std::unordered_map<std::uint64_t, std::shared_ptr<storage::ResourceLease>> leases;
     std::uint64_t allocate() {
         std::lock_guard<std::mutex> lock(mutex);
@@ -74,7 +74,7 @@ std::shared_ptr<Engine> engineFor(fetchkit_engine id) {
     return it->second;
 }
 
-std::shared_ptr<Task> taskFor(fetchkit_task id) {
+std::shared_ptr<Subscription> taskFor(fetchkit_task id) {
     std::lock_guard<std::mutex> lock(registry().mutex);
     const auto it = registry().tasks.find(id);
     if (it == registry().tasks.end() || !it->second) throw Failure(FETCHKIT_CLOSED);
@@ -83,18 +83,17 @@ std::shared_ptr<Task> taskFor(fetchkit_task id) {
 
 fetchkit_status control(fetchkit_task id, StopReason reason, bool resume = false) {
     const auto task = taskFor(id);
-    const auto engine = task->owner.lock();
-    return engine ? engine->control(task, reason, resume) : FETCHKIT_CLOSED;
+    const auto engine = task->task->owner.lock();
+    if(!engine) return FETCHKIT_CLOSED;
+    if(task->released) return FETCHKIT_CLOSED;
+    if(task->inactive) return FETCHKIT_CANCELLED;
+    return engine->control(task->task, reason, resume);
 }
 
-fetchkit_status readSnapshot(const std::shared_ptr<Task>& task, fetchkit_task_snapshot* output, std::uint32_t timeout) {
+fetchkit_status readSnapshot(const std::shared_ptr<Subscription>& task, fetchkit_task_snapshot* output, std::uint32_t timeout) {
     if (!output || output->struct_size < sizeof(*output) || timeout > 60000) return FETCHKIT_INVALID_ARGUMENT;
-    const auto owner = task->owner.lock();
-    if (timeout && owner && owner->onWorker()) return FETCHKIT_BUSY;
-    std::unique_lock<std::mutex> lock(task->mutex);
     bool ready = true;
-    if (timeout) ready = task->changed.wait_for(lock, std::chrono::milliseconds(timeout), [&] { return stoppedState(task->snapshot.state); });
-    *output = task->snapshot;
+    *output=task->read(timeout,ready);
     return ready ? FETCHKIT_OK : FETCHKIT_TIMEOUT;
 }
 
@@ -113,6 +112,8 @@ void fetchkit_engine_config_init(fetchkit_engine_config* config) noexcept {
     config->max_requests = 4096;
     config->checkpoint_bytes=4ULL*1024*1024;
     config->checkpoint_interval_ms=1000;
+    config->max_active_downloads=3;config->max_queued_tasks=1024;config->max_retries=3;
+    config->retry_base_delay_ms=1000;config->retry_max_delay_ms=30000;
 }
 
 void fetchkit_download_request_init(fetchkit_download_request* request) noexcept {
@@ -124,7 +125,7 @@ void fetchkit_download_request_init(fetchkit_download_request* request) noexcept
 const char* fetchkit_status_name(fetchkit_status status) noexcept {
     static const char* names[] = {"Ok", "InvalidArgument", "NotSupported", "Closed", "Busy", "Network", "Timeout",
         "HttpStatus", "AuthRequired", "ProtocolMismatch", "IntegrityMismatch", "DiskFull", "PermissionDenied", "IoError",
-        "Cancelled", "QuotaExceeded", "OutOfMemory", "InternalError", "CertificateError", "NotFound", "UnsupportedMetadata"};
+        "Cancelled", "QuotaExceeded", "OutOfMemory", "InternalError", "CertificateError", "NotFound", "UnsupportedMetadata", "SubscriptionOverflow"};
     return status < sizeof(names) / sizeof(names[0]) ? names[status] : "UnknownError";
 }
 
@@ -137,7 +138,11 @@ fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetc
             input->connect_timeout_ms > 300000 || input->read_timeout_ms > 300000 || input->provider_timeout_ms > 60000 ||
             input->max_redirects > 32 || !input->max_requests || input->max_requests > 65536 || input->reserved2 ||
             !input->checkpoint_bytes || input->checkpoint_bytes>static_cast<std::uint64_t>(INT64_MAX) ||
-            !input->checkpoint_interval_ms || input->checkpoint_interval_ms>300000) return FETCHKIT_INVALID_ARGUMENT;
+            !input->checkpoint_interval_ms || input->checkpoint_interval_ms>300000 || input->reserved3 ||
+            !input->storage_capacity_bytes || input->storage_capacity_bytes>INT64_MAX || !input->staging_retention_ms || input->staging_retention_ms>INT64_MAX ||
+            !input->max_active_downloads || input->max_active_downloads>16 || !input->max_queued_tasks || input->max_queued_tasks>1024 ||
+            input->max_retries>16 || !input->retry_base_delay_ms || input->retry_base_delay_ms>30000 ||
+            input->retry_max_delay_ms<input->retry_base_delay_ms || input->retry_max_delay_ms>30000) return FETCHKIT_INVALID_ARGUMENT;
         EngineConfig config;
         config.root = text(input->storage_root, 3500, true);
         config.ca_bundle = text(input->ca_bundle, 3500);
@@ -150,6 +155,9 @@ fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetc
         config.max_requests = input->max_requests;
         config.checkpoint_bytes=input->checkpoint_bytes;
         config.checkpoint_interval_ms=input->checkpoint_interval_ms;
+        config.capacity_bytes=input->storage_capacity_bytes;config.staging_retention_ms=input->staging_retention_ms;
+        config.max_active=input->max_active_downloads;config.max_queued=input->max_queued_tasks;config.max_retries=input->max_retries;
+        config.retry_base_ms=input->retry_base_delay_ms;config.retry_max_ms=input->retry_max_delay_ms;config.random_seed=input->retry_random_seed;
 #ifdef FETCHKIT_WITH_CURL
         auto engine = std::make_shared<Engine>(config, std::make_shared<transport::CurlTransport>());
         const auto id = registry().allocate();
@@ -176,7 +184,8 @@ static fetchkit_status enqueueInternal(fetchkit_engine id, const fetchkit_downlo
     return boundary([&]() -> fetchkit_status {
         if (!input || !output || input->struct_size < sizeof(*input) || input->expected_length_known > 1 || input->reserved ||
             input->header_count > 64 || (input->header_count && !input->headers) ||
-            input->expected_length > static_cast<std::uint64_t>(INT64_MAX) || input->reserved2 || input->require_digest>1) return FETCHKIT_INVALID_ARGUMENT;
+            input->expected_length > static_cast<std::uint64_t>(INT64_MAX) || input->reserved2 || input->require_digest>1 || input->expires_at_ms>INT64_MAX ||
+            input->pin_on_create>1 || input->reserved3) return FETCHKIT_INVALID_ARGUMENT;
         auto engine = engineFor(id);
         DownloadRequest request;
         request.resource_namespace = text(input->resource_namespace, 256, true);
@@ -187,6 +196,8 @@ static fetchkit_status enqueueInternal(fetchkit_engine id, const fetchkit_downlo
         request.request.url = text(input->url, 16384, start && !input->provider);
         request.expected_sha256=transport::lowerAscii(text(input->expected_sha256,64));
         request.require_digest=input->require_digest!=0;
+        request.expires_at_ms=input->expires_at_ms;
+        request.pin_on_create=input->pin_on_create!=0;
         if ((!request.expected_sha256.empty() && (request.expected_sha256.size()!=64 ||
             request.expected_sha256.find_first_not_of("0123456789abcdef")!=std::string::npos)) ||
             (request.require_digest && request.expected_sha256.empty())) return FETCHKIT_INVALID_ARGUMENT;
@@ -212,7 +223,7 @@ static fetchkit_status enqueueInternal(fetchkit_engine id, const fetchkit_downlo
         const auto task_id = registry().allocate();
         { std::lock_guard<std::mutex> lock(registry().mutex); registry().tasks.emplace(task_id, nullptr); }
         try {
-            engine->enqueue(std::move(request), task_id, [&](const std::shared_ptr<Task>& task) {
+            engine->enqueue(std::move(request), task_id, [&](const std::shared_ptr<Subscription>& task) {
                 std::lock_guard<std::mutex> lock(registry().mutex); registry().tasks.at(task_id) = task;
             },start);
         } catch (...) {
@@ -234,7 +245,7 @@ fetchkit_status fetchkit_list_tasks(fetchkit_engine id,std::uint32_t offset,fetc
     return boundary([&]() -> fetchkit_status {
         if (!count || !items || !capacity || capacity>100) return FETCHKIT_INVALID_ARGUMENT;
         for (std::uint32_t i=0;i<capacity;++i) if (items[i].struct_size<sizeof(fetchkit_task_info)) return FETCHKIT_INVALID_ARGUMENT;
-        const auto store=engineFor(id)->storage();
+        const auto engine=engineFor(id);const auto store=engine->storage();
         const auto records=store->list(offset,capacity);
         for (std::size_t i=0;i<records.size();++i) {
             const auto& r=records[i]; auto& item=items[i]; item={}; item.struct_size=sizeof(item);
@@ -242,6 +253,9 @@ fetchkit_status fetchkit_list_tasks(fetchkit_engine id,std::uint32_t offset,fetc
             s.received_bytes=s.committed_offset=r.committed; s.total_known=r.total.has_value(); s.total_bytes=r.total.value_or(0);
             s.integrity=r.integrity; s.error=r.error;
             s.can_resume=r.state==FETCHKIT_PAUSED || (r.state==FETCHKIT_FAILED && (r.error==FETCHKIT_NETWORK || r.error==FETCHKIT_TIMEOUT));
+            s.retry_count=r.retry_count;s.next_retry_at_ms=r.next_retry_at_ms;s.expires_at_ms=r.expires_at_ms;s.pinned=r.pinned;
+            if(const auto live=engine->liveSnapshot(r.id)) s=*live;
+            s.available=store->available(r.id);
             auto copy=[](auto& out,const std::string& value) { std::memcpy(out,value.c_str(),value.size()+1); };
             copy(s.persistent_id,r.id); copy(item.resource_namespace,r.request.resource_namespace);
             copy(item.resource_key,r.request.resource_key); copy(item.version,r.request.version);
@@ -262,10 +276,8 @@ fetchkit_status fetchkit_resource_acquire(fetchkit_engine id,fetchkit_string inp
         if(!output) return FETCHKIT_INVALID_ARGUMENT;
         const auto resource_id=text(input,64,true);
         if(!storage::validId(resource_id)) return FETCHKIT_INVALID_ARGUMENT;
-        const auto store=engineFor(id)->storage(); const auto record=store->find(resource_id);
-        if(!record) return FETCHKIT_NOT_FOUND;
-        store->checkObject(*record);
-        auto lease=std::make_shared<storage::ResourceLease>(store,*record);
+        const auto store=engineFor(id)->storage();
+        auto lease=store->acquire(resource_id);
         const auto token=registry().allocate();
         {std::lock_guard<std::mutex> lock(registry().mutex);registry().leases.emplace(token,std::move(lease));}
         *output=token;return FETCHKIT_OK;
@@ -299,24 +311,56 @@ fetchkit_status fetchkit_task_wait(fetchkit_task task, std::uint32_t timeout, fe
 }
 fetchkit_status fetchkit_task_pause(fetchkit_task task) noexcept { return boundary([&] { return control(task, StopReason::Pause); }); }
 fetchkit_status fetchkit_task_resume(fetchkit_task task) noexcept { return boundary([&] { return control(task, StopReason::None, true); }); }
-fetchkit_status fetchkit_task_cancel(fetchkit_task task) noexcept { return boundary([&] { return control(task, StopReason::Cancel); }); }
+fetchkit_status fetchkit_task_cancel(fetchkit_task token) noexcept {
+    return boundary([&]() -> fetchkit_status {const auto sub=taskFor(token);const auto owner=sub->task->owner.lock();return owner ? owner->cancel(sub) : FETCHKIT_CLOSED;});
+}
 
 fetchkit_status fetchkit_task_release(fetchkit_task id) noexcept {
     return boundary([&]() -> fetchkit_status {
         auto task = taskFor(id);
-        auto engine = task->owner.lock();
-        if (engine && engine->onWorker()) return FETCHKIT_BUSY;
-        {
-            std::lock_guard<std::mutex> lock(task->mutex); task->released = true;
-        }
-        if (engine) engine->control(task, StopReason::Pause);
-        {
+        auto engine = task->task->owner.lock();
+        if(engine) {const auto status=engine->release(task);if(status) return status;}
+        else {
             std::unique_lock<std::mutex> lock(task->mutex);
-            task->changed.wait(lock, [&] { return stoppedState(task->snapshot.state); });
+            if(task->dispatching && task->dispatch_thread==std::this_thread::get_id()) return FETCHKIT_BUSY;
+            task->released=true;task->events.clear();
+            task->quiescent.wait(lock,[&]{return !task->provider_calls && !task->dispatching;});
         }
         { std::lock_guard<std::mutex> lock(registry().mutex); registry().tasks.erase(id); }
         return FETCHKIT_OK;
     });
+}
+
+fetchkit_status fetchkit_task_dispatch(fetchkit_task token,fetchkit_event_callback callback,void* user,std::uint32_t maximum,std::uint32_t* count) noexcept {
+    if(count) *count=0;
+    return boundary([&]() -> fetchkit_status {
+        if(!callback || !count || !maximum || maximum>64) return FETCHKIT_INVALID_ARGUMENT;
+        return taskFor(token)->dispatch(callback,user,maximum,*count);
+    });
+}
+fetchkit_status fetchkit_resource_pin(fetchkit_engine id,fetchkit_string value,std::uint32_t pinned) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        const auto key=text(value,64,true);if(!storage::validId(key) || pinned>1) return FETCHKIT_INVALID_ARGUMENT;
+        engineFor(id)->storage()->pin(key,pinned!=0);return FETCHKIT_OK;
+    });
+}
+fetchkit_status fetchkit_resource_set_expiry(fetchkit_engine id,fetchkit_string value,std::uint64_t expires) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        const auto key=text(value,64,true);if(!storage::validId(key)) return FETCHKIT_INVALID_ARGUMENT;
+        engineFor(id)->storage()->setExpiry(key,expires);return FETCHKIT_OK;
+    });
+}
+fetchkit_status fetchkit_resource_remove(fetchkit_engine id,fetchkit_string value) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        const auto key=text(value,64,true);if(!storage::validId(key)) return FETCHKIT_INVALID_ARGUMENT;
+        engineFor(id)->storage()->remove(key);return FETCHKIT_OK;
+    });
+}
+fetchkit_status fetchkit_storage_trim(fetchkit_engine id,std::uint64_t target) noexcept {
+    return boundary([&]() -> fetchkit_status {engineFor(id)->storage()->trimTo(target);return FETCHKIT_OK;});
+}
+fetchkit_status fetchkit_storage_collect_staging(fetchkit_engine id) noexcept {
+    return boundary([&]() -> fetchkit_status {engineFor(id)->storage()->collectStaging();return FETCHKIT_OK;});
 }
 
 fetchkit_status fetchkit_request_set_url(fetchkit_request_builder* builder, fetchkit_string url) noexcept {

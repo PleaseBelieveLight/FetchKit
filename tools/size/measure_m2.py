@@ -18,6 +18,7 @@ def main():
     parser.add_argument("--cmake",type=Path,required=True)
     parser.add_argument("--output",type=Path,default=ROOT/"build/m2-size-arm64")
     parser.add_argument("--aar",type=Path,default=ROOT/"platform/android/sdk/build/outputs/aar/sdk-release.aar")
+    parser.add_argument("--include-engine",action="store_true",help="Also retain M3 scheduler/storage/C ABI with a fake transport")
     args=parser.parse_args();args.output=args.output.resolve();args.output.mkdir(parents=True,exist_ok=True)
     extension=".exe" if platform.system()=="Windows" else ""
     prebuilt=next((args.ndk/"toolchains/llvm/prebuilt").iterdir())
@@ -29,7 +30,8 @@ def main():
         "-DFETCHKIT_BUILD_CLI=OFF","-DFETCHKIT_BUILD_SIZE_PROBE=ON",
         "-DCMAKE_CXX_FLAGS_RELEASE=-Os -DNDEBUG -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden",
         "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--gc-sections"]
-    build=[str(cmake),"--build",str(args.output),"--target","fetchkit_baseline_measure","fetchkit_digest_measure","--parallel","8"]
+    targets=["baseline","digest"]+(["engine"] if args.include_engine else [])
+    build=[str(cmake),"--build",str(args.output),"--target",*["fetchkit_"+mode+"_measure" for mode in targets],"--parallel","2"]
     for name,command in [("configure",configure),("build",build)]:
         with (args.output/(name+".log")).open("w",encoding="utf-8") as log:
             subprocess.run(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,check=True)
@@ -44,11 +46,14 @@ def main():
         "compiler":subprocess.check_output([str(prebuilt/'bin'/('clang++'+extension)),"--version"],text=True).strip(),
         "picosha2":json.loads((ROOT/'third_party/picosha2.lock.json').read_text()),"targets":{}}
     stripped=args.output/"stripped";stripped.mkdir(exist_ok=True)
-    for mode in ["baseline","digest"]:
+    for mode in targets:
         original=args.output/("libfetchkit_"+mode+"_measure.so");copy=stripped/original.name
         shutil.copy2(original,copy);subprocess.run([str(strip),"--strip-unneeded",str(copy)],check=True)
         report["targets"][mode]={**info(copy),"needed":needed(copy)}
     report["file_verifier_delta_bytes"]=report["targets"]["digest"]["bytes"]-report["targets"]["baseline"]["bytes"]
+    if args.include_engine:
+        report["engine_delta_bytes"]=report["targets"]["engine"]["bytes"]-report["targets"]["baseline"]["bytes"]
+        report["engine_scope"]="Scheduler/storage/C ABI with fake transport; platform network and JNI download bridge excluded"
     report["core_static_archive"]=info(args.output/"libfetchkit.a")
     if args.aar.exists():
         report["ordinary_aar"]={**info(args.aar),"version_api_only":True,"native":[]}

@@ -11,6 +11,9 @@ struct Record {
     std::string etag;
     std::uint32_t state = FETCHKIT_PAUSED, integrity = 0;
     fetchkit_status error = FETCHKIT_OK;
+    std::uint32_t format_version = 1, retry_count = 0, auth_refreshes = 0;
+    std::uint64_t next_retry_at_ms = 0, updated_at_ms = 0, access_order = 0, expires_at_ms = 0;
+    bool pinned = false;
 };
 std::string resourceId(const core::DownloadRequest& request);
 bool validId(const std::string& id);

@@ -28,7 +28,11 @@ bool leafExists(const std::filesystem::path& path) {
 }
 }
 
-ResourceStore::ResourceStore(const std::string& root) : directory_(root) { scan(); }
+ResourceStore::ResourceStore(const std::string& root, std::uint64_t capacity, std::uint64_t retention_ms,
+    std::shared_ptr<core::Clock> clock)
+    : directory_(root), capacity_(capacity), retention_ms_(retention_ms), clock_(std::move(clock)) {
+    scan(); recount();scanning_=false;
+}
 std::filesystem::path ResourceStore::stagingPath(const std::string& id) const {
     if (!validId(id)) throw core::Failure(FETCHKIT_INVALID_ARGUMENT);
     return directory_.root()/"tmp"/(id+".part");
@@ -38,12 +42,12 @@ std::filesystem::path ResourceStore::objectPath(const std::string& id) const {
     return directory_.root()/"objects"/(id+".obj");
 }
 std::optional<Record> ResourceStore::find(const std::string& id) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto found=records_.find(id);
     return found==records_.end() ? std::optional<Record>{} : found->second;
 }
 std::vector<Record> ResourceStore::list(std::uint32_t offset, std::uint32_t capacity) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     std::vector<Record> result;
     auto it=records_.begin();
     while (offset-- && it!=records_.end()) ++it;
@@ -51,15 +55,39 @@ std::vector<Record> ResourceStore::list(std::uint32_t offset, std::uint32_t capa
     return result;
 }
 fetchkit_storage_stats ResourceStore::stats() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return {sizeof(fetchkit_storage_stats),static_cast<std::uint32_t>(records_.size()),quarantined_,unsupported_,orphans_,0};
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    requireOpen();
+    fetchkit_storage_stats result{sizeof(fetchkit_storage_stats),static_cast<std::uint32_t>(records_.size()),quarantined_,unsupported_,orphans_,0};
+    result.capacity_bytes=capacity_;
+    result.metadata_budget_bytes=slots_.size()*metadataBudget();
+    result.used_bytes=unowned_bytes_;
+    const auto add_used=[&](std::uint64_t value) {result.used_bytes=value>UINT64_MAX-result.used_bytes ? UINT64_MAX : result.used_bytes+value;};
+    for(const auto& item:data_bytes_) add_used(item.second);
+    for(const auto& item:record_bytes_) add_used(item.second);
+    for(const auto& id:slots_) {
+        const auto next=directory_.root()/"records"/(id+".next");
+        if(regularFile(next)) add_used(std::filesystem::file_size(next));
+    }
+    result.charged_bytes=charged();
+    result.reserved_bytes=result.charged_bytes>result.used_bytes ? result.charged_bytes-result.used_bytes : 0;
+    return result;
 }
 
-void ResourceStore::save(const Record& record) {
+void ResourceStore::save(Record record, bool policy_update) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    requireOpen();
+    if(!policy_update) {
+        const auto old=records_.find(record.id);
+        if(old!=records_.end()) {
+            record.pinned=old->second.pinned;record.expires_at_ms=old->second.expires_at_ms;
+            record.access_order=old->second.access_order;
+        }
+    }
+    record.format_version=2;
+    if(!scanning_) record.updated_at_ms=clock_->nowMs();
     const auto bytes=encodeRecord(record);
     const auto path=directory_.root()/"records"/(record.id+".rec");
     const auto next=directory_.root()/"records"/(record.id+".next");
-    std::lock_guard<std::mutex> lock(mutex_);
     // A failed prior commit may leave our own temporary record. Never trust it.
     removeFile(next);
     {
@@ -81,22 +109,45 @@ void ResourceStore::save(const Record& record) {
     auto persisted=record;
     persisted.request.request={}; persisted.request.provider={};
     records_[record.id]=std::move(persisted);
+    record_bytes_[record.id]=bytes.size();
+    {
+        std::lock_guard<std::mutex> protection(protection_mutex_);
+        if(record.state==FETCHKIT_REMOVED) present_ids_.erase(record.id);else present_ids_.insert(record.id);
+    }
 }
 
 Record ResourceStore::create(const core::DownloadRequest& request) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    requireOpen();
     Record r; r.id=resourceId(request); r.request=request; r.total=request.expected_length;
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (records_.size()>=1024) throw core::Failure(FETCHKIT_BUSY);
+    r.format_version=2;r.updated_at_ms=clock_->nowMs();r.expires_at_ms=request.expires_at_ms;
+    r.pinned=request.pin_on_create;
         if (blocked_ids_.count(r.id)) throw core::Failure(FETCHKIT_BUSY);
-    }
+        while(records_.size()>=1024) if(!evictOne(r.id)) throw core::Failure(FETCHKIT_BUSY);
     // An unrecognized/orphan file is never adopted or silently overwritten.
     if (!missing(stagingPath(r.id)) || !missing(objectPath(r.id))) throw core::Failure(FETCHKIT_BUSY);
-    {
-        StagingFile file(stagingPath(r.id),true); file.sync();
+    slots_.insert(r.id);allocations_[r.id]=data_bytes_[r.id]=0;
+    try {
+        ensureCapacity(r.id);
+        { StagingFile file(stagingPath(r.id),true); file.sync(); }
+        syncDirectory(stagingPath(r.id).parent_path());
+        save(r,true);
+    } catch(...) {
+        // Admission failed: no accepted task owns these newly-created leaves.
+        bool cleaned=false;
+        try {
+            removeFile(stagingPath(r.id));
+            removeFile(directory_.root()/"records"/(r.id+".next"));
+            removeFile(directory_.root()/"records"/(r.id+".rec"));
+            cleaned=true;
+        } catch(...) {}
+        records_.erase(r.id);
+        {std::lock_guard<std::mutex> protection(protection_mutex_);present_ids_.erase(r.id);}
+        if(cleaned) {slots_.erase(r.id);allocations_.erase(r.id);data_bytes_.erase(r.id);record_bytes_.erase(r.id);}
+        // On a failed cleanup, retain the conservative slot charge until reopen.
+        throw;
     }
-    syncDirectory(stagingPath(r.id).parent_path());
-    save(r);
+    r.request.request={};r.request.provider={};
     return r;
 }
 
@@ -106,11 +157,12 @@ void ResourceStore::discard(Record& r) {
     save(r); // Tombstone first: a killed cleanup cannot resurrect data.
     faultPoint("cancel_commit_after");
     removeFile(stagingPath(r.id));
+    observeSize(r.id,0);
 }
 
 void ResourceStore::publish(Record& r, transport::Cancellation& cancellation, const std::function<void()>& barrier) {
     r.state=FETCHKIT_VERIFYING; save(r);
-    faultPoint("verify_before");
+    faultPoint("verify_before",&cancellation);
     r.integrity=verifyFile(stagingPath(r.id),r,&cancellation);
     faultPoint("verify_after");
     barrier(); // Serialize the final pause/cancel decision before Publishing.
@@ -123,12 +175,18 @@ void ResourceStore::publish(Record& r, transport::Cancellation& cancellation, co
     syncDirectory(stagingPath(r.id).parent_path());
     syncDirectory(objectPath(r.id).parent_path());
     faultPoint("object_directory_sync_after");
-    r.state=FETCHKIT_COMPLETED; r.error=FETCHKIT_OK; save(r);
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if(access_order_==UINT64_MAX-1) throw core::Failure(FETCHKIT_BUSY);
+        const auto current=records_.find(r.id);
+        if(current!=records_.end()) {r.pinned=current->second.pinned;r.expires_at_ms=current->second.expires_at_ms;}
+        r.access_order=++access_order_;r.state=FETCHKIT_COMPLETED;r.error=FETCHKIT_OK;save(r,true);
+    }
     faultPoint("completed_commit_after");
 }
 
 void ResourceStore::checkObject(const Record& r) {
-    if (r.state!=FETCHKIT_COMPLETED) throw core::Failure(FETCHKIT_NOT_FOUND);
+    if (r.state!=FETCHKIT_COMPLETED || (r.expires_at_ms && r.expires_at_ms<=clock_->nowMs())) throw core::Failure(FETCHKIT_NOT_FOUND);
     verifyFile(objectPath(r.id),r);
 }
 
@@ -187,7 +245,7 @@ void ResourceStore::repair(Record& r) {
         }
         if (file.size()!=r.committed) { file.truncate(r.committed); file.sync(); }
     }
-    if (r.state!=FETCHKIT_FAILED) { r.state=FETCHKIT_PAUSED; r.error=FETCHKIT_OK; }
+    if (r.state!=FETCHKIT_FAILED && r.state!=FETCHKIT_RETRY_WAITING) { r.state=FETCHKIT_PAUSED; r.error=FETCHKIT_OK; }
     r.integrity=FETCHKIT_INTEGRITY_NONE;
     save(r);
 }
@@ -224,6 +282,11 @@ void ResourceStore::scan() {
             quarantine(path); ++quarantined_; continue;
         }
         if (records_.size()>=1024) throw core::Failure(FETCHKIT_BUSY);
+        if(decoded->state==FETCHKIT_REMOVED) {
+            removeFile(stagingPath(decoded->id));removeFile(objectPath(decoded->id));removeFile(path);continue;
+        }
+        if(decoded->format_version==1) { decoded->format_version=2;decoded->updated_at_ms=clock_->nowMs(); }
+        access_order_=std::max(access_order_,decoded->access_order);
         repair(*decoded);
         if (!find(decoded->id)) save(*decoded);
     }
@@ -239,12 +302,13 @@ void ResourceStore::scan() {
 }
 
 ResourceLease::ResourceLease(std::shared_ptr<ResourceStore> store,const Record& r)
-    : store_(std::move(store)),file_(store_->objectPath(r.id),false,true) {
-    if (file_.size()!=r.committed) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
+    : store_(std::move(store)),id_(r.id),file_(std::make_unique<StagingFile>(store_->objectPath(r.id),false,true)) {
+    if (file_->size()!=r.committed) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
 }
+ResourceLease::~ResourceLease() { file_.reset();store_->releaseLease(id_); }
 std::uint32_t ResourceLease::read(std::uint64_t offset,std::uint8_t* buffer,std::uint32_t capacity) {
     std::lock_guard<std::mutex> lock(mutex_);
-    file_.seek(offset);
-    return static_cast<std::uint32_t>(file_.read(buffer,capacity));
+    file_->seek(offset);
+    return static_cast<std::uint32_t>(file_->read(buffer,capacity));
 }
 }

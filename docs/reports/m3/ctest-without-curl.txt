@@ -1,0 +1,19 @@
+Test project D:/work-path/android/fetchkit/build/m3-no-curl
+    Start 1: c_api
+1/5 Test #1: c_api ............................   Passed    0.74 sec
+    Start 2: download_session
+2/5 Test #2: download_session .................   Passed   22.55 sec
+    Start 3: storage
+3/5 Test #3: storage ..........................   Passed    0.86 sec
+    Start 4: scheduler_storage
+4/5 Test #4: scheduler_storage ................   Passed  105.63 sec
+    Start 5: core_version
+5/5 Test #5: core_version .....................   Passed    0.29 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Label Time Summary:
+scheduler    = 105.63 sec*proc (1 test)
+unit         = 130.07 sec*proc (5 tests)
+
+Total Test time (real) = 130.11 sec

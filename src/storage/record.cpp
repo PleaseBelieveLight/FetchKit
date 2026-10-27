@@ -44,10 +44,13 @@ void validate(const Record& r) {
         !utf8(q.representation_key) || q.representation_key.size()>1024 || !utf8(q.reference) || q.reference.size()>2048 ||
         r.etag.size()>1024 || !r.generation || r.generation == UINT64_MAX || r.committed>INT64_MAX ||
         (r.total && (*r.total>INT64_MAX || r.committed>*r.total)) || (q.expected_length && *q.expected_length>INT64_MAX) ||
-        (q.expected_length && r.total && q.expected_length != r.total) || r.state>FETCHKIT_COMPLETED || r.integrity>FETCHKIT_DIGEST_VERIFIED ||
-        r.error>FETCHKIT_UNSUPPORTED_METADATA || (q.require_digest && q.expected_sha256.empty())) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
+        (q.expected_length && r.total && q.expected_length != r.total) || r.state>FETCHKIT_REMOVED || r.integrity>FETCHKIT_DIGEST_VERIFIED ||
+        r.error>FETCHKIT_SUBSCRIPTION_OVERFLOW || (q.require_digest && q.expected_sha256.empty()) ||
+        r.format_version<1 || r.format_version>2 || r.retry_count>16 || r.auth_refreshes>1 ||
+        r.next_retry_at_ms>INT64_MAX || r.updated_at_ms>INT64_MAX || r.expires_at_ms>INT64_MAX || r.access_order==UINT64_MAX) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
     if (!q.expected_sha256.empty() && (q.expected_sha256.size()!=64 ||
         q.expected_sha256.find_first_not_of("0123456789abcdef")!=std::string::npos)) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
+    if(r.state==FETCHKIT_RETRY_WAITING && (!r.retry_count || !r.next_retry_at_ms)) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
     if (!r.etag.empty()) {
         if (r.etag.size()<2 || r.etag.front()!='"' || r.etag.back()!='"') throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
         for (std::size_t i=1; i+1<r.etag.size(); ++i) {
@@ -87,8 +90,12 @@ std::vector<std::uint8_t> encodeRecord(const Record& r) {
     integer(12,r.state); integer(13,r.integrity); integer(14,r.error);
     if (r.request.expected_length) integer(15,*r.request.expected_length);
     if (r.total) integer(16,*r.total);
+    if(r.format_version==2) {
+        integer(17,r.retry_count); integer(18,r.next_retry_at_ms); integer(19,r.auth_refreshes);
+        integer(20,r.updated_at_ms); integer(21,r.access_order); integer(22,r.expires_at_ms); integer(23,r.pinned);
+    }
     std::vector<std::uint8_t> out(std::begin(magic), std::end(magic));
-    put(out,1,4); put(out,payload.size(),4);
+    put(out,r.format_version,4); put(out,payload.size(),4);
     auto crc = crc32(0, out.data(), static_cast<uInt>(out.size()));
     crc = crc32(crc,payload.data(),static_cast<uInt>(payload.size()));
     put(out,crc,4); out.insert(out.end(),payload.begin(),payload.end());
@@ -97,11 +104,12 @@ std::vector<std::uint8_t> encodeRecord(const Record& r) {
 
 Record decodeRecord(const std::vector<std::uint8_t>& bytes) {
     if (bytes.size()<20 || bytes.size()>65556 || !std::equal(std::begin(magic),std::end(magic),bytes.begin())) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
-    if (get(bytes,8,4)!=1) throw core::Failure(FETCHKIT_UNSUPPORTED_METADATA);
+    const auto version=get(bytes,8,4);
+    if (version!=1 && version!=2) throw core::Failure(FETCHKIT_UNSUPPORTED_METADATA);
     if (get(bytes,12,4)!=bytes.size()-20) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
     auto crc=crc32(0,bytes.data(),16); crc=crc32(crc,bytes.data()+20,static_cast<uInt>(bytes.size()-20));
     if (crc!=get(bytes,16,4)) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
-    Record r;
+    Record r; r.format_version=static_cast<std::uint32_t>(version);
     std::set<unsigned int> seen;
     for (std::size_t at=20; at<bytes.size();) {
         const auto tag=static_cast<unsigned int>(get(bytes,at,2)), flags=static_cast<unsigned int>(get(bytes,at+2,2));
@@ -116,15 +124,23 @@ Record decodeRecord(const std::vector<std::uint8_t>& bytes) {
             case 7:r.request.expected_sha256=value;break;
             case 8:{const auto v=integer(); if(v>1) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.request.require_digest=v!=0;break;}
             case 9:r.committed=integer();break; case 10:r.generation=integer();break; case 11:r.etag=value;break;
-            case 12:{const auto v=integer();if(v>FETCHKIT_COMPLETED) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.state=static_cast<std::uint32_t>(v);break;}
+            case 12:{const auto v=integer();if(v>FETCHKIT_REMOVED) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.state=static_cast<std::uint32_t>(v);break;}
             case 13:{const auto v=integer();if(v>FETCHKIT_DIGEST_VERIFIED) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.integrity=static_cast<std::uint32_t>(v);break;}
-            case 14:{const auto v=integer();if(v>FETCHKIT_UNSUPPORTED_METADATA) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.error=static_cast<fetchkit_status>(v);break;}
+            case 14:{const auto v=integer();if(v>FETCHKIT_SUBSCRIPTION_OVERFLOW) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.error=static_cast<fetchkit_status>(v);break;}
             case 15:r.request.expected_length=integer();break;case 16:r.total=integer();break;
+            case 17:{const auto v=integer();if(v>16) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.retry_count=static_cast<std::uint32_t>(v);break;}
+            case 18:r.next_retry_at_ms=integer();break;
+            case 19:{const auto v=integer();if(v>1) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.auth_refreshes=static_cast<std::uint32_t>(v);break;}
+            case 20:r.updated_at_ms=integer();break;case 21:r.access_order=integer();break;case 22:r.expires_at_ms=integer();break;
+            case 23:{const auto v=integer();if(v>1) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);r.pinned=v!=0;break;}
             default:if(flags&1) throw core::Failure(FETCHKIT_UNSUPPORTED_METADATA);break;
         }
         at+=static_cast<std::size_t>(length);
     }
     for (unsigned int i=1;i<=14;++i) if (!seen.count(i)) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
+    if(version==2) for(unsigned int i=17;i<=23;++i) if(!seen.count(i)) throw core::Failure(FETCHKIT_INTEGRITY_MISMATCH);
+    if(version==1) for(unsigned int i=17;i<=23;++i) if(seen.count(i)) throw core::Failure(FETCHKIT_UNSUPPORTED_METADATA);
+    if(version==1 && r.state>FETCHKIT_COMPLETED) throw core::Failure(FETCHKIT_UNSUPPORTED_METADATA);
     validate(r); return r;
 }
 }

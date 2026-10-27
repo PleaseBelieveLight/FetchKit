@@ -52,8 +52,8 @@ compileSdk/targetSdk 37、minSdk 24、NDK 28.2.13676358、CMake 3.22.1，ABI 为
 | `include/fetchkit/`                                                    | C ABI、公共类型、C++ RAII 包装；不暴露 curl/JNI/STL 容器到 C ABI    | M0 契约、M1 最小 API     |
 | `src/core/` / `fetchkit_core`                                          | TaskManager、DownloadSession、Scheduler、事件、身份、错误和重试策略 | M0～M3                   |
 | `src/transport/` / `fetchkit_transport_curl`                           | 内部传输契约与 Linux libcurl 适配；只接受核心构造的单次请求         | M0 探针、M1 正式后端     |
-| `src/storage/` / `fetchkit_storage`                                    | 文件系统抽象、目录锁、检查点、记录、启动扫描、发布与 Verifier       | M1 最小写盘、M2 完整恢复 |
-| `src/cache/` / `fetchkit_cache`                                        | 配额预留、LRU、pin、租约及遗留暂存清理                              | M3                       |
+| `src/storage/`（随 `fetchkit_core` 编译）                              | 文件系统、目录锁、检查点、记录、扫描、发布与 Verifier              | M1 最小写盘、M2 完整恢复 |
+| `src/storage/storage_policy.cpp`                                      | 配额预留、LRU、pin、租约及遗留暂存清理，共用存储事务与保护锁        | M3                       |
 | `platform/android/sdk/src/main/cpp/`                                   | JNI handle 注册表、线程附着、缓冲桥接、异常转换                     | M0 探针、M4 正式接入     |
 | `platform/android/sdk/src/main/java/com/luofelix/fetchkit/`            | Kotlin API、平台网络、宿主请求信息提供入口；不重复实现核心策略      | M0 探针、M4              |
 | `platform/android/sample/`                                             | Compose 演示、宿主调度选择、通知、网络约束和生命周期验证            | M4                       |
@@ -210,6 +210,11 @@ M2 门槛：T09～T12 的恢复与损坏用例通过；TransportComplete 与 Dig
 缺摘要时在创建阶段拒绝。进程终止结果单独成报告，不外推为重启/掉电保证。
 
 ### M3：任务调度、重试与资源生命周期
+
+2026-10-27 实施状态：M3-01～M3-05 的主机代码与测试入口已加入，见 [M3 API](m3-host-api.md) 和
+[阶段报告](reports/m3-baseline.md)。事件通过宿主 executor 主动 dispatch；记录升级 v2，保留 v1 迁移。
+缺少 Linux/sanitizer 与真实小容量文件系统证据，阶段门槛不标为整体验收通过。
+缓存策略与记录删除需要同一事务和保护锁，实际归入 `src/storage/`，未另建 cache 目标。
 
 目标：多个任务和多个调用方共存时，空间、线程、状态和回调仍然受控。
 
