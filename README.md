@@ -4,12 +4,14 @@ FetchKit 是面向 Android 与 Linux 的 C++ 网络资源下载
 SDK，以可靠、可扩展和控制接入体积为目标。首版围绕文件下载、断点续传、多任务调度和资源缓存建立基础能力，后续按需扩展下载能力。
 
 当前状态：主机端已实现多任务调度、独立订阅、持久化重试、检查点/恢复、可选可信 SHA-256、原子发布、
-配额、LRU、pin/过期和只读租约，提供 alpha C ABI、C++ 包装和 CLI。Android 仍仅支持版本查询，下载接入留待 M4。
+配额、LRU、pin/过期和只读租约，提供 alpha C ABI、C++ 包装和 CLI。
+Android 已接入异步 Kotlin/JNI 下载 API、独立 OkHttp 后端、Compose 与 JobScheduler 示例。
 
 M0 已加入可控 HTTP 服务、主机/Android/JNI 探针、接口契约与体积对照工具。
 实测结论、后端调整和缺测项见 [M0 基线报告](docs/reports/m0-baseline.md)；实验接口不等于正式下载能力。
 
 当前用法见 [M3 主机 API](docs/m3-host-api.md)，验证范围见 [M3 报告](docs/reports/m3-baseline.md)。
+Android 用法、生命周期和依赖见 [M4 API](docs/m4-android-api.md)，环境与剩余门槛见 [M4 报告](docs/reports/m4-baseline.md)。
 已发布的 Completed 通过 lease 读取，TransportComplete 与 DigestVerified 是独立的完整性结果。
 [M1 API](docs/m1-host-api.md)、[M2 存储](docs/m2-storage.md) 和对应报告保留阶段历史；Linux/设备缺测项不由 Windows 结果代替。
 
@@ -55,7 +57,7 @@ Android Studio 直接打开仓库根目录。Gradle 模块通过 `projectDir` �
 Gradle 工程。
 
 调用链：演示 App → `com.luofelix.fetchkit.FetchKit.version()` → JNI → C++ 核心。
-主机下载由 C++ 实现；Android 模块负责平台适配，下载桥接仍待 M4。
+主机与 Android 复用同一 C++ 下载核心；Android 模块提供平台网络与 JNI 适配。
 
 ## 构建与运行
 
@@ -65,16 +67,16 @@ Gradle 工程。
 在仓库根目录的 PowerShell 中执行：
 
 ```powershell
-.\gradlew.bat :sdk:assembleDebug :sample:assembleDebug :sample:testDebugUnitTest
+.\gradlew.bat :sdk:assembleDebug :sdk:testDebugUnitTest :sample:assembleDebug :sample:testDebugUnitTest
 ```
 
-Android Studio 中选择 `sample` 运行，页面显示核心版本。AAR 位于
+Android Studio 中选择 `sample` 运行，可操作任务、检查点、校验结果、pin 和租约读取。AAR 位于
 `platform/android/sdk/build/outputs/aar/`，APK 位于 `platform/android/sample/build/outputs/apk/`。
 
-有可用设备或模拟器时，验证安装标识与 JNI 加载：
+有可用设备或模拟器时，单独验证安装标识与 JNI 加载：
 
 ```powershell
-.\gradlew.bat :sample:connectedDebugAndroidTest
+.\gradlew.bat :sample:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.luofelix.fetchkit.sample.SdkIntegrationTest'
 ```
 
 独立 C++ 构建不依赖 Android SDK。本机 Windows 使用 Ninja 和 g++：
@@ -89,7 +91,8 @@ Linux 可省略编译器参数，运行 `./build/native-debug/fetchkit_cli --ver
 默认不链接 curl，可查询版本；增加 `-DFETCHKIT_WITH_CURL=ON` 后 CLI 可下载与查询同进程任务。
 固定源码参考配置使用 `-DFETCHKIT_USE_PINNED_CURL=ON`，具体入口见 [依赖说明](third_party/README.md)。
 可选 CTest 与 Android 探针运行方式见 [测试说明](tests/README.md)，
-体积对照见 [测量工具说明](tools/size/README.md)。普通构建不会引入 M0 实验依赖。
+体积对照见 [测量工具说明](tools/size/README.md)。普通构建不含 M0 探针；正式 Android 后端已将 OkHttp 5.5.1 及其传递依赖纳入运行图。
+完整设备协议与进程恢复分别使用 `tools/ci/run_m4_android.py` 和 `tools/ci/run_m4_recovery.py`，需要受控本地服务器。
 
 ## 首版目标
 
@@ -99,7 +102,7 @@ Linux 可省略编译器参数，运行 `./build/native-debug/fetchkit_cli --ver
 - 在文件完成必要校验并发布后，才向调用方提供可用资源。
 - 提供有配额、淘汰和保留能力的资源存储。
 - C++ 实现任务、续传、存储和缓存策略；网络传输通过后端适配。
-- Android 默认评估平台网络后端以控制新增依赖；Linux 使用 libcurl 后端。
+- Android 使用经 M0 选择的隔离 OkHttp 后端并单列完整依赖成本；Linux 使用 libcurl 后端。
 
 首版聚焦普通文件，HLS/DASH 清单与分片编排、DRM、多连接分段加速、差分更新及解压安装列入后续范围。
 

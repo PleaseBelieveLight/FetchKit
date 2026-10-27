@@ -7,7 +7,8 @@ add_subdirectory(
     "${CMAKE_CURRENT_BINARY_DIR}/fetchkit-core"
 )
 
-add_library(fetchkit_jni SHARED src/main/cpp/fetchkit_jni.cpp)
+add_library(fetchkit_jni SHARED src/main/cpp/fetchkit_jni.cpp src/main/cpp/android_bridge.cpp)
+target_include_directories(fetchkit_jni PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src")
 option(FETCHKIT_ENABLE_PLATFORM_PROBE "Include the opt-in M0 Android/JNI probe" OFF)
 if(FETCHKIT_ENABLE_PLATFORM_PROBE)
     target_sources(fetchkit_jni PRIVATE src/probe/cpp/platform_probe_jni.cpp)

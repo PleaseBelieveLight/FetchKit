@@ -7,8 +7,9 @@
 ## 项目结构与模块组织
 
 FetchKit 已实现 M3 主机下载器，包括有界调度、独立订阅、持久化重试、配额/LRU/pin/过期管理、校验发布和读取租约。
-Android 仍为工程骨架。修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md`、
-`docs/m3-host-api.md` 和 `docs/storage-record-v2.md`。
+M4 已增加异步 Kotlin/JNI API、隔离 OkHttp 传输与 Compose/JobScheduler 示例。
+修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md`、`docs/m3-host-api.md`、
+`docs/m4-android-api.md` 和 `docs/storage-record-v2.md`。
 
 根目录 CMake 工程构建 `include/fetchkit/`、`src/core/` 和 `examples/cli/`。
 根目录 Gradle 配置将 `:sdk` 映射到 `platform/android/sdk/`，将 `:sample` 映射到
@@ -20,8 +21,8 @@ Android 仍为工程骨架。修改范围或架构前，先阅读 `README.md`、
 在 Windows 的仓库根目录执行：
 
 ```powershell
-.\gradlew.bat :sdk:assembleDebug :sample:assembleDebug :sample:testDebugUnitTest
-.\gradlew.bat :sample:connectedDebugAndroidTest
+.\gradlew.bat :sdk:assembleDebug :sdk:testDebugUnitTest :sample:assembleDebug :sample:testDebugUnitTest
+.\gradlew.bat :sample:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.luofelix.fetchkit.sample.SdkIntegrationTest'
 cmake -S . -B build/native-debug -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/native-debug --parallel
 cmake -S . -B build/m0-host -G Ninja -DCMAKE_CXX_COMPILER=g++ -DFETCHKIT_BUILD_TESTS=ON -DFETCHKIT_BUILD_PROBES=ON -DFETCHKIT_WITH_CURL=ON
@@ -42,6 +43,12 @@ M2 恢复测试还需在主机测试构建中开启 `FETCHKIT_ENABLE_FAULT_INJEC
 PicoSHA2 的固定哈希与 MIT 许可证位于 `third_party/`。
 M3 的 Linux 验收使用 `tools/ci/linux_m3.sh`。主机协议测试仅检查自己启动的子进程内存/线程指标。
 宿主通过 `fetchkit_task_dispatch` 在自己的 executor 上分发事件；不得引入无界队列或在 SDK 锁下调用宿主代码。
+M4 正式设备矩阵使用 `tools/ci/run_m4_android.py` 和 `tools/ci/run_m4_recovery.py`。
+复用已有设备，记录 API/ABI，区分 SIGKILL、强制停止、系统重启和掉电。
+使用独立命名的 `adb reverse --no-rebind` 规则，只清理本次映射。ADB 33.0.3 的允许列表会覆盖多个 `tcp:0` 请求。
+模拟器启动还会继承 `http_proxy`；受控启动已有 AVD 可使用 `tools/ci/start_m4_emulator.ps1`。
+OkHttp 5.5.1 已成为正式运行依赖。测试 CA/网络例外只放示例 Debug；SDK/Release 产物不得包含探针、故障钩子或测试信任锚。
+体积测量须使用完整文件 AAR 宿主。
 
 ## 编码风格与命名规范
 

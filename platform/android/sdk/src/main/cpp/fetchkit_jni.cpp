@@ -2,6 +2,8 @@
 
 #include <jni.h>
 
+bool registerAndroidBridge(JavaVM* vm, JNIEnv* env) noexcept;
+
 #ifdef FETCHKIT_ENABLE_PLATFORM_PROBE
 bool registerPlatformProbe(JNIEnv* env) noexcept;
 #endif
@@ -38,6 +40,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
     if (result != JNI_OK) {
         return JNI_ERR;
     }
+    if (!registerAndroidBridge(vm, env)) return JNI_ERR;
 #ifdef FETCHKIT_ENABLE_PLATFORM_PROBE
     if (!registerPlatformProbe(env)) {
         return JNI_ERR;

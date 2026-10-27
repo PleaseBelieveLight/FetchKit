@@ -11,5 +11,6 @@ public final class MainActivity extends Activity {
         TextView text = new TextView(this);
         text.setText(Integration.label());
         setContentView(text);
+        Integration.launch(this, text);
     }
 }

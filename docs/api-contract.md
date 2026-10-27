@@ -15,6 +15,9 @@ M1 实现状态见 [主机 API](m1-host-api.md)：当前只开放其明确列出
 事件采用宿主在指定 executor 上主动调用 dispatch 的形式，队列有界，关闭不依赖宿主处理积压回调。
 它不创建自动 post 到宿主的后台回调机制；后续 JNI 适配须保持同样的所有权和关闭屏障。
 
+2026-10-27 M4：Android 适配见 [M4 API](m4-android-api.md)。Kotlin 事件泵一次只向宿主 executor 提交一个有界批次，
+关闭包含公共调用/事件查询屏障，失效回调丢弃；provider 与 operation 均使用注册表范围 token。
+
 ## ABI 与所有权
 
 - C ABI 只使用固定宽度整数、带长度的 UTF-8、opaque handle、结构大小/版本及预留字段；不跨边界暴露 C++

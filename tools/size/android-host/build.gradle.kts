@@ -3,7 +3,9 @@ plugins {
 }
 
 val sizeMode = providers.gradleProperty("fetchkit.sizeMode").get()
-require(sizeMode in setOf("bare", "scaffold", "probe", "okhttp"))
+val r8Enabled = providers.gradleProperty("fetchkit.r8").orNull == "true"
+val smokeSign = providers.gradleProperty("fetchkit.smokeSign").orNull == "true"
+require(sizeMode in setOf("bare", "scaffold", "probe", "okhttp", "production"))
 require((providers.gradleProperty("fetchkit.probes").orNull == "true") == (sizeMode in setOf("probe", "okhttp")))
 
 android {
@@ -19,13 +21,25 @@ android {
         ndk { abiFilters += providers.gradleProperty("fetchkit.abis").orNull ?: "arm64-v8a" }
     }
     buildTypes {
-        release { optimization { enable = false } }
+        release {
+            optimization {
+                enable = r8Enabled
+                if (r8Enabled) packageScope = setOf("com.luofelix.**", "okhttp3.**", "okio.**", "androidx.**", "kotlin.**", "kotlinx.**")
+            }
+            if (smokeSign) signingConfig = signingConfigs.getByName("debug")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures { buildConfig = false }
+    if (sizeMode == "production") {
+        sourceSets.getByName("release") {
+            manifest.srcFile("src/modes/production/AndroidManifest.xml")
+            res.srcDir("src/modes/production/res")
+        }
+    }
 }
 
 androidComponents {
@@ -36,5 +50,9 @@ androidComponents {
 }
 
 dependencies {
-    if (sizeMode != "bare") implementation(project(":sdk"))
+    val externalAar = providers.gradleProperty("fetchkit.aar").orNull
+    if (sizeMode != "bare") {
+        if (externalAar == null) implementation(project(":sdk"))
+        else { implementation(files(externalAar)); implementation(libs.okhttp) }
+    }
 }

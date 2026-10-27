@@ -237,6 +237,12 @@ HTTP 缓存协商。
 
 ### M4：Android 正式接入与后台示例
 
+2026-10-27 实施状态：M4-01～M4-05 的 Kotlin/JNI、网络、UI 和宿主 JobScheduler 实现已加入，
+M4-06 增加真实进程终止/强制停止恢复、独立大文件入口、Release 文件 AAR/R8 与体积工具。
+接口与限制见 [Android API](m4-android-api.md)，实测范围与缺测项见 [M4 报告](reports/m4-baseline.md)。
+正式后端使用 M0 已选择的隔离 OkHttp 5.5.1；该依赖现在进入普通 SDK。缺少真机、API 24/目标 API 和 Linux 等证据时，
+阶段门槛不标记为整体验收通过。后台示例使用系统 JobScheduler，不新增 WorkManager 模块。
+
 目标：将已验证核心能力映射至 Android，复用同一批协议场景，验证真实生命周期。
 
 | 编号  | 工作包与具体产物                                                              | 依赖         | 完成依据                                                        |

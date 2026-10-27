@@ -1,5 +1,17 @@
 # Android 接入体积基线
 
+M4 正式下载接入使用独立文件 AAR 宿主，分别比较同工具链、arm64/API24、R8 关闭和开启时的 bare/production：
+
+```powershell
+python tools/size/measure_m4.py --ndk D:/Android/Sdk/ndk/28.2.13676358
+```
+
+测量包括完整 JNI 核心、Kotlin API、OkHttp/Okio/Kotlin/AndroidX 运行依赖；最小 Java 宿主不预装 Kotlin，
+不包含 Compose/WorkManager。静态 STL 已计入 JNI，记录 strip 后导出/NEEDED、双 ABI AAR 与单 ABI APK。
+SDK Native Release 的实际 CMake 配置需单列，不能与 M3 独立 `-Os` 假传输目标混成同一指标。
+`fetchkit.sizeMode=production` 支持 `fetchkit.aar` 文件接入和 `fetchkit.r8=true`；`fetchkit.smokeSign=true`
+只为设备烟测启用本机 debug 签名，不改变正式 AAR，也不进行外部发布。
+
 M3 完整主机核心/ABI 的独立 arm64 测量在同一入口增加 `--include-engine --output build/m3-size-arm64`。
 engine 目标保留 Scheduler、存储、Verifier 和公开 C ABI，使用确定性假传输占位；不包含 Android 网络后端或 JNI 下载桥。
 与 baseline/digest 使用相同导出列表、静态 STL、优化和 strip。该口径与普通 JNI 版本入口、最终 AAR/APK 接入成本分别报告。

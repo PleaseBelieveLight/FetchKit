@@ -8,8 +8,9 @@ changes; keep requirements, examples, and commands equivalent.
 ## Project Structure & Module Organization
 
 FetchKit has an M3 host downloader with bounded scheduling, independent subscriptions, persisted
-retries, quota/LRU/pin/expiry management, verified publication and read leases. Android remains a scaffold.
-Read `README.md`, `docs/v1-design.md`, `docs/m3-host-api.md` and `docs/storage-record-v2.md`
+retries, quota/LRU/pin/expiry management, verified publication and read leases. M4 adds asynchronous
+Kotlin/JNI APIs, isolated OkHttp transport and Compose/JobScheduler examples.
+Read `README.md`, `docs/v1-design.md`, `docs/m3-host-api.md`, `docs/m4-android-api.md` and `docs/storage-record-v2.md`
 before changing scope or architecture.
 
 The root CMake project builds `include/fetchkit/`, `src/core/`, and `examples/cli/`.
@@ -22,8 +23,8 @@ Create storage, cache, transport, and protocol-test directories when implementin
 From the repository root on Windows:
 
 ```powershell
-.\gradlew.bat :sdk:assembleDebug :sample:assembleDebug :sample:testDebugUnitTest
-.\gradlew.bat :sample:connectedDebugAndroidTest
+.\gradlew.bat :sdk:assembleDebug :sdk:testDebugUnitTest :sample:assembleDebug :sample:testDebugUnitTest
+.\gradlew.bat :sample:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.luofelix.fetchkit.sample.SdkIntegrationTest'
 cmake -S . -B build/native-debug -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/native-debug --parallel
 cmake -S . -B build/m0-host -G Ninja -DCMAKE_CXX_COMPILER=g++ -DFETCHKIT_BUILD_TESTS=ON -DFETCHKIT_BUILD_PROBES=ON -DFETCHKIT_WITH_CURL=ON
@@ -46,6 +47,13 @@ is hash-pinned with its MIT license in `third_party/`.
 M3 Linux acceptance uses `tools/ci/linux_m3.sh`. Host protocol tests inspect only their own child
 processes for memory/thread metrics. The event executor is host-pumped through `fetchkit_task_dispatch`;
 do not introduce unbounded queues or call host code under SDK locks.
+M4 production device matrices use `tools/ci/run_m4_android.py` and `tools/ci/run_m4_recovery.py`.
+Reuse an existing device; record API/ABI and distinguish SIGKILL, force-stop, reboot and power loss.
+Use uniquely named `adb reverse --no-rebind` rules and clean up only owned mappings. ADB 33.0.3
+collides multiple `tcp:0` requests in its allow-list. Emulator startup also inherits `http_proxy`;
+use `tools/ci/start_m4_emulator.ps1` for a controlled existing AVD.
+OkHttp 5.5.1 is now a production runtime dependency. Test CA/network exceptions belong only in sample Debug;
+SDK/Release artifacts must exclude probes, fault hooks and test trust anchors. Measure the full file-AAR host.
 
 ## Coding Style & Naming Conventions
 

@@ -2,6 +2,11 @@
 
 日期：2026-10-23。状态：工程骨架已建立，下载、续传和缓存能力待实现。
 
+2026-10-27 M4 进展：异步 Kotlin/JNI、隔离 OkHttp 5.5.1 后端、任务/资源示例与 JobScheduler 适配已加入。
+见 [Android API](m4-android-api.md) 和 [M4 报告](reports/m4-baseline.md)。核心策略仍由 C++ 决定；
+后台示例在 API 34+ 使用 UIDT，低版本使用有限的普通任务，显式绑定获准 Network，不强制依赖 WorkManager。
+API/ABI 真机矩阵、实际 >4 GiB、Linux/sanitizer 和重启/掉电仍须分别提供证据。
+
 2026-10-27 M3 进展：多任务、独立订阅、持久化重试、配额/LRU/pin/过期及读取保护已有主机实现，
 见 [M3 API](m3-host-api.md)、[v2 记录](storage-record-v2.md) 和 [报告](reports/m3-baseline.md)。
 宿主在自己的 executor 上主动分发有界事件；Android 正式接入仍待 M4，Linux/sanitizer 等缺测不由 Windows 代替。

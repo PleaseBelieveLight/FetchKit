@@ -1,5 +1,28 @@
 # FetchKit 主机与平台验证
 
+## M4 正式 Android SDK
+
+普通 SDK 已使用隔离 OkHttp 5.5.1；设备矩阵测试正式 Kotlin/JNI/C++ 链路，不启用 M0 探针。
+
+```powershell
+.\tools\ci\start_m4_emulator.ps1 -SdkRoot D:/Android/Sdk -Avd Small_Phone
+python tools/ci/run_m4_android.py --serial emulator-5554
+python tools/ci/run_m4_recovery.py --serial emulator-5554
+python tools/ci/run_m4_recovery.py --serial <设备序列号> --large-file
+```
+
+启动器只使用已存在的 AVD，不停止已有模拟器，不载入/保存快照，并移除子进程继承的代理变量。
+设备驱动使用唯一且 `--no-rebind` 的 reverse 规则，避免旧 ADB 多个 tcp:0 允许列表覆盖；只回收自己的映射和日志。
+`--device-host` 可显式选取模拟器主机地址作诊断，SDK 不硬编码模拟器地址；不同路由结果分别报告。
+每次校验 run_id、完整 JUnit 结果、服务器请求、凭证去向及真实内容，不能只凭 adb 退出码判定通过。
+
+矩阵覆盖 M1/M3 共享场景、真实 TLS、隐藏重试、取消/回调/关闭、pin/过期/lease、部分恢复、UTF-8 身份和请求头。
+内存专项实际并发 3×256 KiB 与 3×32 MiB 文件，报告 Android PSS，不能与 Windows RSS 混用。
+恢复专项在 committed 屏障后由控制器触发 Process.killProcess 的真实 SIGKILL；另验 am force-stop 后显式重启。
+两者都重新创建 provider 并断言精确 Range/If-Range、SDK DigestVerified 和租约全量 SHA-256。
+可选大文件入口实际跨过 4 GiB 检查点，至少需要 4.8 GiB 可用空间；默认不运行，不用模拟偏移代替。
+API 24/中间/目标 API、arm64 真机、系统停止/网络切换、重启和掉电需要对应记录，见 [M4 报告](../docs/reports/m4-baseline.md)。
+
 ## M3 调度、重试、配额与竞态
 
 参考构建开启 `FETCHKIT_BUILD_TESTS`、`FETCHKIT_BUILD_PROBES`、`FETCHKIT_WITH_CURL`、

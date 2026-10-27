@@ -34,3 +34,10 @@ builds are recommended for this CPU-intensive test. No script installs software 
 M3 uses the same external dependencies and adds no SDK runtime library. Run `bash tools/ci/linux_m3.sh`
 for scheduling/cache acceptance. Retry-After parsing uses bounded ASCII fields and UTC arithmetic;
 it does not change global locale/timezone or add a date/serialization dependency.
+
+M4 makes the previously evaluated OkHttp 5.5.1 client a production Android runtime dependency.
+OkHttp/Okio/Kotlin/AndroidX retain their upstream Apache-2.0 licensing; Maven artifacts supply their
+metadata and consumer rules. No networking JAR is embedded in the AAR. A direct file-AAR consumer
+must also declare the documented OkHttp dependency graph. The SDK does not add WorkManager or Compose.
+`tools/size/measure_m4.py` records the resolved dependencies, complete JNI/AAR/APK cost and R8 comparison.
+Test TLS keys/certificates are synthetic fixtures; only the sample Debug variant trusts the local certificate.

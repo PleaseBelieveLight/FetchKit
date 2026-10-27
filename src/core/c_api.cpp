@@ -1,5 +1,6 @@
 #include "fetchkit/fetchkit.h"
 #include "core/engine.h"
+#include "core/engine_factory.h"
 
 #include <algorithm>
 #include <cstring>
@@ -129,7 +130,10 @@ const char* fetchkit_status_name(fetchkit_status status) noexcept {
     return status < sizeof(names) / sizeof(names[0]) ? names[status] : "UnknownError";
 }
 
-fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetchkit_engine* output) noexcept {
+} // extern "C"
+
+fetchkit_status fetchkit::core::createEngineWithTransport(const fetchkit_engine_config* input, fetchkit_engine* output,
+    std::shared_ptr<transport::HttpTransport> transport) noexcept {
     if (output) *output = 0;
     return boundary([&]() -> fetchkit_status {
         if (!input || !output || input->struct_size < sizeof(*input) || input->allow_http > 1 || input->reserved ||
@@ -159,15 +163,20 @@ fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetc
         config.max_active=input->max_active_downloads;config.max_queued=input->max_queued_tasks;config.max_retries=input->max_retries;
         config.retry_base_ms=input->retry_base_delay_ms;config.retry_max_ms=input->retry_max_delay_ms;config.random_seed=input->retry_random_seed;
 #ifdef FETCHKIT_WITH_CURL
-        auto engine = std::make_shared<Engine>(config, std::make_shared<transport::CurlTransport>());
+        if(!transport) transport=std::make_shared<transport::CurlTransport>();
+#endif
+        if(!transport) return FETCHKIT_NOT_SUPPORTED;
+        auto engine = std::make_shared<Engine>(config, std::move(transport));
         const auto id = registry().allocate();
         { std::lock_guard<std::mutex> lock(registry().mutex); registry().engines.emplace(id, std::move(engine)); }
         *output = id;
         return FETCHKIT_OK;
-#else
-        return FETCHKIT_NOT_SUPPORTED;
-#endif
     });
+}
+
+extern "C" {
+fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetchkit_engine* output) noexcept {
+    return fetchkit::core::createEngineWithTransport(input,output,{});
 }
 
 fetchkit_status fetchkit_engine_close(fetchkit_engine id) noexcept {

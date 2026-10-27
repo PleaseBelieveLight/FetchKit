@@ -61,5 +61,6 @@ androidComponents {
 }
 
 dependencies {
-    if (platformProbe && probeBackend == "okhttp") implementation(libs.okhttp)
+    implementation(libs.okhttp)
+    testImplementation(libs.junit)
 }
