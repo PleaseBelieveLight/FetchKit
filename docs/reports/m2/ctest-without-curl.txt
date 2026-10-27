@@ -1,0 +1,16 @@
+Test project D:/work-path/android/fetchkit/build/m2-no-curl
+    Start 1: c_api
+1/4 Test #1: c_api ............................   Passed    0.18 sec
+    Start 2: download_session
+2/4 Test #2: download_session .................   Passed   15.20 sec
+    Start 3: storage
+3/4 Test #3: storage ..........................   Passed    0.94 sec
+    Start 4: core_version
+4/4 Test #4: core_version .....................   Passed    0.27 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Label Time Summary:
+unit    =  16.60 sec*proc (4 tests)
+
+Total Test time (real) =  16.64 sec

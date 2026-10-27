@@ -36,6 +36,8 @@ struct DownloadRequest {
     std::string resource_namespace, resource_key, version, representation_key, reference;
     RequestData request;
     std::optional<std::uint64_t> expected_length;
+    std::string expected_sha256;
+    bool require_digest = false;
     std::function<void(const ProviderContext&, RequestData&, transport::Cancellation&)> provider;
 };
 
@@ -45,6 +47,8 @@ struct EngineConfig {
     std::uint32_t connect_timeout_ms = 5000, read_timeout_ms = 15000, provider_timeout_ms = 10000;
     std::uint32_t max_redirects = 5, max_requests = 4096;
     bool allow_http = false;
+    std::uint64_t checkpoint_bytes = 4ULL * 1024 * 1024;
+    std::uint32_t checkpoint_interval_ms = 1000;
 };
 
 inline bool protectedHeader(const std::string& name) {
@@ -67,7 +71,7 @@ inline void validateHeaders(const std::vector<transport::Header>& headers) {
 
 inline bool stoppedState(std::uint32_t state) {
     return state == FETCHKIT_PAUSED || state == FETCHKIT_TRANSFER_COMPLETE ||
-        state == FETCHKIT_FAILED || state == FETCHKIT_TASK_CANCELLED;
+        state == FETCHKIT_FAILED || state == FETCHKIT_TASK_CANCELLED || state == FETCHKIT_COMPLETED;
 }
 
 }

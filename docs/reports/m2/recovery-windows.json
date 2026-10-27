@@ -1,0 +1,475 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "process_termination_only": true,
+  "reboot_tested": false,
+  "power_loss_tested": false,
+  "cases": [
+    {
+      "id": "digest-verified",
+      "passed": true,
+      "integrity": 2,
+      "seconds": 2.735
+    },
+    {
+      "id": "transport-complete",
+      "passed": true,
+      "integrity": 1,
+      "seconds": 1.172
+    },
+    {
+      "id": "empty-digest",
+      "passed": true,
+      "bytes": 0,
+      "seconds": 0.703
+    },
+    {
+      "id": "require-digest-missing",
+      "passed": true,
+      "seconds": 0.047
+    },
+    {
+      "id": "invalid-digest",
+      "passed": true,
+      "seconds": 0.031
+    },
+    {
+      "id": "digest-mismatch",
+      "passed": true,
+      "seconds": 1.406
+    },
+    {
+      "id": "pause-attach-resume",
+      "passed": true,
+      "committed": 16384,
+      "seconds": 2.828
+    },
+    {
+      "id": "close-attach-resume",
+      "passed": true,
+      "committed": 16384,
+      "seconds": 4.891
+    },
+    {
+      "id": "kill-data_write_before",
+      "passed": true,
+      "fault": "data_write_before",
+      "occurrence": 1,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 3.937
+    },
+    {
+      "id": "kill-data_write_after",
+      "passed": true,
+      "fault": "data_write_after",
+      "occurrence": 1,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 5.125
+    },
+    {
+      "id": "kill-checkpoint_data_sync_before",
+      "passed": true,
+      "fault": "checkpoint_data_sync_before",
+      "occurrence": 1,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 4.907
+    },
+    {
+      "id": "kill-checkpoint_data_sync_after",
+      "passed": true,
+      "fault": "checkpoint_data_sync_after",
+      "occurrence": 1,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 4.968
+    },
+    {
+      "id": "kill-checkpoint_commit_after",
+      "passed": true,
+      "fault": "checkpoint_commit_after",
+      "occurrence": 1,
+      "committed_before_scan": 65536,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 4.703
+    },
+    {
+      "id": "kill-verify_before",
+      "passed": true,
+      "fault": "verify_before",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 7.219
+    },
+    {
+      "id": "kill-verify_after",
+      "passed": true,
+      "fault": "verify_after",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 5.531
+    },
+    {
+      "id": "kill-publishing_commit_after",
+      "passed": true,
+      "fault": "publishing_commit_after",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 9,
+      "integrity": 2,
+      "seconds": 2.563
+    },
+    {
+      "id": "kill-object_rename_before",
+      "passed": true,
+      "fault": "object_rename_before",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 9,
+      "integrity": 2,
+      "seconds": 2.312
+    },
+    {
+      "id": "kill-object_rename_after",
+      "passed": true,
+      "fault": "object_rename_after",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 9,
+      "integrity": 2,
+      "seconds": 2.297
+    },
+    {
+      "id": "kill-object_directory_sync_before",
+      "passed": true,
+      "fault": "object_directory_sync_before",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 9,
+      "integrity": 2,
+      "seconds": 2.407
+    },
+    {
+      "id": "kill-object_directory_sync_after",
+      "passed": true,
+      "fault": "object_directory_sync_after",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 9,
+      "integrity": 2,
+      "seconds": 3.203
+    },
+    {
+      "id": "kill-completed_commit_after",
+      "passed": true,
+      "fault": "completed_commit_after",
+      "occurrence": 1,
+      "committed_before_scan": 262144,
+      "recovered_state": 9,
+      "integrity": 2,
+      "seconds": 4.156
+    },
+    {
+      "id": "kill-record_write_before",
+      "passed": true,
+      "fault": "record_write_before",
+      "occurrence": 3,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 3.953
+    },
+    {
+      "id": "kill-record_partial_write_after",
+      "passed": true,
+      "fault": "record_partial_write_after",
+      "occurrence": 3,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 4.063
+    },
+    {
+      "id": "kill-record_sync_before",
+      "passed": true,
+      "fault": "record_sync_before",
+      "occurrence": 3,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 5.328
+    },
+    {
+      "id": "kill-record_sync_after",
+      "passed": true,
+      "fault": "record_sync_after",
+      "occurrence": 3,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 2.937
+    },
+    {
+      "id": "kill-record_replace_before",
+      "passed": true,
+      "fault": "record_replace_before",
+      "occurrence": 3,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 2.625
+    },
+    {
+      "id": "kill-record_replace_after",
+      "passed": true,
+      "fault": "record_replace_after",
+      "occurrence": 3,
+      "committed_before_scan": 65536,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 3.078
+    },
+    {
+      "id": "kill-record_directory_sync_before",
+      "passed": true,
+      "fault": "record_directory_sync_before",
+      "occurrence": 3,
+      "committed_before_scan": 65536,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 2.235
+    },
+    {
+      "id": "kill-record_directory_sync_after",
+      "passed": true,
+      "fault": "record_directory_sync_after",
+      "occurrence": 3,
+      "committed_before_scan": 65536,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 4.906
+    },
+    {
+      "id": "time-checkpoint",
+      "passed": true,
+      "fault": "checkpoint_commit_after",
+      "occurrence": 1,
+      "committed_before_scan": 24576,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 3.781
+    },
+    {
+      "id": "publishing-part-corrupt",
+      "passed": true,
+      "fault": "publishing_commit_after",
+      "recovered_state": 4,
+      "seconds": 4.36
+    },
+    {
+      "id": "publishing-object-corrupt",
+      "passed": true,
+      "fault": "object_rename_after",
+      "recovered_state": 4,
+      "seconds": 4.203
+    },
+    {
+      "id": "kill-reset-before-truncate",
+      "passed": true,
+      "fault": "reset_commit_after",
+      "occurrence": 1,
+      "committed_before_scan": 0,
+      "recovered_state": 2,
+      "integrity": 2,
+      "seconds": 4.281
+    },
+    {
+      "id": "kill-cancel-before-cleanup",
+      "passed": true,
+      "fault": "cancel_commit_after",
+      "recovered_state": 5,
+      "seconds": 0.75
+    },
+    {
+      "id": "longer-than-committed",
+      "passed": true,
+      "seconds": 1.844
+    },
+    {
+      "id": "shorter-than-committed",
+      "passed": true,
+      "seconds": 2.031
+    },
+    {
+      "id": "weak-etag-restart",
+      "passed": true,
+      "discarded_prefix": 32768,
+      "seconds": 1.687
+    },
+    {
+      "id": "missing-etag-restart",
+      "passed": true,
+      "discarded_prefix": 40960,
+      "seconds": 1.907
+    },
+    {
+      "id": "record-crc",
+      "passed": true,
+      "seconds": 5.718
+    },
+    {
+      "id": "record-future",
+      "passed": true,
+      "seconds": 4.625
+    },
+    {
+      "id": "record-truncated",
+      "passed": true,
+      "seconds": 2.735
+    },
+    {
+      "id": "record-oversized",
+      "passed": true,
+      "seconds": 2.609
+    },
+    {
+      "id": "record-overflow",
+      "passed": true,
+      "seconds": 1.969
+    },
+    {
+      "id": "record-bad-state",
+      "passed": true,
+      "seconds": 2.266
+    },
+    {
+      "id": "record-duplicate",
+      "passed": true,
+      "seconds": 2.515
+    },
+    {
+      "id": "record-required",
+      "passed": true,
+      "seconds": 2.0
+    },
+    {
+      "id": "record-utf8",
+      "passed": true,
+      "seconds": 2.172
+    },
+    {
+      "id": "record-identity",
+      "passed": true,
+      "seconds": 2.063
+    },
+    {
+      "id": "future-record-without-data",
+      "passed": true,
+      "seconds": 0.64
+    },
+    {
+      "id": "unknown-optional-field",
+      "passed": true,
+      "seconds": 3.125
+    },
+    {
+      "id": "orphan-retention-and-path-identity",
+      "passed": true,
+      "seconds": 2.422
+    },
+    {
+      "id": "recovered-constraint-conflict",
+      "passed": true,
+      "seconds": 4.328
+    },
+    {
+      "id": "completed-missing",
+      "passed": true,
+      "seconds": 4.344
+    },
+    {
+      "id": "completed-length-corrupt",
+      "passed": true,
+      "seconds": 4.031
+    },
+    {
+      "id": "completed-same-length-corrupt",
+      "passed": true,
+      "seconds": 4.516
+    },
+    {
+      "id": "failure-data_write_before-disk_full",
+      "passed": true,
+      "error": "DiskFull",
+      "committed": 0,
+      "seconds": 2.14
+    },
+    {
+      "id": "failure-data_write_before-permission",
+      "passed": true,
+      "error": "PermissionDenied",
+      "committed": 0,
+      "seconds": 1.219
+    },
+    {
+      "id": "failure-checkpoint_data_sync_before-io",
+      "passed": true,
+      "error": "IoError",
+      "committed": 0,
+      "seconds": 1.328
+    },
+    {
+      "id": "failure-record_sync_before-io",
+      "passed": true,
+      "error": "IoError",
+      "committed": 0,
+      "seconds": 1.11
+    },
+    {
+      "id": "failure-record_directory_sync_before-io",
+      "passed": true,
+      "error": "IoError",
+      "committed": 0,
+      "seconds": 1.125
+    },
+    {
+      "id": "failure-object_rename_before-io",
+      "passed": true,
+      "error": "IoError",
+      "committed": 262144,
+      "seconds": 3.422
+    },
+    {
+      "id": "seven-byte-short-writes",
+      "passed": true,
+      "seconds": 3.203
+    },
+    {
+      "id": "cancel-tombstone",
+      "passed": true,
+      "seconds": 1.218
+    },
+    {
+      "id": "cancel-during-verification",
+      "passed": true,
+      "seconds": 1.938
+    },
+    {
+      "id": "pause-during-verification",
+      "passed": true,
+      "seconds": 6.781
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

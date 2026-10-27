@@ -1,0 +1,27 @@
+Test project D:/work-path/android/fetchkit/build/m2-host
+    Start 1: fixture_server
+1/8 Test #1: fixture_server ...................   Passed    1.00 sec
+    Start 2: c_api
+2/8 Test #2: c_api ............................   Passed    1.03 sec
+    Start 3: download_session
+3/8 Test #3: download_session .................   Passed    7.99 sec
+    Start 4: storage
+4/8 Test #4: storage ..........................   Passed    0.58 sec
+    Start 5: download_protocol
+5/8 Test #5: download_protocol ................   Passed   58.82 sec
+    Start 6: download_recovery
+6/8 Test #6: download_recovery ................   Passed  197.73 sec
+    Start 7: core_version
+7/8 Test #7: core_version .....................   Passed    0.37 sec
+    Start 8: curl_contract
+8/8 Test #8: curl_contract ....................   Passed   23.58 sec
+
+100% tests passed, 0 tests failed out of 8
+
+Label Time Summary:
+contract    =  23.58 sec*proc (1 test)
+protocol    =  58.82 sec*proc (1 test)
+recovery    = 197.73 sec*proc (1 test)
+unit        =  10.97 sec*proc (5 tests)
+
+Total Test time (real) = 291.13 sec

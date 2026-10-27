@@ -20,6 +20,7 @@ struct Registry {
     std::uint64_t next_id = 1;
     std::unordered_map<std::uint64_t, std::shared_ptr<Engine>> engines;
     std::unordered_map<std::uint64_t, std::shared_ptr<Task>> tasks;
+    std::unordered_map<std::uint64_t, std::shared_ptr<storage::ResourceLease>> leases;
     std::uint64_t allocate() {
         std::lock_guard<std::mutex> lock(mutex);
         if (next_id == UINT64_MAX) throw Failure(FETCHKIT_BUSY);
@@ -31,6 +32,11 @@ Registry& registry() { static Registry value; return value; }
 template<class F> fetchkit_status boundary(F function) noexcept {
     try { return function(); }
     catch (const Failure& error) { return error.code; }
+    catch (const std::filesystem::filesystem_error& error) {
+        if(error.code()==std::errc::permission_denied || error.code()==std::errc::operation_not_permitted) return FETCHKIT_PERMISSION_DENIED;
+        if(error.code()==std::errc::no_space_on_device) return FETCHKIT_DISK_FULL;
+        return FETCHKIT_IO_ERROR;
+    }
     catch (const std::bad_alloc&) { return FETCHKIT_OUT_OF_MEMORY; }
     catch (...) { return FETCHKIT_INTERNAL_ERROR; }
 }
@@ -105,6 +111,8 @@ void fetchkit_engine_config_init(fetchkit_engine_config* config) noexcept {
     config->provider_timeout_ms = 10000;
     config->max_redirects = 5;
     config->max_requests = 4096;
+    config->checkpoint_bytes=4ULL*1024*1024;
+    config->checkpoint_interval_ms=1000;
 }
 
 void fetchkit_download_request_init(fetchkit_download_request* request) noexcept {
@@ -116,7 +124,7 @@ void fetchkit_download_request_init(fetchkit_download_request* request) noexcept
 const char* fetchkit_status_name(fetchkit_status status) noexcept {
     static const char* names[] = {"Ok", "InvalidArgument", "NotSupported", "Closed", "Busy", "Network", "Timeout",
         "HttpStatus", "AuthRequired", "ProtocolMismatch", "IntegrityMismatch", "DiskFull", "PermissionDenied", "IoError",
-        "Cancelled", "QuotaExceeded", "OutOfMemory", "InternalError", "CertificateError"};
+        "Cancelled", "QuotaExceeded", "OutOfMemory", "InternalError", "CertificateError", "NotFound", "UnsupportedMetadata"};
     return status < sizeof(names) / sizeof(names[0]) ? names[status] : "UnknownError";
 }
 
@@ -127,7 +135,9 @@ fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetc
             input->max_download_bytes == 0 || input->max_download_bytes > static_cast<std::uint64_t>(INT64_MAX) ||
             !input->connect_timeout_ms || !input->read_timeout_ms || !input->provider_timeout_ms ||
             input->connect_timeout_ms > 300000 || input->read_timeout_ms > 300000 || input->provider_timeout_ms > 60000 ||
-            input->max_redirects > 32 || !input->max_requests || input->max_requests > 65536) return FETCHKIT_INVALID_ARGUMENT;
+            input->max_redirects > 32 || !input->max_requests || input->max_requests > 65536 || input->reserved2 ||
+            !input->checkpoint_bytes || input->checkpoint_bytes>static_cast<std::uint64_t>(INT64_MAX) ||
+            !input->checkpoint_interval_ms || input->checkpoint_interval_ms>300000) return FETCHKIT_INVALID_ARGUMENT;
         EngineConfig config;
         config.root = text(input->storage_root, 3500, true);
         config.ca_bundle = text(input->ca_bundle, 3500);
@@ -138,6 +148,8 @@ fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetc
         config.provider_timeout_ms = input->provider_timeout_ms;
         config.max_redirects = input->max_redirects;
         config.max_requests = input->max_requests;
+        config.checkpoint_bytes=input->checkpoint_bytes;
+        config.checkpoint_interval_ms=input->checkpoint_interval_ms;
 #ifdef FETCHKIT_WITH_CURL
         auto engine = std::make_shared<Engine>(config, std::make_shared<transport::CurlTransport>());
         const auto id = registry().allocate();
@@ -159,12 +171,12 @@ fetchkit_status fetchkit_engine_close(fetchkit_engine id) noexcept {
     });
 }
 
-fetchkit_status fetchkit_enqueue(fetchkit_engine id, const fetchkit_download_request* input, fetchkit_task* output) noexcept {
+static fetchkit_status enqueueInternal(fetchkit_engine id, const fetchkit_download_request* input, fetchkit_task* output, bool start) noexcept {
     if (output) *output = 0;
     return boundary([&]() -> fetchkit_status {
         if (!input || !output || input->struct_size < sizeof(*input) || input->expected_length_known > 1 || input->reserved ||
             input->header_count > 64 || (input->header_count && !input->headers) ||
-            input->expected_length > static_cast<std::uint64_t>(INT64_MAX)) return FETCHKIT_INVALID_ARGUMENT;
+            input->expected_length > static_cast<std::uint64_t>(INT64_MAX) || input->reserved2 || input->require_digest>1) return FETCHKIT_INVALID_ARGUMENT;
         auto engine = engineFor(id);
         DownloadRequest request;
         request.resource_namespace = text(input->resource_namespace, 256, true);
@@ -172,7 +184,12 @@ fetchkit_status fetchkit_enqueue(fetchkit_engine id, const fetchkit_download_req
         request.version = text(input->version, 256, true);
         request.representation_key = text(input->representation_key, 1024);
         request.reference = text(input->address_reference, 2048);
-        request.request.url = text(input->url, 16384, !input->provider);
+        request.request.url = text(input->url, 16384, start && !input->provider);
+        request.expected_sha256=transport::lowerAscii(text(input->expected_sha256,64));
+        request.require_digest=input->require_digest!=0;
+        if ((!request.expected_sha256.empty() && (request.expected_sha256.size()!=64 ||
+            request.expected_sha256.find_first_not_of("0123456789abcdef")!=std::string::npos)) ||
+            (request.require_digest && request.expected_sha256.empty())) return FETCHKIT_INVALID_ARGUMENT;
         if (input->expected_length_known) request.expected_length = input->expected_length;
         for (std::uint32_t i = 0; i < input->header_count; ++i) {
             request.request.headers.push_back({text(input->headers[i].name, 256, true), text(input->headers[i].value, 8192)});
@@ -197,11 +214,79 @@ fetchkit_status fetchkit_enqueue(fetchkit_engine id, const fetchkit_download_req
         try {
             engine->enqueue(std::move(request), task_id, [&](const std::shared_ptr<Task>& task) {
                 std::lock_guard<std::mutex> lock(registry().mutex); registry().tasks.at(task_id) = task;
-            });
+            },start);
         } catch (...) {
             std::lock_guard<std::mutex> lock(registry().mutex); registry().tasks.erase(task_id); throw;
         }
         *output = task_id;
+        return FETCHKIT_OK;
+    });
+}
+
+fetchkit_status fetchkit_enqueue(fetchkit_engine id,const fetchkit_download_request* input,fetchkit_task* output) noexcept {
+    return enqueueInternal(id,input,output,true);
+}
+fetchkit_status fetchkit_attach(fetchkit_engine id,const fetchkit_download_request* input,fetchkit_task* output) noexcept {
+    return enqueueInternal(id,input,output,false);
+}
+fetchkit_status fetchkit_list_tasks(fetchkit_engine id,std::uint32_t offset,fetchkit_task_info* items,std::uint32_t capacity,std::uint32_t* count) noexcept {
+    if (count) *count=0;
+    return boundary([&]() -> fetchkit_status {
+        if (!count || !items || !capacity || capacity>100) return FETCHKIT_INVALID_ARGUMENT;
+        for (std::uint32_t i=0;i<capacity;++i) if (items[i].struct_size<sizeof(fetchkit_task_info)) return FETCHKIT_INVALID_ARGUMENT;
+        const auto store=engineFor(id)->storage();
+        const auto records=store->list(offset,capacity);
+        for (std::size_t i=0;i<records.size();++i) {
+            const auto& r=records[i]; auto& item=items[i]; item={}; item.struct_size=sizeof(item);
+            auto& s=item.snapshot; s.struct_size=sizeof(s); s.state=r.state; s.generation=r.generation;
+            s.received_bytes=s.committed_offset=r.committed; s.total_known=r.total.has_value(); s.total_bytes=r.total.value_or(0);
+            s.integrity=r.integrity; s.error=r.error;
+            s.can_resume=r.state==FETCHKIT_PAUSED || (r.state==FETCHKIT_FAILED && (r.error==FETCHKIT_NETWORK || r.error==FETCHKIT_TIMEOUT));
+            auto copy=[](auto& out,const std::string& value) { std::memcpy(out,value.c_str(),value.size()+1); };
+            copy(s.persistent_id,r.id); copy(item.resource_namespace,r.request.resource_namespace);
+            copy(item.resource_key,r.request.resource_key); copy(item.version,r.request.version);
+            copy(item.representation_key,r.request.representation_key); copy(item.address_reference,r.request.reference);
+        }
+        *count=static_cast<std::uint32_t>(records.size()); return FETCHKIT_OK;
+    });
+}
+fetchkit_status fetchkit_engine_storage_stats(fetchkit_engine id,fetchkit_storage_stats* output) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        if (!output || output->struct_size<sizeof(*output)) return FETCHKIT_INVALID_ARGUMENT;
+        *output=engineFor(id)->storage()->stats(); return FETCHKIT_OK;
+    });
+}
+fetchkit_status fetchkit_resource_acquire(fetchkit_engine id,fetchkit_string input,fetchkit_lease* output) noexcept {
+    if(output) *output=0;
+    return boundary([&]() -> fetchkit_status {
+        if(!output) return FETCHKIT_INVALID_ARGUMENT;
+        const auto resource_id=text(input,64,true);
+        if(!storage::validId(resource_id)) return FETCHKIT_INVALID_ARGUMENT;
+        const auto store=engineFor(id)->storage(); const auto record=store->find(resource_id);
+        if(!record) return FETCHKIT_NOT_FOUND;
+        store->checkObject(*record);
+        auto lease=std::make_shared<storage::ResourceLease>(store,*record);
+        const auto token=registry().allocate();
+        {std::lock_guard<std::mutex> lock(registry().mutex);registry().leases.emplace(token,std::move(lease));}
+        *output=token;return FETCHKIT_OK;
+    });
+}
+fetchkit_status fetchkit_resource_read(fetchkit_lease id,std::uint64_t offset,void* buffer,std::uint32_t capacity,std::uint32_t* count) noexcept {
+    if(count) *count=0;
+    return boundary([&]() -> fetchkit_status {
+        if(!count || (capacity && !buffer) || offset>INT64_MAX) return FETCHKIT_INVALID_ARGUMENT;
+        std::shared_ptr<storage::ResourceLease> lease;
+        {std::lock_guard<std::mutex> lock(registry().mutex);const auto it=registry().leases.find(id);
+         if(it==registry().leases.end()) return FETCHKIT_CLOSED;lease=it->second;}
+        if(capacity) *count=lease->read(offset,static_cast<std::uint8_t*>(buffer),capacity);
+        return FETCHKIT_OK;
+    });
+}
+fetchkit_status fetchkit_resource_release(fetchkit_lease id) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        std::shared_ptr<storage::ResourceLease> lease;
+        {std::lock_guard<std::mutex> lock(registry().mutex);const auto it=registry().leases.find(id);
+         if(it==registry().leases.end()) return FETCHKIT_CLOSED;lease=std::move(it->second);registry().leases.erase(it);}
         return FETCHKIT_OK;
     });
 }

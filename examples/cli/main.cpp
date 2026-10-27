@@ -24,11 +24,11 @@ std::uint64_t number(const std::string& value) {
 
 bool stopped(const fetchkit_task_snapshot& snapshot) {
     return snapshot.state == FETCHKIT_PAUSED || snapshot.state == FETCHKIT_TRANSFER_COMPLETE ||
-        snapshot.state == FETCHKIT_FAILED || snapshot.state == FETCHKIT_TASK_CANCELLED;
+        snapshot.state == FETCHKIT_FAILED || snapshot.state == FETCHKIT_TASK_CANCELLED || snapshot.state == FETCHKIT_COMPLETED;
 }
 
 int exitCode(const fetchkit_task_snapshot& snapshot) {
-    if (snapshot.state == FETCHKIT_TRANSFER_COMPLETE) return 0;
+    if (snapshot.state == FETCHKIT_COMPLETED) return 0;
     switch (snapshot.error) {
         case FETCHKIT_NETWORK: case FETCHKIT_TIMEOUT: case FETCHKIT_CERTIFICATE_ERROR: return 3;
         case FETCHKIT_HTTP_STATUS: case FETCHKIT_AUTH_REQUIRED: return 4;
@@ -56,12 +56,13 @@ int main(int argc, char** argv) {
     if (argc < 2 || (std::string(argv[1]) != "download" && std::string(argv[1]) != "shell")) {
         std::cerr << "Usage: fetchkit_cli --version | download URL --root DIR [--allow-http] [--expected-length N]\n"
             "       fetchkit_cli shell --root DIR [--allow-http]\n"
-            "M1 stages .part files only; no published resources or cross-process resume.\n";
+            "M2 resumes persisted identities and publishes only after required verification.\n";
         return argc == 1 ? 0 : 2;
     }
     try {
         const bool shell = std::string(argv[1]) == "shell";
-        std::string url, root, ca_bundle, key = "resource";
+        std::string url, root, ca_bundle, sha256, key = "resource";
+        bool require_digest=false;
         std::uint64_t pause_after = 0;
         fetchkit_engine_config config{};
         fetchkit_engine_config_init(&config);
@@ -72,6 +73,7 @@ int main(int argc, char** argv) {
         while (index < argc) {
             const std::string option = argv[index++];
             if (option == "--allow-http") { config.allow_http = 1; continue; }
+            if (option == "--require-digest") { require_digest=true; continue; }
             if (index >= argc) return 2;
             const std::string value = argv[index++];
             if (option == "--root") root = value;
@@ -80,6 +82,7 @@ int main(int argc, char** argv) {
             else if (option == "--max-bytes") config.max_download_bytes = number(value);
             else if (option == "--expected-length") expected = number(value);
             else if (option == "--pause-after") pause_after = number(value);
+            else if (option == "--sha256") sha256=value;
             else return 2;
         }
         if (root.empty()) return 2;
@@ -95,10 +98,19 @@ int main(int argc, char** argv) {
                 if (command.empty()) continue;
                 if (command == "quit") break;
                 try {
-                    if (command == "enqueue") {
+                    if (command == "list") {
+                        std::uint32_t offset=0; input>>offset;
+                        fetchkit_task_info items[10]{}; for(auto& item:items) item.struct_size=sizeof(item);
+                        std::uint32_t count=0;
+                        fetchkit::checkStatus(fetchkit_list_tasks(engine.nativeHandle(),offset,items,10,&count));
+                        std::cout<<"{\"items\":[";
+                        for(std::uint32_t i=0;i<count;++i) { if(i) std::cout<<',';printSnapshot(std::cout,items[i].snapshot); }
+                        std::cout<<"],\"count\":"<<count<<"}\n";
+                    } else if (command == "enqueue" || command=="attach") {
                         std::string task_key, address;
                         if (!(input >> std::quoted(task_key) >> std::quoted(address))) throw std::runtime_error("InvalidArgument");
-                        auto task = engine.enqueue(requestFor(address, task_key));
+                        const auto request=requestFor(address,task_key);
+                        auto task = command=="enqueue" ? engine.enqueue(request) : engine.attach(request);
                         const auto id = task.query().task_id;
                         tasks.emplace(id, std::move(task));
                         std::cout << "{\"accepted\":" << id << "}\n";
@@ -119,6 +131,7 @@ int main(int argc, char** argv) {
             return 0;
         }
         auto request = requestFor(url, key);
+        request.expected_sha256=fetchkit::stringView(sha256);request.require_digest=require_digest;
         if (expected) { request.expected_length_known = 1; request.expected_length = *expected; }
         auto task = engine.enqueue(request);
         std::signal(SIGINT, interrupt);

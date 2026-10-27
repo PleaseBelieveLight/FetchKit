@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/okdshin/PicoSHA2",
+  "commit": "161cb3fc4170fa7a3eca9e582cebd27cc4d1fe29",
+  "license": "MIT",
+  "files": {
+    "picosha2/picosha2.h": "b13c180161ffac8d0adc81e033e493c409457c4d1258ab9781ac80579ba3bdd8",
+    "licenses/picosha2.txt": "6c30eb1f37554ec4199cb82a8c86d9e7a852da78a757832bebb03ac9ddc44ff1"
+  }
+}

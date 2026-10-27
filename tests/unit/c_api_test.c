@@ -25,6 +25,20 @@ int main(int argc, char** argv) {
     CHECK(fetchkit_enqueue(engine, &request, &task) == FETCHKIT_INVALID_ARGUMENT && task == 0);
     request.url = view("http://localhost/file");
     CHECK(fetchkit_enqueue(engine, &request, &task) == FETCHKIT_INVALID_ARGUMENT);
+    request.url = view("https://localhost/file"); request.require_digest = 1;
+    CHECK(fetchkit_enqueue(engine, &request, &task) == FETCHKIT_INVALID_ARGUMENT);
+    request.expected_sha256 = view("bad");
+    CHECK(fetchkit_enqueue(engine, &request, &task) == FETCHKIT_INVALID_ARGUMENT);
+    {
+        uint32_t count = 9;
+        fetchkit_lease lease = 9;
+        fetchkit_task_info item = {0}; item.struct_size = sizeof(item);
+        CHECK(fetchkit_list_tasks(engine, 0, &item, 101, &count) == FETCHKIT_INVALID_ARGUMENT && count == 0);
+        CHECK(fetchkit_resource_acquire(engine, view("../escape"), &lease) == FETCHKIT_INVALID_ARGUMENT && lease == 0);
+        CHECK(fetchkit_resource_read(UINT64_MAX, 0, NULL, 1, &count) == FETCHKIT_INVALID_ARGUMENT && count == 0);
+        CHECK(fetchkit_resource_read(UINT64_MAX, 0, NULL, 0, &count) == FETCHKIT_CLOSED);
+        CHECK(fetchkit_resource_release(UINT64_MAX) == FETCHKIT_CLOSED);
+    }
     CHECK(fetchkit_engine_close(engine) == FETCHKIT_OK);
     CHECK(fetchkit_engine_close(engine) == FETCHKIT_CLOSED);
     CHECK(fetchkit_engine_create(&config, &engine) == FETCHKIT_OK);

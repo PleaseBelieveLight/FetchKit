@@ -7,9 +7,10 @@ changes; keep requirements, examples, and commands equivalent.
 
 ## Project Structure & Module Organization
 
-FetchKit has an M1 host staging downloader and an Android scaffold. Persistent recovery, publication,
-scheduling and caching remain unimplemented. Read `README.md`, `docs/v1-design.md` and
-`docs/m1-host-api.md` before changing scope or architecture.
+FetchKit has an M2 host downloader with persistent checkpoints, SHA-256 verification, publication
+and read leases, plus an Android scaffold. Scheduling, quotas and caching remain unimplemented.
+Read `README.md`, `docs/v1-design.md`, `docs/m2-storage.md` and `docs/storage-record-v1.md`
+before changing scope or architecture.
 
 The root CMake project builds `include/fetchkit/`, `src/core/`, and `examples/cli/`.
 Root Gradle settings map `:sdk` to `platform/android/sdk/` and `:sample` to
@@ -37,6 +38,11 @@ See `tests/README.md` for opt-in Android probes and `tools/size/README.md` for s
 M1 reference builds can enable `FETCHKIT_USE_PINNED_CURL`; `tools/ci/linux_m1.sh` runs the Linux
 acceptance entry. Actual >4 GiB tests require `FETCHKIT_BUILD_LARGE_FILE_TESTS=ON` and the
 `large_file` label. Never substitute Windows evidence for Linux acceptance.
+M2 recovery tests also require `FETCHKIT_ENABLE_FAULT_INJECTION=ON` in a host test build;
+ordinary SDK builds must keep it off. `tools/ci/linux_m2.sh` includes recovery; use separate
+`FETCHKIT_SANITIZERS=address,undefined` and `FETCHKIT_SANITIZERS=thread` runs on Linux.
+Host builds require zlib development files; Android uses the system libz. Vendored PicoSHA2
+is hash-pinned with its MIT license in `third_party/`.
 
 ## Coding Style & Naming Conventions
 
@@ -57,7 +63,8 @@ documents when architecture changes.
 
 Android uses JUnit4. Sample instrumentation verifies application identity and SDK JNI loading.
 CTest registers the fixture-server, pure C ABI, fake-transport session, version, real protocol and
-optional curl contract/large-file tests. No third-party C++ test framework or coverage threshold is configured. Protocol tests should
+storage golden/SHA vectors, deterministic subprocess recovery, and optional curl contract/large-file tests.
+No third-party C++ test framework or coverage threshold is configured. Protocol tests should
 use filenames such as `resume_test.cpp` and the controllable local HTTP server.
 
 Keep M0 experiment sources and dependencies out of ordinary SDK builds. Android probes are enabled
@@ -68,6 +75,8 @@ Cover ignored Range requests, invalid
 206/416 responses, resource changes, interrupted checkpoints, checksum failures, disk exhaustion,
 and cancellation races. Follow the acceptance checklist in `docs/v1-design.md`; distinguish process
 termination tests from reboot tests.
+Only Completed objects may be acquired. Do not restore callbacks/credentials from records or
+advance committed offsets before data and record synchronization. Retain unknown-version data.
 
 ## Commit & Pull Request Guidelines
 

@@ -1,5 +1,26 @@
 # FetchKit 主机与平台验证
 
+## M2 恢复与校验
+
+主机配置增加 `-DFETCHKIT_ENABLE_FAULT_INJECTION=ON -DFETCHKIT_BUILD_TESTS=ON`，然后执行
+`ctest --test-dir build/m2-host --output-on-failure -LE large_file`。本地 HTTP/HTTPS 测试需要回环套接字许可。
+故障注入仅允许主机测试构建；普通 SDK/Android 构建不得开启。恢复驱动在已命名的确定性屏障输出标记，
+父进程确认后 kill，再启动全新进程；不能用随机 sleep 代替屏障，也不能称为重启/掉电测试。
+
+`storage` 检查标准 SHA-256 向量、独立编码的记录黄金样本、损坏/版本和 64 位文件偏移；
+`download_recovery` 覆盖检查点/记录替换/校验/发布窗口、前缀截断、坏记录隔离、未知字段、摘要失败、
+短写/磁盘/同步/权限注入、只读租约及校验期间的控制。原协议集合改为验证 Completed 与 TransportComplete 完整性结果。
+
+开启 `FETCHKIT_BUILD_LARGE_FILE_TESTS=ON` 后，`recovery_large_file` 实际传输 4 GiB+65539 字节，
+在 4 GiB+32768 字节提交检查点并结束进程，随后新进程从该偏移续传、SDK 验证可信摘要、通过 lease 读取，
+并独立对照整文件哈希。建议 Release/RelWithDebInfo 运行，避免 Debug 摘要计算成本放大；不是稀疏文件或计数模拟。
+该大文件配置将字节检查点阈值调为 64 MiB、时间阈值仍为 1 秒；默认 4 MiB 策略不变，阈值触发另由常规恢复矩阵验证。
+测试仅在受控临时目录写数据并验证删除边界。存储单元测试的偏移检查与实际网络大文件测试分别报告。
+
+Linux 入口为 `bash tools/ci/linux_m2.sh`，可分别设置 `FETCHKIT_SANITIZERS=address,undefined` 或
+`FETCHKIT_SANITIZERS=thread`；大文件另加 `FETCHKIT_RUN_LARGE_FILE=1`。
+实测环境与缺测项见 [M2 报告](../docs/reports/m2-baseline.md)，当前 API 见 [M2 文档](../docs/m2-storage.md)。
+
 M1 主机验证还包括纯 C ABI、假传输状态机、真实下载协议/HTTPS/CLI 和独立大文件集合。
 接口与限制见 [M1 API](../docs/m1-host-api.md)，固定依赖与 Linux
 入口见 [依赖说明](../third_party/README.md)。

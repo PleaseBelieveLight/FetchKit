@@ -6,8 +6,9 @@
 
 ## 项目结构与模块组织
 
-FetchKit 已实现 M1 主机暂存下载器，Android 仍为工程骨架。持久化恢复、发布、调度和缓存尚未实现。
-修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md` 和 `docs/m1-host-api.md`。
+FetchKit 已实现 M2 主机下载器，包括持久化检查点、SHA-256 校验、发布和读取租约，Android 仍为工程骨架。
+调度、配额和缓存尚未实现。修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md`、
+`docs/m2-storage.md` 和 `docs/storage-record-v1.md`。
 
 根目录 CMake 工程构建 `include/fetchkit/`、`src/core/` 和 `examples/cli/`。
 根目录 Gradle 配置将 `:sdk` 映射到 `platform/android/sdk/`，将 `:sample` 映射到
@@ -35,6 +36,10 @@ M0 探针需要 Python 3.10+ 和 libcurl 7.85+ 开发文件；必要时设置 `C
 M1 参考构建可开启 `FETCHKIT_USE_PINNED_CURL`，Linux 验收入口为 `tools/ci/linux_m1.sh`。
 真实 >4 GiB 测试需开启 `FETCHKIT_BUILD_LARGE_FILE_TESTS=ON` 并选择 `large_file` 标签。
 不得用 Windows 证据代替 Linux 验收。
+M2 恢复测试还需在主机测试构建中开启 `FETCHKIT_ENABLE_FAULT_INJECTION=ON`，普通 SDK 必须关闭。
+`tools/ci/linux_m2.sh` 包含恢复验证；Linux 上分别使用 `FETCHKIT_SANITIZERS=address,undefined` 和
+`FETCHKIT_SANITIZERS=thread` 执行诊断。主机需要 zlib 开发文件，Android 使用系统 libz。
+PicoSHA2 的固定哈希与 MIT 许可证位于 `third_party/`。
 
 ## 编码风格与命名规范
 
@@ -52,7 +57,7 @@ applicationId 保留为 `com.luofelix.fetchkit`。
 ## 测试要求
 
 Android 使用 JUnit4，示例设备测试验证安装标识和 SDK JNI 加载。
-CTest 已注册服务器、纯 C ABI、假传输会话、版本、真实协议及可选 curl 契约/大文件测试。
+CTest 已注册服务器、纯 C ABI、假传输会话、版本、真实协议、存储黄金样本/SHA 向量、确定性子进程恢复及可选 curl 契约/大文件测试。
 当前未配置第三方 C++ 测试框架或覆盖率门槛。协议测试使用 `resume_test.cpp` 等文件名和可控制行为的本地 HTTP 服务器。
 
 M0 实验源码和依赖不得进入普通 SDK 构建。Android 探针仅通过 `-Pfetchkit.probes=true` 开启，
@@ -61,6 +66,8 @@ M0 实验源码和依赖不得进入普通 SDK 构建。Android 探针仅通过 
 覆盖服务端忽略 Range、无效的 206/416
 响应、资源变化、检查点写入中断、摘要校验失败、磁盘耗尽和取消竞态。遵循 `docs/v1-design.md`
 的验收清单，分别记录进程终止测试与系统重启测试。
+仅 Completed 对象可 acquire。禁止从记录恢复回调/凭证；数据与记录同步完成前不得推进 committed 偏移。
+保留未知版本数据。
 
 ## 提交与 Pull Request 要求
 

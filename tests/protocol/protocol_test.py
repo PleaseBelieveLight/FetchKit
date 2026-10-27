@@ -68,8 +68,8 @@ def shell_case(cli, fixture, root):
                                 capture_output=True, text=True, timeout=5)
         check(second.returncode == 8 and "Busy" in second.stderr, "second process directory lock")
         check(command(f"resume {task}")["status"] == "Ok", "CLI resume")
-        done = await_state(task, 3)
-        check(Path(done["staging_path"]).read_bytes() == CONTENT, "CLI shell staged bytes")
+        done = await_state(task, 9)
+        check((root / "objects" / (done["persistent_id"] + ".obj")).read_bytes() == CONTENT, "CLI shell published bytes")
         check(command(f"release {task}")["status"] == "Ok", "CLI release")
         check(command(f"query {task}").get("error") == "Closed", "CLI released task")
         process.stdin.write("quit\n"); process.stdin.flush()
@@ -125,16 +125,17 @@ def main():
                     "http_status", "platform_code", "generation", "request_count"]})
                 item.update({"bytes": snapshot["received_bytes"], "paused_bytes": data["paused_bytes"],
                     "requests": list(fixture.server.requests), "refreshes": data["refreshes"]})
-                check(not snapshot["published"], f"{mode}: M1 must not publish")
+                check(snapshot["published"] == (snapshot["state"] == 9), f"{mode}: inconsistent publication")
                 check(data["closed_resume"] == "Closed" and data["release"] == "Ok" and data["stale_query"] == "Closed", f"{mode}: handle lifecycle")
                 check(data["reentry_ok"], f"{mode}: provider reentry/self-close barrier")
                 if error:
                     check(snapshot["state"] == (5 if state is None and error == "Cancelled" else 4 if state is None else state)
                           and snapshot["error"] == error, f"{mode}: wrong failure {snapshot['state']}/{snapshot['error']}")
                 else:
-                    check(snapshot["state"] == 3 and snapshot["error"] == "Ok", f"{mode}: unexpected {snapshot['state']}/{snapshot['error']}")
-                staged = Path(snapshot["staging_path"]).resolve()
-                check(staged.parent == case_root.resolve() / "tmp", f"{mode}: staging boundary")
+                    check(snapshot["state"] == 9 and snapshot["error"] == "Ok" and snapshot["integrity"] == 1,
+                          f"{mode}: unexpected {snapshot['state']}/{snapshot['error']}")
+                staged = (case_root / "objects" / (snapshot["persistent_id"] + ".obj")).resolve() if snapshot["published"] else Path(snapshot["staging_path"]).resolve()
+                check(staged.parent == case_root.resolve() / ("objects" if snapshot["published"] else "tmp"), f"{mode}: storage boundary")
                 if expected is not None and not error:
                     check(staged.read_bytes() == expected, f"{mode}: mixed/wrong bytes")
                     check(snapshot["received_bytes"] == len(expected), f"{mode}: wrong 64-bit offset")

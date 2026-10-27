@@ -65,9 +65,9 @@ void runCase(const std::string& root, int mode) {
         require(engine->control(task, StopReason::None, true) == FETCHKIT_OK);
     }
     const auto result = snapshot(task);
-    require(result.state == (mode < 6 ? FETCHKIT_TRANSFER_COMPLETE : FETCHKIT_FAILED));
+    require(result.state == (mode < 6 ? FETCHKIT_COMPLETED : FETCHKIT_FAILED));
     if (mode < 6) {
-        std::ifstream file(task->path, std::ios::binary);
+        std::ifstream file(std::filesystem::u8path(root)/"objects"/(std::string(result.persistent_id)+".obj"), std::ios::binary);
         require(std::string(std::istreambuf_iterator<char>(file), {}) == content);
     } else if (mode == 8) {
         require(result.received_bytes == 4 && result.error == FETCHKIT_TIMEOUT && result.http_status == 0 && result.generation == 2);
@@ -82,7 +82,8 @@ void runCase(const std::string& root, int mode) {
 int main(int argc, char** argv) {
     try {
         require(argc == 2);
-        for (int mode = 0; mode < 9; ++mode) runCase(std::string(argv[1]) + '/' + std::to_string(mode), mode);
+        const auto run=std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+        for (int mode = 0; mode < 9; ++mode) runCase(std::string(argv[1]) + '/' + run + '/' + std::to_string(mode), mode);
         std::cout << "9 fake-transport session cases passed\n";
         return 0;
     } catch (const std::exception&) { std::cerr << "Session unit test failed\n"; return 1; }

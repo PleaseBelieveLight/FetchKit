@@ -1,0 +1,35 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "summary": {
+    "delayed-headers": {
+      "count": 100,
+      "p95_ms": 47.166,
+      "max_ms": 47.889
+    },
+    "blocked-read": {
+      "count": 100,
+      "p95_ms": 31.912,
+      "max_ms": 32.166
+    },
+    "header-barrier": {
+      "count": 100,
+      "p95_ms": 0.483,
+      "max_ms": 0.509
+    },
+    "backpressure": {
+      "count": 100,
+      "p95_ms": 0.448,
+      "max_ms": 0.497
+    },
+    "close-race": {
+      "count": 100,
+      "p95_ms": 0.062,
+      "max_ms": 0.613
+    }
+  },
+  "failures": [],
+  "backend": "libcurl=8.20.0;tls=OpenSSL/3.6.4;async_dns=1;largefile=1;protocols=http,https",
+  "request_count": 408,
+  "sample_count": 508,
+  "raw_report_sha256": "6aef39cd202f98cf2b747afe47b489efa5e6d28c81be130edf7a95591c934c7c"
+}

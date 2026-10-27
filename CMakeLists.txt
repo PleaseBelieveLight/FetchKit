@@ -4,6 +4,18 @@ project(fetchkit VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/third_party/picosha2/picosha2.h" fetchkit_picosha2_sha256)
+if(NOT fetchkit_picosha2_sha256 STREQUAL "b13c180161ffac8d0adc81e033e493c409457c4d1258ab9781ac80579ba3bdd8")
+    message(FATAL_ERROR "Vendored PicoSHA2 does not match third_party/picosha2.lock.json")
+endif()
+set(FETCHKIT_SANITIZERS "" CACHE STRING "Linux test sanitizers: address,undefined or thread (separately)")
+if(FETCHKIT_SANITIZERS)
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR NOT FETCHKIT_SANITIZERS MATCHES "^(address,undefined|address|undefined|thread)$")
+        message(FATAL_ERROR "Use Linux address,undefined or a separate thread sanitizer build")
+    endif()
+    add_compile_options("-fsanitize=${FETCHKIT_SANITIZERS}" -fno-omit-frame-pointer)
+    add_link_options("-fsanitize=${FETCHKIT_SANITIZERS}")
+endif()
 
 add_library(fetchkit_core STATIC
     src/core/version.cpp
@@ -11,6 +23,10 @@ add_library(fetchkit_core STATIC
     src/core/engine.cpp
     src/core/download_session.cpp
     src/storage/staging_file.cpp
+    src/storage/record.cpp
+    src/storage/resource_store.cpp
+    src/storage/verifier.cpp
+    src/storage/fault.cpp
 )
 add_library(fetchkit::core ALIAS fetchkit_core)
 
@@ -18,9 +34,15 @@ target_compile_features(fetchkit_core PUBLIC cxx_std_17)
 target_include_directories(fetchkit_core PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-target_include_directories(fetchkit_core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_include_directories(fetchkit_core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
 find_package(Threads REQUIRED)
 target_link_libraries(fetchkit_core PRIVATE Threads::Threads)
+if(ANDROID)
+    target_link_libraries(fetchkit_core PRIVATE z)
+else()
+    find_package(ZLIB REQUIRED)
+    target_link_libraries(fetchkit_core PRIVATE ZLIB::ZLIB)
+endif()
 if(UNIX)
     target_compile_definitions(fetchkit_core PRIVATE _FILE_OFFSET_BITS=64)
 endif()
@@ -38,7 +60,32 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR AND NOT ANDROID)
     set(fetchkit_cli_default ON)
 endif()
 option(FETCHKIT_BUILD_CLI "Build the FetchKit command-line example" ${fetchkit_cli_default})
+option(FETCHKIT_BUILD_SIZE_PROBE "Build isolated baseline/digest native size targets" OFF)
+if(FETCHKIT_BUILD_SIZE_PROBE)
+    foreach(mode IN ITEMS baseline digest)
+        add_library(fetchkit_${mode}_measure SHARED tools/size/native_measure.cpp)
+        target_include_directories(fetchkit_${mode}_measure PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_link_libraries(fetchkit_${mode}_measure PRIVATE fetchkit::core)
+        if(NOT MSVC)
+            target_compile_options(fetchkit_${mode}_measure PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
+        endif()
+        if(UNIX AND NOT APPLE)
+            target_link_options(fetchkit_${mode}_measure PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/tools/size/measure.map")
+            set_property(TARGET fetchkit_${mode}_measure APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tools/size/measure.map")
+        endif()
+        if(mode STREQUAL "digest")
+            target_compile_definitions(fetchkit_${mode}_measure PRIVATE FETCHKIT_MEASURE_DIGEST=1)
+        endif()
+    endforeach()
+endif()
 option(FETCHKIT_BUILD_TESTS "Build host tests and register them with CTest" OFF)
+option(FETCHKIT_ENABLE_FAULT_INJECTION "Enable test-only storage failures and process barriers" OFF)
+if(FETCHKIT_ENABLE_FAULT_INJECTION)
+    if(NOT FETCHKIT_BUILD_TESTS OR ANDROID)
+        message(FATAL_ERROR "Fault injection is only permitted in host test builds")
+    endif()
+    target_compile_definitions(fetchkit_core PRIVATE FETCHKIT_ENABLE_FAULT_INJECTION=1)
+endif()
 option(FETCHKIT_BUILD_PROBES "Build M0 host transport probes" OFF)
 option(FETCHKIT_BUILD_LARGE_FILE_TESTS "Register opt-in actual >4 GiB transfer tests" OFF)
 option(FETCHKIT_WITH_CURL "Enable the host libcurl download backend" OFF)
@@ -106,6 +153,12 @@ if(FETCHKIT_BUILD_TESTS)
     target_link_libraries(fetchkit_session_test PRIVATE fetchkit::core)
     add_test(NAME download_session COMMAND fetchkit_session_test "${CMAKE_CURRENT_BINARY_DIR}/session-store")
     set_tests_properties(download_session PROPERTIES LABELS "unit" TIMEOUT 30)
+    add_executable(fetchkit_storage_test tests/unit/storage_test.cpp)
+    target_include_directories(fetchkit_storage_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(fetchkit_storage_test PRIVATE fetchkit::core)
+    add_test(NAME storage COMMAND fetchkit_storage_test "${CMAKE_CURRENT_BINARY_DIR}/storage-unit"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/record-v1.hex")
+    set_tests_properties(storage PROPERTIES LABELS "unit" TIMEOUT 90)
     if(FETCHKIT_WITH_CURL AND FETCHKIT_BUILD_CLI)
         add_executable(fetchkit_download_driver tests/protocol/download_driver.cpp)
         target_link_libraries(fetchkit_download_driver PRIVATE fetchkit::core)
@@ -115,6 +168,23 @@ if(FETCHKIT_BUILD_TESTS)
             --driver "$<TARGET_FILE:fetchkit_download_driver>" --cli "$<TARGET_FILE:fetchkit_cli>"
             --work-root "${CMAKE_CURRENT_BINARY_DIR}/protocol" --report "${CMAKE_CURRENT_BINARY_DIR}/reports/m1-protocol.json")
         set_tests_properties(download_protocol PROPERTIES LABELS "protocol" TIMEOUT 180)
+        if(FETCHKIT_ENABLE_FAULT_INJECTION)
+            add_executable(fetchkit_recovery_driver tests/recovery/recovery_driver.cpp)
+            target_include_directories(fetchkit_recovery_driver PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/examples/cli")
+            target_link_libraries(fetchkit_recovery_driver PRIVATE fetchkit::core)
+            add_test(NAME download_recovery COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/recovery/recovery_test.py"
+                --driver "$<TARGET_FILE:fetchkit_recovery_driver>" --work-root "${CMAKE_CURRENT_BINARY_DIR}/recovery"
+                --report "${CMAKE_CURRENT_BINARY_DIR}/reports/m2-recovery.json")
+            set_tests_properties(download_recovery PROPERTIES LABELS "recovery" TIMEOUT 300)
+            if(FETCHKIT_BUILD_LARGE_FILE_TESTS)
+                add_test(NAME recovery_large_file COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/recovery/large_file_test.py"
+                    --driver "$<TARGET_FILE:fetchkit_recovery_driver>" --work-root "${CMAKE_CURRENT_BINARY_DIR}/recovery-large"
+                    --report "${CMAKE_CURRENT_BINARY_DIR}/reports/m2-large-file.json")
+                set_tests_properties(recovery_large_file PROPERTIES LABELS "large_file" TIMEOUT 900)
+            endif()
+        endif()
         if(FETCHKIT_BUILD_LARGE_FILE_TESTS)
             add_test(NAME download_large_file COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/protocol/protocol_test.py"

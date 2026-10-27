@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
         }
         if (scenario == "cancel" && result.received_bytes >= 1024) task.cancel();
         if (scenario == "provider-cancel" && provider.entered.load()) task.cancel();
-        if (result.state == FETCHKIT_TRANSFER_COMPLETE || result.state == FETCHKIT_FAILED || result.state == FETCHKIT_TASK_CANCELLED) break;
+        if (result.state == FETCHKIT_COMPLETED || result.state == FETCHKIT_FAILED || result.state == FETCHKIT_TASK_CANCELLED) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     if (result.state == FETCHKIT_RUNNING || result.state == FETCHKIT_QUEUED || result.state == FETCHKIT_PAUSING) return 4;

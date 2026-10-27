@@ -1,0 +1,36 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "actual_network_and_disk": true,
+  "sparse_simulation": false,
+  "bytes": 4295032835,
+  "sha256": "228f3903446aeb88363ccbf444258f060ac18c5653d978b4bb2f5b04956c757c",
+  "checkpoint_config_bytes": 67108864,
+  "checkpoint_interval_ms": 1000,
+  "passed": true,
+  "checkpoint_bytes": 4295000064,
+  "requests": [
+    {
+      "path": "/large",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": true,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/large",
+      "method": "GET",
+      "range": "bytes=4295000064-",
+      "if_range": "\"large-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": true,
+      "has_cookie": false,
+      "has_api_key": false
+    }
+  ],
+  "integrity": 2,
+  "generation": 2,
+  "seconds": 797.172
+}

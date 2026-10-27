@@ -52,6 +52,24 @@ private:
     fetchkit_task handle_ = 0;
 };
 
+class ResourceLease {
+public:
+    explicit ResourceLease(fetchkit_lease handle=0) noexcept : handle_(handle) {}
+    ~ResourceLease() { if(handle_) fetchkit_resource_release(handle_); }
+    ResourceLease(const ResourceLease&)=delete;
+    ResourceLease& operator=(const ResourceLease&)=delete;
+    ResourceLease(ResourceLease&& other) noexcept : handle_(std::exchange(other.handle_,0)) {}
+    ResourceLease& operator=(ResourceLease&& other) noexcept {
+        if(this!=&other) { if(handle_) fetchkit_resource_release(handle_);handle_=std::exchange(other.handle_,0); }
+        return *this;
+    }
+    std::uint32_t read(std::uint64_t offset,void* buffer,std::uint32_t capacity) const {
+        std::uint32_t count=0;checkStatus(fetchkit_resource_read(handle_,offset,buffer,capacity,&count));return count;
+    }
+private:
+    fetchkit_lease handle_=0;
+};
+
 class Engine {
 public:
     explicit Engine(const fetchkit_engine_config& config) { checkStatus(fetchkit_engine_create(&config, &handle_)); }
@@ -71,6 +89,13 @@ public:
         checkStatus(fetchkit_enqueue(handle_, &request, &task));
         return Task(task);
     }
+    Task attach(const fetchkit_download_request& request) {
+        fetchkit_task task=0;checkStatus(fetchkit_attach(handle_,&request,&task));return Task(task);
+    }
+    ResourceLease acquire(const std::string& persistent_id) {
+        fetchkit_lease lease=0;checkStatus(fetchkit_resource_acquire(handle_,stringView(persistent_id),&lease));return ResourceLease(lease);
+    }
+    fetchkit_engine nativeHandle() const noexcept { return handle_; }
 private:
     fetchkit_engine handle_ = 0;
 };

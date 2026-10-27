@@ -20,6 +20,9 @@ inline void printSnapshot(std::ostream& output, const fetchkit_task_snapshot& sn
         << ",\"total_known\":" << (snapshot.total_known ? "true" : "false") << ",\"total_bytes\":" << snapshot.total_bytes
         << ",\"http_status\":" << snapshot.http_status << ",\"error\":" << jsonString(fetchkit_status_name(snapshot.error))
         << ",\"platform_code\":" << snapshot.platform_code << ",\"can_resume\":" << (snapshot.can_resume ? "true" : "false")
-        << ",\"request_count\":" << snapshot.request_count << ",\"published\":false,\"staging_path\":"
+        << ",\"request_count\":" << snapshot.request_count
+        << ",\"committed_offset\":" << snapshot.committed_offset << ",\"integrity\":" << snapshot.integrity
+        << ",\"persistent_id\":" << jsonString(snapshot.persistent_id)
+        << ",\"published\":" << (snapshot.state==FETCHKIT_COMPLETED ? "true" : "false") << ",\"staging_path\":"
         << jsonString(snapshot.staging_path) << '}';
 }

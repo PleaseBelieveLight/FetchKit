@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/download_types.h"
-#include "storage/staging_file.h"
+#include "storage/resource_store.h"
 
 #include <deque>
 #include <memory>
@@ -29,6 +29,8 @@ struct Task {
     std::shared_ptr<transport::Cancellation> cancellation;
     std::atomic<StopReason> stop{StopReason::None};
     ResumeData saved; // Worker-owned; never read by public API threads.
+    storage::Record record;
+    std::weak_ptr<storage::ResourceStore> store;
     bool finishing = false, released = false;
     void progress(std::uint64_t offset, std::optional<std::uint64_t> total);
 };
@@ -41,15 +43,16 @@ public:
     Engine(EngineConfig config, std::shared_ptr<transport::HttpTransport> transport);
     ~Engine();
     std::shared_ptr<Task> enqueue(DownloadRequest request, std::uint64_t id,
-        const std::function<void(const std::shared_ptr<Task>&)>& publish = {});
+        const std::function<void(const std::shared_ptr<Task>&)>& publish = {}, bool start = true);
     fetchkit_status control(const std::shared_ptr<Task>& task, StopReason reason, bool resume = false);
     fetchkit_status close();
     bool onWorker() const { return std::this_thread::get_id() == worker_id_; }
+    std::shared_ptr<storage::ResourceStore> storage();
 private:
     void loop();
     EngineConfig config_;
     std::shared_ptr<transport::HttpTransport> transport_;
-    std::unique_ptr<storage::StagingStore> store_;
+    std::shared_ptr<storage::ResourceStore> store_;
     std::mutex mutex_, close_mutex_;
     std::condition_variable changed_;
     std::shared_ptr<Task> active_, pending_;

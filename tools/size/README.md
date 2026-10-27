@@ -1,5 +1,18 @@
 # Android 接入体积基线
 
+M2 摘要与文件读取的独立测量：
+
+```powershell
+python tools/size/measure_m2.py --ndk D:/Android/Sdk/ndk/28.2.13676358 --cmake D:/Android/Sdk/cmake/3.22.1/bin/cmake.exe
+```
+
+使用同一 arm64-v8a/API24、Release `-Os`、静态 STL、section GC、无 LTO、相同 strip 的两个共享库比较：
+baseline 仅版本入口，digest 实际引用完整文件 SHA-256 Verifier。结果包含命令、源码/产物哈希、NEEDED、
+静态核心和现有普通 AAR；保存在 `build/m2-size-arm64/report.json`。这项测量包含文件读取/异常/运行库实际链接成本，
+不是只统计第三方头文件字节数，也不等同于完整 Android 下载接入增量。当前普通 JNI 仍仅引用版本接口，不能用它的零增量宣称摘要零成本。
+
+以下保留 M0 完整宿主对照工具。
+
 在仓库根目录运行：
 
 ```powershell

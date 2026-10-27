@@ -1,4 +1,5 @@
 #include "core/engine.h"
+#include "storage/fault.h"
 
 #include <algorithm>
 #include <set>
@@ -140,7 +141,7 @@ public:
                     continue;
                 }
                 if (task_.saved.total && task_.saved.offset != *task_.saved.total) throw Failure(FETCHKIT_INTEGRITY_MISMATCH);
-                file_.sync();
+                checkpoint();
                 return {};
             }
             throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
@@ -152,7 +153,7 @@ public:
                     std::lock_guard<std::mutex> lock(task_.mutex);
                     task_.snapshot.state = FETCHKIT_PAUSING;
                 }
-                if (task_.stop.load() != StopReason::Cancel) file_.sync();
+                if (task_.stop.load() != StopReason::Cancel && !checkpoint_failed_) checkpoint();
             } catch (const Failure& storage_error) { return {storage_error.code, storage_error.platform_code}; }
             return {error.code, error.platform_code};
         } catch (const std::invalid_argument&) { return {FETCHKIT_PROTOCOL_MISMATCH, 0}; }
@@ -216,19 +217,46 @@ public:
             if (expected_body_ && size > *expected_body_ - body_received_) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
             if (task_.saved.total && (task_.saved.offset > *task_.saved.total ||
                 size > *task_.saved.total - task_.saved.offset)) throw Failure(FETCHKIT_INTEGRITY_MISMATCH);
+            storage::faultPoint("data_write_before");
             file_.write(data, size);
+            storage::faultPoint("data_write_after");
             task_.saved.offset += size;
             body_received_ += size;
             task_.progress(task_.saved.offset, task_.saved.total);
+            if (task_.saved.offset-task_.record.committed>=config_.checkpoint_bytes ||
+                std::chrono::steady_clock::now()-last_checkpoint_>=std::chrono::milliseconds(config_.checkpoint_interval_ms)) checkpoint();
             return true;
         } catch (const Failure& error) { error_ = {error.code, error.platform_code}; return false; }
     }
 
 private:
     enum class Action { None, Restart, Redirect, Refresh };
+    void checkpoint() {
+        try {
+            storage::faultPoint("checkpoint_data_sync_before");
+            file_.sync();
+            storage::faultPoint("checkpoint_data_sync_after");
+            auto record=task_.record;
+            record.committed=task_.saved.offset; record.total=task_.saved.total;
+            record.etag=task_.saved.strong_etag; record.state=FETCHKIT_RUNNING;
+            record.generation=task_.snapshot.generation; record.integrity=FETCHKIT_INTEGRITY_NONE; record.error=FETCHKIT_OK;
+            const auto store=task_.store.lock();
+            if (!store) throw Failure(FETCHKIT_CLOSED);
+            store->save(record);
+            task_.record=std::move(record);
+            { std::lock_guard<std::mutex> lock(task_.mutex); task_.snapshot.committed_offset=task_.record.committed; }
+            last_checkpoint_=std::chrono::steady_clock::now();
+            storage::faultPoint("checkpoint_commit_after");
+        } catch (...) { checkpoint_failed_=true; throw; }
+    }
     void reset() {
-        file_.truncate();
+        // Commit zero BEFORE touching previously committed bytes. Otherwise a
+        // killed restart can pair an old ETag/offset with new representation data.
         task_.saved = {0, task_.request.expected_length, {}};
+        checkpoint();
+        storage::faultPoint("reset_commit_after");
+        file_.truncate();
+        file_.sync();
         task_.progress(0, task_.saved.total);
     }
     void prepare(std::uint32_t reason, const std::string& previous_origin, std::uint32_t status) {
@@ -272,6 +300,8 @@ private:
     Action action_ = Action::None;
     std::string location_;
     RunResult error_;
+    bool checkpoint_failed_=false;
+    std::chrono::steady_clock::time_point last_checkpoint_=std::chrono::steady_clock::now();
 };
 
 }
