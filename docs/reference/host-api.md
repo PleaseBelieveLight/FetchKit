@@ -1,8 +1,10 @@
-# M3 调度、订阅与资源存储
+# 主机 API：调度、订阅与资源存储
 
-状态：alpha，2026-10-27。C ABI 增加字段后须重新编译客户端，尚未冻结发布版 ABI。
-主机实现已加入多任务、重试和缓存管理；Android Kotlin/JNI 下载接入仍待 M4。
-验证范围与缺测项见 [M3 报告](reports/m3-baseline.md)。
+[文档中心](../README.md) · [构建与运行](../guides/development.md)
+
+状态：alpha。C ABI 增加字段后须重新编译客户端，尚未冻结发布版 ABI。
+主机实现包含多任务、重试和缓存管理；Kotlin/JNI 接入见 [Android API](android-api.md)。
+验证范围与缺测项见 [M3 报告](../reports/m3-baseline.md)。
 
 ## 配置与运行
 

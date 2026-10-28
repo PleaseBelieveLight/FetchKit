@@ -1,7 +1,9 @@
-# M5 接入与本地发布预览
+# 接入、打包与本地发布预览
+
+[文档中心](../README.md) · [发布检查表](checklist.md)
 
 版本源是根目录 `VERSION`，当前 `0.1.0`。这是 alpha 接口的本地交付预览，尚未冻结 C ABI；升级库后重新编译宿主。
-当前结果与未通过的发布门槛见 [M5 报告](reports/m5-baseline.md)。未配置远程仓库，也没有上传产物。
+当前结果与未通过的发布门槛见 [M5 报告](../reports/m5-baseline.md)。未配置远程仓库，也没有上传产物。
 
 ## Native 安装与独立接入
 
@@ -28,7 +30,7 @@ find_package(fetchkit 0.1.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE fetchkit::core)
 ```
 
-纯 C 宿主仍须使用 C++ 链接器，见 [完整 C/C++ 示例](../examples/consumer/CMakeLists.txt)
+纯 C 宿主仍须使用 C++ 链接器，见 [完整 C/C++ 示例](../../examples/consumer/CMakeLists.txt)
 。静态库不表示运行时完全静态： 固定 curl 是随包安装的静态库；OpenSSL、zlib、编译器运行库及系统线程/网络库仍由目标平台提供。
 系统 curl 模式通过 `find_dependency(CURL 7.85)` 查找宿主依赖；固定模式要求随安装前缀提供的 curl
 8.20.0 CMake 配置。 Linux 发行前记录 `ldd bin/fetchkit_cli`，Windows 记录
@@ -70,7 +72,7 @@ module metadata 和校验文件。 本地草案坐标是 `com.luofelix.fetchkit:
 publish 拒绝 probes=true 或缺少 arm64-v8a/x86_64 的配置；普通构建仍可选择单 ABI 做诊断。 POM 声明
 Kotlin 标准库和 OkHttp 5.5.1，最终版本以依赖解析结果为准。直接复制 AAR 文件仍须自行声明运行依赖。
 
-可将 [Android 独立示例](../examples/android-consumer/) 复制到仓库外，配置 Android SDK 并使用完整的
+可将 [Android 独立示例](../../examples/android-consumer) 复制到仓库外，配置 Android SDK 并使用完整的
 Adoptium JDK 25：
 
 ```sh
@@ -89,8 +91,8 @@ python tools/ci/verify_android_package.py --repository build/m5-maven --sdk D:/A
 该示例使用 Debug key 签名本地 Release 验证 APK；只为 loopback 放行明文，没有测试 CA，不作为业务应用的发布签名或网络策略。
 构建需要完整 JDK（含 jlink），IDE 的裁剪运行时可能缺少该工具。显式 Java toolchain 的依据见
 [Android JDK 文档](https://developer.android.com/build/jdks)。 SDK 的线程、Future、provider、事件
-executor、Network、备份排除与 JobScheduler 接入规则见 [M4 API](m4-android-api.md)；
-存储、鉴权、重试、错误恢复及读取保护见 [M3 API](m3-host-api.md)。不要在 UI 或 provider 中阻塞等待 SDK
+executor、Network、备份排除与 JobScheduler 接入规则见 [M4 API](../reference/android-api.md)；
+存储、鉴权、重试、错误恢复及读取保护见 [M3 API](../reference/host-api.md)。不要在 UI 或 provider 中阻塞等待 SDK
 Future。
 
 ## 符号、依赖与产物一致性
@@ -124,4 +126,4 @@ Range/摘要。 自动 reboot 仅接受 emulator serial，不操作宿主系统�
 汇总证据见 `docs/reports/m5/`。
 `tools/release/check_release.py --preview ... --evidence ... --output ... --preview-only`
 验证本地预览；省略 `--preview-only` 为严格发布检查，缺少平台/许可门槛时返回非零。当前发布保持阻断，详情见
-[检查表](release-checklist.md)。最终候选需在固定提交重新构建、运行并归档同一批产物。
+[检查表](checklist.md)。最终候选需在固定提交重新构建、运行并归档同一批产物。

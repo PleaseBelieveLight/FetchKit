@@ -1,10 +1,12 @@
 # M1 主机暂存下载 API
 
-历史阶段文档：对应 M1 提交 `5ed1e31`。当前工作区已进入 M2，持久化、Completed、摘要和 lease 用法见
-[M2 存储与恢复](m2-storage.md)；下述 M1 能力边界不能作为当前 API 的完整说明。
+[历史文档索引](README.md) · [当前主机 API](../reference/host-api.md)
+
+历史阶段文档：对应 M1 提交 `5ed1e31`。后续 M2 的持久化、Completed、摘要和 lease 用法见
+[M2 存储与恢复](m2-storage.md)；当前接入见 [主机 API](../reference/host-api.md)，下述能力仅属于 M1。
 
 状态：alpha，2026-10-26。当前交付普通文件的单任务暂存下载、同进程暂停/恢复、续传协议与诊断查询。 Linux
-是产品目标，Windows 用于当前开发验证；实测与缺测项见 [M1 报告](reports/m1-baseline.md)。
+是产品目标，Windows 用于当前开发验证；实测与缺测项见 [M1 报告](../reports/m1-baseline.md)。
 
 ## 能力与阶段边界
 
@@ -31,7 +33,7 @@ cmake --build build/m1-host --parallel
 Windows 自定义 curl 安装位置通过 `CMAKE_PREFIX_PATH` 指定，动态库需要在 PATH。未启用后端时 create 返回
 NotSupported；`--version` 不依赖 curl。
 
-参考源码构建和 Linux 持续验证入口见 [依赖说明](../third_party/README.md)：
+参考源码构建和 Linux 持续验证入口见 [依赖说明](../../third_party/README.md)：
 
 ```sh
 bash tools/ci/linux_m1.sh
@@ -62,7 +64,7 @@ quit
 
 ## C ABI 与 C++ 包装
 
-[fetchkit.h](../include/fetchkit/fetchkit.h) 提供固定宽度整数、带长度 UTF-8 和非复用的 64 位句柄
+[fetchkit.h](../../include/fetchkit/fetchkit.h) 提供固定宽度整数、带长度 UTF-8 和非复用的 64 位句柄
 token。 所有配置/请求/快照带 `struct_size`；先调用 init，输出快照先设置大小。输入在 API
 调用期间借用并复制，快照完全归调用方。 字符串拒绝 NUL/非法 UTF-8/超限长度；受管根目录必须为 SDK
 专用目录，不能混用同一个目录运行多个进程。

@@ -1,30 +1,34 @@
 # FetchKit 首版设计基线
 
-日期：2026-10-23。状态：工程骨架已建立，下载、续传和缓存能力待实现。
+[文档中心](../README.md)
+
+初始基线日期：2026-10-23，当时仅建立工程骨架。下列日期段落保留历史进展，其余章节描述设计与验收要求；
+当前用法见 [主机 API](../reference/host-api.md) 和 [Android API](../reference/android-api.md)，
+实际验收范围见 [验证报告](../reports/README.md)。
 
 2026-10-27 M4 进展：异步 Kotlin/JNI、隔离 OkHttp 5.5.1 后端、任务/资源示例与 JobScheduler 适配已加入。
-见 [Android API](m4-android-api.md) 和 [M4 报告](reports/m4-baseline.md)。核心策略仍由 C++ 决定；
+见 [Android API](../reference/android-api.md) 和 [M4 报告](../reports/m4-baseline.md)。核心策略仍由 C++ 决定；
 后台示例在 API 34+ 使用 UIDT，低版本使用有限的普通任务，显式绑定获准 Network，不强制依赖 WorkManager。
 API/ABI 真机矩阵、实际 >4 GiB、Linux/sanitizer 和重启/掉电仍须分别提供证据。
 
 2026-10-27 M3 进展：多任务、独立订阅、持久化重试、配额/LRU/pin/过期及读取保护已有主机实现，
-见 [M3 API](m3-host-api.md)、[v2 记录](storage-record-v2.md) 和 [报告](reports/m3-baseline.md)。
+见 [M3 API](../reference/host-api.md)、[v2 记录](../reference/storage-record-v2.md) 和 [报告](../reports/m3-baseline.md)。
 宿主在自己的 executor 上主动分发有界事件；Android 正式接入仍待 M4，Linux/sanitizer 等缺测不由 Windows
 代替。
 
 2026-10-27 M2 进展：已增加检查点、跨进程重新绑定、可信 SHA-256、发布恢复与最小只读租约。
-当前实现与同步边界见 [M2 存储](m2-storage.md)、[记录格式](storage-record-v1.md)
-和 [报告](reports/m2-baseline.md)。 Linux/重启/掉电尚无执行证据；完整阶段门槛仍受这些缺测项约束。以下保留原始设计和阶段目标。
+当前实现与同步边界见 [M2 存储](../archive/m2-storage.md)、[记录格式](../reference/storage-record-v1.md)
+和 [报告](../reports/m2-baseline.md)。 Linux/重启/掉电尚无执行证据；完整阶段门槛仍受这些缺测项约束。以下保留原始设计和阶段目标。
 
-2026-10-26 M1 进展：主机暂存下载与续传校验已有实现，详见 [M1 API](m1-host-api.md) 和
-[阶段报告](reports/m1-baseline.md)。Android 下载、持久化检查点、摘要验证、资源发布和缓存仍待后续里程碑；
+2026-10-26 M1 进展：主机暂存下载与续传校验已有实现，详见 [M1 API](../archive/m1-host-api.md) 和
+[阶段报告](../reports/m1-baseline.md)。Android 下载、持久化检查点、摘要验证、资源发布和缓存仍待后续里程碑；
 Linux 尚未实测，不能将 M1 标为整体验收通过。
 
 当前结构以根目录 Gradle 工程管理 `:sdk`（`platform/android/sdk`）和 `:sample`（
 `platform/android/sample`），根目录 CMake 单独构建 C++ 核心及主机 CLI。已打通版本查询链路，本文的下载能力和里程碑仍是实现目标。
 
-M0 的可执行探针与阶段证据见 [M0 基线报告](reports/m0-baseline.md)，细化契约见
-[传输契约](transport-contract.md) 和 [API/存储契约](api-contract.md)。探针不等于正式下载
+M0 的可执行探针与阶段证据见 [M0 基线报告](../reports/m0-baseline.md)，细化契约见
+[传输契约](../reference/transport-contract.md) 和 [API/存储契约](../reference/api-contract.md)。探针不等于正式下载
 API；阶段缺测项仍须补齐。
 
 ## 1. 产品定位与边界
@@ -87,7 +91,7 @@ Android      libcurl   TaskJournal   CacheManager
 
 M0 后 Android 默认实现方向调整为通过 JNI 接入独立配置的 OkHttp 客户端，Linux 采用 libcurl。 Android
 仍复用平台 TLS 和证书能力，但必须计入 OkHttp、Okio、Kotlin 标准库及其他传递依赖的实际接入成本。
-当前仅交付可选实验，正式适配仍在 M4 完成，版本和体积证据见 [M0 报告](reports/m0-baseline.md)。
+当前仅交付可选实验，正式适配仍在 M4 完成，版本和体积证据见 [M0 报告](../reports/m0-baseline.md)。
 
 最初候选 `HttpURLConnection` / `HttpsURLConnection` 在 API 31 探针中会使用宿主全局 CookieHandler 和
 Authenticator，绕过核心凭证与鉴权策略，因此不能直接作为默认后端。不能通过临时替换宿主全局处理器规避该问题。
@@ -129,7 +133,7 @@ API 管理。
 
 M1 alpha 接口仅提供单个活动任务、同进程暂停/恢复和 TransferComplete 暂存结果，未交付发布/读取 API。 此阶段
 Paused 只确认数据文件同步与内存偏移，不能承诺跨进程恢复。M2 才形成完整持久化检查点； 多订阅、回调
-executor、总配额与缓存生命周期已由 M3 主机实现补齐，详见 [M3 API](m3-host-api.md)。 缓存策略放在
+executor、总配额与缓存生命周期已由 M3 主机实现补齐，详见 [M3 API](../reference/host-api.md)。 缓存策略放在
 `src/storage/storage_policy.cpp`，与记录变更、删除和租约共用事务及保护锁。
 
 M0 将共享控制细化为：pause/resume 对共享 task 生效；cancel 只撤销指定订阅，最后一个订阅显式取消时才取消共享下载。
@@ -140,7 +144,7 @@ M0 将共享控制细化为：pause/resume 对共享 task 生效；cancel 只撤
 HTTP 状态和平台错误作为附加诊断信息保留。
 
 M0 另细化 InvalidArgument、NotFound、Closed、UnsupportedMetadata 和 SubscriptionOverflow 等本地错误，
-明确共享控制、事件容量及租约关闭行为，见 [API 契约](api-contract.md)。这些类型尚未形成已发布 API。
+明确共享控制、事件容量及租约关闭行为，见 [API 契约](../reference/api-contract.md)。这些类型尚未形成已发布 API。
 
 ## 3. 资源身份与请求信息
 
@@ -155,8 +159,8 @@ URL 不一定代表同一份资源。
   可由宿主显式允许持久化。
 - 日志不记录 token、Cookie、完整签名 URL 或完整鉴权头。
   诊断由宿主通过日志级别开关显式开启，默认 Off；仅覆盖操作边界和异常，避免进度/数据路径刷屏。
-  Android 使用 Logcat，主机使用 stderr；具体接口见 [Android API](m4-android-api.md#可选诊断日志) 和
-  [主机 API](m3-host-api.md#可选诊断日志)。
+  Android 使用 Logcat，主机使用 stderr；具体接口见 [Android API](../reference/android-api.md#可选诊断日志) 和
+  [主机 API](../reference/host-api.md#可选诊断日志)。
 - 文件名由内部身份映射生成，远端文件名只作展示元数据。
 
 缓存是显式业务资源存储，首版由业务版本和可选过期时间控制复用；完整 HTTP 缓存的新鲜度和协商语义属于另一个范围。需要透明
@@ -205,7 +209,7 @@ Running 恢复为可恢复的待调度状态，是否启动取决于宿主策略
 每份资源采用暂存数据文件与独立元数据记录。记录包含格式版本、有限长度字段和记录校验值；写入通过临时文件和同目录原子替换进行。首版采用可扫描的独立记录，避免强制引入数据库，任务数量较大时再评估索引。
 
 M0 将编码方向细化为有界二进制 TLV，记录使用 CRC32 检测损坏，字段上限和版本隔离见 API 契约。 M2
-已固定 [字节格式与黄金样本](storage-record-v1.md)，CRC 使用平台 zlib，内容 SHA-256 使用固定提交的 MIT
+已固定 [字节格式与黄金样本](../reference/storage-record-v1.md)，CRC 使用平台 zlib，内容 SHA-256 使用固定提交的 MIT
 许可 PicoSHA2。 记录校验不能代替可信内容摘要；Windows 同步边界与缺测项单列。
 
 检查点写入顺序：
@@ -315,8 +319,8 @@ Android 的系统执行许可与 SDK 的下载策略分层：
 | M4：Android 接入 | JNI、Kotlin、平台网络适配、可选后台示例              | 与 Linux 共用协议用例，真机生命周期和大文件验证通过 |
 | M5：首版发布     | CLI、AAR、接入示例、版本与错误文档、体积报告         | 故障测试清单通过，发布包内容与报告一致              |
 
-M5 已提供 [本地交付预览和发布流程](m5-release.md)、[检查表](release-checklist.md) 与
-[实际证据](reports/m5-baseline.md)。版本统一在根目录 VERSION，CMake 导出采用精确版本匹配，AAR 通过本地
+M5 已提供 [本地交付预览和发布流程](../release/packaging.md)、[检查表](../release/checklist.md) 与
+[实际证据](../reports/m5-baseline.md)。版本统一在根目录 VERSION，CMake 导出采用精确版本匹配，AAR 通过本地
 Maven 保留传递依赖。项目自身采用 Apache-2.0，第三方许可独立保留。当前仍为
 alpha；Linux/物理设备矩阵和完整许可审核等门槛未满足时，发布检查保持阻断。
 

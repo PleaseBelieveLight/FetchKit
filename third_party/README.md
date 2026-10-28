@@ -1,5 +1,7 @@
 # Native reference dependencies
 
+[Documentation index](../docs/README.md) · [Integration and packaging](../docs/release/packaging.md)
+
 `curl.lock.json` pins the reference curl source archive and SHA-256. The archive was obtained from
 curl's official HTTPS download endpoint. `FETCHKIT_USE_PINNED_CURL=ON` verifies the hash before
 CMake extracts/builds it; `FETCHKIT_CURL_ARCHIVE` accepts an offline copy with the same checksum.
@@ -48,4 +50,4 @@ The owner selected Apache-2.0 for FetchKit on 2026-10-28; the canonical project 
 Third-party licenses remain separate. Native installs, AAR Java resources, sources JARs and the preview
 retain the project license; the Maven POM declares it. Complete third-party license review remains a release gate.
 `VERSION` controls native and Maven artifact versions.
-See `docs/m5-release.md` for the complete dependency and symbol archive procedure.
+See [integration and packaging](../docs/release/packaging.md) for the complete dependency and symbol archive procedure.

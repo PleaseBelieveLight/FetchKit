@@ -1,7 +1,9 @@
 # 存储记录 v1
 
+[文档中心](../README.md)
+
 2026-10-27 固定 M2 字节格式。参考实现为 `src/storage/record.cpp`，独立编码的黄金样本为
-[record-v1.hex](../tests/fixtures/record-v1.hex)。整数均无符号小端；不依赖 C/C++ 结构布局。
+[record-v1.hex](../../tests/fixtures/record-v1.hex)。整数均无符号小端；不依赖 C/C++ 结构布局。
 
 ## 封装
 

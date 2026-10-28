@@ -1,7 +1,9 @@
 # 存储记录 v2
 
+[文档中心](../README.md)
+
 日期：2026-10-27。M3 在 [v1](storage-record-v1.md) 封装上使用版本号 2，魔数、CRC32、整数端序、TLV 和 64
-KiB payload 上限不变。 独立编码的 [v2 黄金样本](../tests/fixtures/record-v2.hex) 与原 v1 样本共同参与编解码对照。
+KiB payload 上限不变。 独立编码的 [v2 黄金样本](../../tests/fixtures/record-v2.hex) 与原 v1 样本共同参与编解码对照。
 v1 的 tag 1～16 保持语义；新增字段全部为必须理解的 8 字节无符号整数。
 
 | tag | 字段             | 约束                                                   |

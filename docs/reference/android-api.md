@@ -1,7 +1,9 @@
-# M4 Android 接入
+# Android API：Kotlin/JNI 接入
 
-状态：alpha，2026-10-27。Kotlin/JNI 复用 M3 核心调度、协议、存储、重试与租约；保留 `FetchKit.version()`。
-运行矩阵、产物和未验证的环境见 [M4 报告](reports/m4-baseline.md)。
+[文档中心](../README.md) · [接入与打包](../release/packaging.md#maven-aar-与外部-android-宿主)
+
+状态：alpha。Kotlin/JNI 复用 C++ 核心调度、协议、存储、重试与租约；保留 `FetchKit.version()`。
+运行矩阵、产物和未验证的环境见 [M4 报告](../reports/m4-baseline.md)。
 
 ## 打开与请求
 
@@ -29,7 +31,7 @@ UI 使用 `thenAcceptAsync(..., mainExecutor)`，组合操作使用 `thenCompose
 取消 Future 不等同于取消订阅；有资源返回值的提交 Future 拒绝取消，避免成功创建后丢失待释放对象。
 
 每进程最多打开 16 个 Kotlin engine；公共 API 工作池 2 个线程、256 个等待槽，关闭使用独立控制通道。
-每 engine 1 个事件泵与 1 个取消监视线程，核心线程限制和队列见 [M3 API](m3-host-api.md)。
+每 engine 1 个事件泵与 1 个取消监视线程，核心线程限制和队列见 [M3 API](host-api.md)。
 同一订阅只有一个待完成的 `awaitStopped` 轮询，不因重复等待累积无界任务。
 SDK 不引入 Compose、WorkManager 或通知依赖。
 宿主可通过 `EngineConfig.network` 显式绑定 Android Network；socket 与 DNS 使用同一网络，不自动切换到其他网络。
@@ -50,7 +52,7 @@ FetchKit.setLogLevel(LogLevel.Off)   // 排障结束后关闭
 日志仅覆盖打开/关闭、扫描修复汇总、重要续传回退、重试和最终结果，以及 provider/listener/executor
 异常；不逐数据块、轮询或进度输出。异常只记录类型和安全状态，不记录异常消息/堆栈、URL、headers 或响应体。
 `RequestInfo` 和 `DownloadRequest` 的 `toString()` 隐藏外部字符串，实际请求字段保持原值；直接读取字段后打印仍须由宿主脱敏。
-关闭日志不影响 Future 错误、快照和事件；host/native 的过滤与上下文见 [主机诊断说明](m3-host-api.md#可选诊断日志)。
+关闭日志不影响 Future 错误、快照和事件；host/native 的过滤与上下文见 [主机诊断说明](host-api.md#可选诊断日志)。
 
 ## 订阅、事件与恢复
 
@@ -136,7 +138,7 @@ Completed/TransportComplete 与 DigestVerified 分别呈现；不要把前者说
 
 ## 示例的后台执行许可
 
-示例分为下载、存储和能力指南三个页面，操作与验证方式见 [Android 示例指南](android-sample.md)。
+示例分为下载、存储和能力指南三个页面，操作与验证方式见 [Android 示例指南](../guides/android-sample.md)。
 前台页面显示多文件进度、采样速度、核心快照、检查点、重试信息和有界状态事件，提供批量/逐任务暂停恢复、
 独立订阅取消/释放、可选长度/SHA-256、pin/过期、LRU 回收、暂存清理和可手动释放的读取租约。
 每个资源使用自己的请求与订阅，控制现有任务不会再从公共输入框构造其他资源的请求。

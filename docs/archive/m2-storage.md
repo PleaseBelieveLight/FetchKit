@@ -1,10 +1,12 @@
 # M2 持久化、校验与发布
 
-历史阶段文档：对应 `d90ffca`。当前 API 已进入 [M3](m3-host-api.md)，包括多任务、独立订阅、配额及记录 v2；
+[历史文档索引](README.md) · [当前主机 API](../reference/host-api.md)
+
+历史阶段文档：对应 `d90ffca`。[当前主机 API](../reference/host-api.md) 包括多任务、独立订阅、配额及记录 v2；
 下述 M2 单任务与结构布局说明不代表当前全部能力。
 
 状态：alpha，2026-10-27。替代 M1 的仅内存暂存结果。当前仍为每 engine 一个活动下载，Android Kotlin/JNI
-下载接口留在 M4。 实测与缺测项见 [M2 报告](reports/m2-baseline.md)。C 结构已扩展，使用方必须重新编译；尚不承诺发布版
+下载接口留在 M4。 实测与缺测项见 [M2 报告](../reports/m2-baseline.md)。C 结构已扩展，使用方必须重新编译；尚不承诺发布版
 ABI 稳定性。
 
 ## 下载与恢复
@@ -17,7 +19,7 @@ ctest --test-dir build/m2-host --output-on-failure -LE large_file
 ```
 
 系统 curl/zlib 的开发文件不在标准位置时设置 `CMAKE_PREFIX_PATH`；固定 curl 参考配置见
-[依赖说明](../third_party/README.md)。不在普通 SDK 构建中开启故障注入。
+[依赖说明](../../third_party/README.md)。不在普通 SDK 构建中开启故障注入。
 
 - 创建 engine 获取目录所有权锁并同步扫描，恢复记录默认不会发起网络请求。扫描可能读取完整文件，不能放在
   UI 主线程。
@@ -95,4 +97,4 @@ POSIX 同步目录失败会显式报错。Windows 使用 FlushFileBuffers 和 MO
 fsync； 当前只对实测的进程终止恢复负责。Linux、ASan/UBSan/TSan、系统重启、掉电与真实文件系统 ENOSPC
 的缺测项单列，不能由注入或 Windows 结果替代。
 
-字节格式见 [记录格式 v1](storage-record-v1.md)，故障测试见 [测试说明](../tests/README.md)。
+字节格式见 [记录格式 v1](../reference/storage-record-v1.md)，故障测试见 [测试说明](../../tests/README.md)。

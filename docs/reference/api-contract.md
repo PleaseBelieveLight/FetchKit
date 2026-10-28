@@ -1,21 +1,26 @@
 # M0 公共 API 与存储契约草案
 
+[文档中心](../README.md)
+
+本文保留契约草案及阶段演进记录；当前调用方式与实际语义以 [主机 API](host-api.md) 和
+[Android API](android-api.md) 为准。以下按日期描述的状态属于当时阶段。
+
 日期：2026-10-26。本文冻结 M1～M4 应遵守的可观察行为；函数名用于说明边界，尚未提供这些下载 API。现有
 `fetchkit_version()` 和 `FetchKit.version()`
-保持兼容。下载状态、线程和安全要求以 [v1-design.md](v1-design.md) 为基线。
+保持兼容。下载状态、线程和安全要求以 [v1-design.md](../design/v1-design.md) 为基线。
 
-M1 实现状态见 [主机 API](m1-host-api.md)：当前只开放其明确列出的 alpha 子集，使用校验后的 64 位 opaque
+M1 实现状态见 [主机 API](../archive/m1-host-api.md)：当前只开放其明确列出的 alpha 子集，使用校验后的 64 位 opaque
 token、 单任务与诊断快照；以下共享订阅、持久化、发布、租约等仍是后续契约，不能据此宣称已有完整 API。 请求
 provider 为网络 worker 上的协作式回调，截止时间不能强制打断任意宿主代码。
 
-2026-10-27：M2 已交付最小持久化、发布与只读租约子集，当前行为以 [M2 文档](m2-storage.md) 为准；
+2026-10-27：M2 已交付最小持久化、发布与只读租约子集，当前行为以 [M2 文档](../archive/m2-storage.md) 为准；
 共享订阅、调度、配额、pin/LRU 仍待 M3。alpha C 结构扩展后需要重新编译使用方。
 
-2026-10-27 M3：上述子集已实现，当前语义见 [M3 API](m3-host-api.md) 和 [记录 v2](storage-record-v2.md)。
+2026-10-27 M3：上述子集已实现，当前语义见 [M3 API](host-api.md) 和 [记录 v2](storage-record-v2.md)。
 事件采用宿主在指定 executor 上主动调用 dispatch 的形式，队列有界，关闭不依赖宿主处理积压回调。 它不创建自动
 post 到宿主的后台回调机制；后续 JNI 适配须保持同样的所有权和关闭屏障。
 
-2026-10-27 M4：Android 适配见 [M4 API](m4-android-api.md)。Kotlin 事件泵一次只向宿主 executor
+2026-10-27 M4：Android 适配见 [M4 API](android-api.md)。Kotlin 事件泵一次只向宿主 executor
 提交一个有界批次， 关闭包含公共调用/事件查询屏障，失效回调丢弃；provider 与 operation 均使用注册表范围
 token。
 

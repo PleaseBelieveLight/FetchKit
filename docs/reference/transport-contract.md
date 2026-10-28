@@ -1,14 +1,19 @@
-# M0 传输契约
+# 传输契约
+
+[文档中心](../README.md)
+
+本页说明传输边界，并保留 M0～M4 的后端演进记录。当前接入见 [主机 API](host-api.md) 和
+[Android API](android-api.md)；以下阶段状态按当时实现解读。
 
 状态：2026-10-26，内部契约 v1；供 M1/M4 实现使用。`src/transport/http_transport.h` 和 Android
 可选源码是验证此契约的实验接口，不是已发布下载
-API。实测范围与缺口见 [M0 报告](reports/m0-baseline.md)。
+API。实测范围与缺口见 [M0 报告](../reports/m0-baseline.md)。
 
 M1 已将主机探针适配演进为 `CurlTransport`，并由 DownloadSession 控制响应接受、续传和重定向。
-当前实现与限制见 [M1 API](m1-host-api.md)；Android 部分仍为可选实验，历史 M0 报告按原提交保留。
+当前实现与限制见 [M1 API](../archive/m1-host-api.md)；Android 部分仍为可选实验，历史 M0 报告按原提交保留。
 
 M4 已将隔离 OkHttp 5.5.1 产品化为 `AndroidTransport`，由 JNI 注入同一 C ABI engine 注册表， 不使用原
-HttpURLConnection 候选。当前边界见 [Android API](m4-android-api.md)，历史探针继续保持可选。 正式适配显式声明
+HttpURLConnection 候选。当前边界见 [Android API](android-api.md)，历史探针继续保持可选。 正式适配显式声明
 identity，绕过 OkHttp 内部状态重发，由 C++ 决定后续请求；复用 64 KiB ByteArray。
 取消监视与连接/响应头截止时间不套用完整文件总时限；DNS 使用有界隔离 worker，明确保留系统解析无法强制中断的边界。
 

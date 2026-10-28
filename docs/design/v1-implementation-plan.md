@@ -1,5 +1,7 @@
 # FetchKit v1 落地计划
 
+[文档中心](../README.md)
+
 日期：2026-10-26。基线提交：`ab1f46b`（`chore: 初始化 FetchKit SDK 工程骨架`）。
 
 本计划以 [v1-design.md](v1-design.md) 为需求与架构基线，将目标拆解为可以逐项实施、验证和交付的工作。本文中的新增文件、API
@@ -75,7 +77,7 @@ compileSdk/targetSdk 37、minSdk 24、NDK 28.2.13676358、CMake 3.22.1，ABI 为
 
 ## 4. 先冻结的接口与语义
 
-M0 输出 `docs/transport-contract.md` 和 `docs/api-contract.md`。接口先满足 M1 最小闭环，完整任务与存储
+M0 输出 `docs/reference/transport-contract.md` 和 `docs/reference/api-contract.md`。接口先满足 M1 最小闭环，完整任务与存储
 API 分阶段开放，不一次性实现全部空接口。
 
 ### 4.1 网络契约
@@ -136,8 +138,8 @@ M0 定义记录字段，M2 冻结首版格式与兼容策略。建议同一受�
 目标：排除平台网络、取消和体积方面的基础风险，明确后续实现的边界。
 
 2026-10-26 实施记录：已建立服务器、CTest、两类 Android/JNI 探针和体积工具，契约细化见
-[传输契约](transport-contract.md)、[API/存储契约](api-contract.md)，测量与缺测项见
-[M0 报告](reports/m0-baseline.md)。HttpURLConnection 未通过全局凭证隔离，已增加独立 OkHttp 对照并调整设计方向；
+[传输契约](../reference/transport-contract.md)、[API/存储契约](../reference/api-contract.md)，测量与缺测项见
+[M0 报告](../reports/m0-baseline.md)。HttpURLConnection 未通过全局凭证隔离，已增加独立 OkHttp 对照并调整设计方向；
 Linux 与更多设备仍待验证，不能将 M0 标为全部完成。
 
 | 编号  | 工作包与具体产物                                                                              | 依赖         | 完成依据                                                         |
@@ -162,7 +164,7 @@ M0 门槛：
 目标：从提交资源到正确接收字节，首先解决协议正确性；此阶段不承诺进程崩溃恢复。
 
 2026-10-26 实施记录：已交付主机 alpha API、CurlTransport、暂存写盘和 CLI，真实协议、HTTPS、跨 origin 及 >4
-GiB 验证已在 Windows 执行，详见 [M1 报告](reports/m1-baseline.md)。固定 curl 源码配置与 Linux CI
+GiB 验证已在 Windows 执行，详见 [M1 报告](../reports/m1-baseline.md)。固定 curl 源码配置与 Linux CI
 脚本已建立；Linux 执行记录尚缺，因此 M1 不标为全部验收完成。M0 的 Linux/真机缺测继续保留。
 
 | 编号  | 工作包与具体产物                                                                              | 依赖         | 完成依据                                                                                  |
@@ -188,7 +190,7 @@ M1 门槛：协议用例 T01～T07 通过 Linux 真后端测试；Linux 上进�
 ### M2：检查点、可信校验与发布恢复
 
 2026-10-27 实施状态：M2-01～M2-05 的主机代码、恢复/故障测试入口、记录格式与租约已加入，
-见 [M2 用法](m2-storage.md) 和 [阶段证据](reports/m2-baseline.md)。当前 Windows 验证不能代替 Linux
+见 [M2 用法](../archive/m2-storage.md) 和 [阶段证据](../reports/m2-baseline.md)。当前 Windows 验证不能代替 Linux
 或系统重启/掉电验收。
 
 目标：进程退出后可保守恢复，错误内容永不成为可读资源。
@@ -212,8 +214,8 @@ M2 门槛：T09～T12 的恢复与损坏用例通过；TransportComplete 与 Dig
 
 ### M3：任务调度、重试与资源生命周期
 
-2026-10-27 实施状态：M3-01～M3-05 的主机代码与测试入口已加入，见 [M3 API](m3-host-api.md) 和
-[阶段报告](reports/m3-baseline.md)。事件通过宿主 executor 主动 dispatch；记录升级 v2，保留 v1 迁移。 缺少
+2026-10-27 实施状态：M3-01～M3-05 的主机代码与测试入口已加入，见 [M3 API](../reference/host-api.md) 和
+[阶段报告](../reports/m3-baseline.md)。事件通过宿主 executor 主动 dispatch；记录升级 v2，保留 v1 迁移。 缺少
 Linux/sanitizer 与真实小容量文件系统证据，阶段门槛不标为整体验收通过。 缓存策略与记录删除需要同一事务和保护锁，实际归入
 `src/storage/`，未另建 cache 目标。
 
@@ -240,7 +242,7 @@ HTTP 缓存协商。
 
 2026-10-27 实施状态：M4-01～M4-05 的 Kotlin/JNI、网络、UI 和宿主 JobScheduler 实现已加入， M4-06
 增加真实进程终止/强制停止恢复、独立大文件入口、Release 文件 AAR/R8 与体积工具。
-接口与限制见 [Android API](m4-android-api.md)，实测范围与缺测项见 [M4 报告](reports/m4-baseline.md)。
+接口与限制见 [Android API](../reference/android-api.md)，实测范围与缺测项见 [M4 报告](../reports/m4-baseline.md)。
 正式后端使用 M0 已选择的隔离 OkHttp 5.5.1；该依赖现在进入普通 SDK。缺少真机、API 24/目标 API 和 Linux
 等证据时， 阶段门槛不标记为整体验收通过。后台示例使用系统 JobScheduler，不新增 WorkManager 模块。
 
@@ -275,7 +277,7 @@ M4 门槛：Android 与 Linux 的协议结果一致；真机完成实际超过 4
 
 2026-10-27 实施状态：已加入统一版本、生产 CMake 安装导出、本地 Maven AAR/sources 发布、独立 C/C++ 与
 Android R8 宿主、 Build ID 符号归档、有限压力/真实 ENOSPC 入口、模拟器 guest 重启恢复和严格发布检查。
-用法见 [M5 交付指南](m5-release.md)，逐项结果与剩余门槛见 [M5 报告](reports/m5-baseline.md)。 项目自身已采用
+用法见 [M5 交付指南](../release/packaging.md)，逐项结果与剩余门槛见 [M5 报告](../reports/m5-baseline.md)。 项目自身已采用
 Apache-2.0；代码与本地预览已准备不代表 Linux、物理设备、完整第三方许可审核和首版发布门槛全部通过；未上传产物。
 
 目标：从干净环境构建、接入和验证首版，交付内容与声明相符。

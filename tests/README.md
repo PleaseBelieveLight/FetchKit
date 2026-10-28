@@ -1,8 +1,10 @@
 # FetchKit 主机与平台验证
 
+[文档中心](../docs/README.md) · [构建与运行](../docs/guides/development.md)
+
 ## M5 交付验证
 
-完整步骤和发布门槛见 [M5 指南](../docs/m5-release.md)。`bash tools/ci/linux_m5.sh` 运行主机协议/恢复、
+完整步骤和发布门槛见 [M5 指南](../docs/release/packaging.md)。`bash tools/ci/linux_m5.sh` 运行主机协议/恢复、
 安装导出、源码树外 C/C++、固定 seed 压力和 Linux 隔离 tmpfs 真实 ENOSPC。
 Linux sanitizer 分别使用 `FETCHKIT_SANITIZERS=address,undefined` 与 `FETCHKIT_SANITIZERS=thread`；
 `FETCHKIT_RUN_LARGE_FILE=1` 执行真实 >4 GiB。缺少 Linux 不能用 Windows 结果替代。
@@ -71,10 +73,11 @@ Linux 入口为 `tools/ci/linux_m3.sh`，ASan/UBSan 与 TSan 分开配置；缺�
 
 Linux 入口为 `bash tools/ci/linux_m2.sh`，可分别设置 `FETCHKIT_SANITIZERS=address,undefined` 或
 `FETCHKIT_SANITIZERS=thread`；大文件另加 `FETCHKIT_RUN_LARGE_FILE=1`。
-实测环境与缺测项见 [M2 报告](../docs/reports/m2-baseline.md)，当前 API 见 [M2 文档](../docs/m2-storage.md)。
+实测环境与缺测项见 [M2 报告](../docs/reports/m2-baseline.md)，历史用法见 [M2 文档](../docs/archive/m2-storage.md)，
+当前接口见 [主机 API](../docs/reference/host-api.md)。
 
 M1 主机验证还包括纯 C ABI、假传输状态机、真实下载协议/HTTPS/CLI 和独立大文件集合。
-接口与限制见 [M1 API](../docs/m1-host-api.md)，固定依赖与 Linux
+接口与限制见 [M1 API](../docs/archive/m1-host-api.md)，固定依赖与 Linux
 入口见 [依赖说明](../third_party/README.md)。
 `ctest --test-dir build/m1-host --output-on-failure -LE large_file` 运行常规集合； 要注册实际 >4 GiB
 测试，配置时显式增加 `-DFETCHKIT_BUILD_LARGE_FILE_TESTS=ON`，再执行

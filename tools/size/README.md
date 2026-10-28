@@ -1,5 +1,7 @@
 # Android 接入体积基线
 
+[文档中心](../../docs/README.md) · [验证报告索引](../../docs/reports/README.md)
+
 M4 正式下载接入使用独立文件 AAR 宿主，分别比较同工具链、arm64/API24、R8 关闭和开启时的 bare/production：
 
 ```powershell

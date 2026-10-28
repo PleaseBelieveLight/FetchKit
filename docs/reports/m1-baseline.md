@@ -1,5 +1,7 @@
 # M1 暂存下载与续传验证
 
+[文档中心](../README.md) · [验证报告索引](README.md)
+
 日期：2026-10-26。基线提交：`3466326`，M1 实现位于其后的工作区；归档时的关键源码/构建输入哈希见
 [参考构建记录](m1/reference-build.json)。M0 报告按原提交保留，不用 M1 源码覆盖历史证据。
 
@@ -20,7 +22,7 @@ M4。
 ## 2. 可运行链路
 
 `C/CLI → engine/task → DownloadSession → HttpTransport/CurlTransport → staging file`。 API
-说明与示例见 [M1 主机 API](../m1-host-api.md)，测试入口见 [测试说明](../../tests/README.md)。
+说明与示例见 [M1 主机 API](../archive/m1-host-api.md)，测试入口见 [测试说明](../../tests/README.md)。
 
 - 每 engine 一个 worker、一个活动任务，忙时返回 Busy；同身份只有一个存活 task handle，未实现订阅共享。
 - API 输入复制，句柄通过 registry 校验并且不复用；控制和最终状态串行化，I/O 完全停止后才允许释放。

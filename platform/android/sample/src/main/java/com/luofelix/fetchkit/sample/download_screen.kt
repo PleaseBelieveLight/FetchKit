@@ -428,7 +428,7 @@ private fun GuidePage(modifier: Modifier) {
             KeyValue("单文件上限 / 存储配额", "2 GiB / 4 GiB")
             KeyValue("检查点阈值", "4 MiB 或 1 秒")
             KeyValue("重试 / 暂存保留", "最多 3 次 / 7 天")
-            Hint("请求头、鉴权刷新 RequestProvider、网络绑定和超时配置等高级接入见 docs/m4-android-api.md。凭证由宿主即时提供，避免写入任务记录。")
+            Hint("请求头、鉴权刷新 RequestProvider、网络绑定和超时配置等高级接入见 docs/reference/android-api.md。凭证由宿主即时提供，避免写入任务记录。")
         } }
         item { Text("最近状态事件", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
         item { Panel {

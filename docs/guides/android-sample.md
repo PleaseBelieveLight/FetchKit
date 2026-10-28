@@ -1,5 +1,7 @@
 # Android 示例操作指南
 
+[文档中心](../README.md)
+
 sample 使用真实 Kotlin/JNI SDK，不模拟进度，不添加新的运行依赖。入口为 `MainActivity`；
 `download_screen.kt` 负责 Compose 展示，`SampleDownloads` 管理宿主生命周期、请求和订阅，下载及存储策略仍在
 C++。
@@ -63,7 +65,7 @@ executor 上执行。 SDK 的 `filesDir/fetchkit`、记录格式和备份排除�
 
 当前配置为并发 3、队列 1024、最多重试 3、单文件 2 GiB、总配额 4 GiB、检查点 4 MiB 或 1 秒、暂存保留 7 天。
 需要大于 2 GiB 的示例时应明确调整单文件与配额预算；不要把此示例默认限制误认为 SDK 的 64 位偏移上限。
-请求头、鉴权刷新 RequestProvider、超时及网络绑定的接入示例见 [Android API](m4-android-api.md)。
+请求头、鉴权刷新 RequestProvider、超时及网络绑定的接入示例见 [Android API](../reference/android-api.md)。
 
 ## 验证
 
