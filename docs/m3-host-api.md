@@ -41,6 +41,26 @@ CLI 自身选定 16 GiB 容量和 7 天暂存保留期；库的 init 不替宿�
 `--retry-max-ms`、`--retention-ms`；它们不会缩短合法 Retry-After。 本地 HTTP 仍须显式 `--allow-http`。普通
 API/重定向/鉴权规则沿用 M1/M2。
 
+## 可选诊断日志
+
+日志默认关闭，由宿主显式设置当前库实例内的进程级级别，不写入存储记录：
+
+```c
+fetchkit_set_log_level(FETCHKIT_LOG_WARN);
+/* 排障结束后关闭；也可选择 ERROR 或 DEBUG，级别包含更严重的消息。 */
+fetchkit_set_log_level(FETCHKIT_LOG_OFF);
+```
+
+C++ 可使用 `fetchkit::setLogLevel(fetchkit::LogLevel::Warn)`。设置线程安全，非法级别返回
+InvalidArgument 并保留原设置；切换影响后续日志，已进入输出的日志可完成。静态链接到不同模块的独立库实例各自配置。
+主机写 stderr，CLI 的 stdout JSON 不受影响。日志只覆盖打开/关闭、扫描修复汇总、重要续传回退、
+每轮重试和最终失败/发布完成；不打印数据块、读写、轮询或进度。Error 表示操作失败，Warn 表示可恢复异常，
+Debug 增加正常操作边界；暂停和取消不会被记录为错误。
+
+任务日志包含核心生成的 taskId/persistentId、generation、状态/错误码、HTTP 状态、平台码和重试信息。
+不输出资源身份原文、路径、URL、headers、响应体或原始异常文本。日志不代替返回值、快照、事件，也不增加
+宿主回调、线程或日志队列；核心调度锁外完成诊断格式化，数据高频路径不输出日志。
+
 ## 任务与独立订阅
 
 `fetchkit_task` 现在表示独立订阅 token。`enqueue` 相同身份只创建一个写入任务，返回不同 token； 身份仍为

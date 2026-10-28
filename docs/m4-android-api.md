@@ -19,7 +19,7 @@ FetchKit.open(config).thenCompose { engine ->
         pinOnCreate = true,
     ))
 }.thenAcceptAsync({ subscription ->
-    // Save the subscription and engine in the owner's lifecycle scope.
+    // 在宿主生命周期范围内保存 subscription 和 engine，并在结束时释放。
 }, mainExecutor)
 ```
 
@@ -35,6 +35,23 @@ SDK 不引入 Compose、WorkManager 或通知依赖。
 宿主可通过 `EngineConfig.network` 显式绑定 Android Network；socket 与 DNS 使用同一网络，不自动切换到其他网络。
 后台示例使用 JobParameters 的获准网络；API 24～27 从满足约束的网络中选取，不能仅因另一个 Wi-Fi 存在就走计费默认网络。
 
+## 可选诊断日志
+
+```kotlin
+FetchKit.setLogLevel(LogLevel.Debug) // 排障时开启，普通宿主默认 Off
+FetchKit.setLogLevel(LogLevel.Warn)  // 仅错误与可恢复异常
+FetchKit.setLogLevel(LogLevel.Off)   // 排障结束后关闭
+```
+
+开关作用于当前 SDK 实例内的全部 engine，同时控制 Kotlin/JNI 适配与 C++ 核心。设置线程安全，
+影响后续日志；已进入输出的日志可能完成。Android 统一使用 Logcat tag `FetchKit`，可用
+`adb logcat -s FetchKit:D` 查看。Android 示例在 `SampleDownloads` 初始化时开启 Debug，覆盖前台及 JobService 入口。
+
+日志仅覆盖打开/关闭、扫描修复汇总、重要续传回退、重试和最终结果，以及 provider/listener/executor
+异常；不逐数据块、轮询或进度输出。异常只记录类型和安全状态，不记录异常消息/堆栈、URL、headers 或响应体。
+`RequestInfo` 和 `DownloadRequest` 的 `toString()` 隐藏外部字符串，实际请求字段保持原值；直接读取字段后打印仍须由宿主脱敏。
+关闭日志不影响 Future 错误、快照和事件；host/native 的过滤与上下文见 [主机诊断说明](m3-host-api.md#可选诊断日志)。
+
 ## 订阅、事件与恢复
 
 `DownloadSubscription` 是独立订阅；相同身份共享一个 writer。`pause` / `resume` 影响共享任务，
@@ -42,10 +59,10 @@ SDK 不引入 Compose、WorkManager 或通知依赖。
 
 ```kotlin
 val observation = subscription.observe(mainExecutor) { event ->
-    // Immutable core event: taskId, generation, state, bytes, integrity and error.
+    // 不可变事件，使用 taskId/generation 关联本轮业务状态。
 }
 subscription.pause().thenAcceptAsync({ paused ->
-    // Paused confirms I/O stopped and the checkpoint committed.
+    // 检查 state/error；仅 Paused 确认 I/O 停止且检查点提交成功。
 }, mainExecutor)
 subscription.resume()
 subscription.cancel()
@@ -66,7 +83,7 @@ Future 完成发生在 SDK 锁之外。关闭不依赖宿主执行积压事件�
 ```kotlin
 val provider = RequestProvider { context ->
     if (context.isCancelled()) throw IllegalStateException("Cancelled")
-    // Fetch/copy current request credentials. Cooperate with cancellation.
+    // 获取/复制当前凭证，并协作检查取消。
     RequestInfo(context.proposedUrl, mapOf("Authorization" to currentToken))
 }
 ```

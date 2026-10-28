@@ -23,8 +23,12 @@ import java.util.concurrent.Executor
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-/** Host permission and presentation state; download/storage policy stays in the SDK. */
+/** 管理宿主执行许可与展示状态；下载和存储策略由 SDK 核心负责。 */
 internal object SampleDownloads {
+    init {
+        // 示例同时覆盖前台和 JobService 入口；正式宿主按需开启，SDK 自身默认关闭。
+        FetchKit.setLogLevel(LogLevel.Debug)
+    }
     val main = Executor { Handler(Looper.getMainLooper()).post(it) }
     private val io = ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, ArrayBlockingQueue(64),
         { Thread(it, "sample-requests").apply { isDaemon = true } }, ThreadPoolExecutor.AbortPolicy())

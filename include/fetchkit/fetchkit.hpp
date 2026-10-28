@@ -17,6 +17,14 @@ inline void checkStatus(fetchkit_status status) {
     if (status != FETCHKIT_OK) throw std::runtime_error(fetchkit_status_name(status));
 }
 
+enum class LogLevel : std::uint32_t {
+    Off = FETCHKIT_LOG_OFF, Error = FETCHKIT_LOG_ERROR, Warn = FETCHKIT_LOG_WARN, Debug = FETCHKIT_LOG_DEBUG
+};
+
+// 当前库实例内的进程级开关，默认 Off；主机诊断写 stderr，不改变错误或事件语义。
+inline void setLogLevel(LogLevel level) { checkStatus(fetchkit_set_log_level(static_cast<std::uint32_t>(level))); }
+
+// 独立订阅的 RAII 包装；析构等同于 release，最后一个释放保留可恢复记录。
 class Task {
 public:
     explicit Task(fetchkit_task handle = 0) noexcept : handle_(handle) {}
@@ -55,6 +63,7 @@ private:
     fetchkit_task handle_ = 0;
 };
 
+// 已发布资源的只读 RAII 租约；engine 关闭后仍可读，析构后才能解除其淘汰/目录锁保护。
 class ResourceLease {
 public:
     explicit ResourceLease(fetchkit_lease handle=0) noexcept : handle_(handle) {}
@@ -73,6 +82,7 @@ private:
     fetchkit_lease handle_=0;
 };
 
+// 同步主机 API；构造/析构可能执行磁盘工作或等待 I/O/provider，宿主须选择合适线程。
 class Engine {
 public:
     explicit Engine(const fetchkit_engine_config& config) { checkStatus(fetchkit_engine_create(&config, &handle_)); }

@@ -25,6 +25,7 @@ endif()
 add_library(fetchkit_core STATIC
     src/core/version.cpp
     src/core/c_api.cpp
+    src/core/diagnostics.cpp
     src/core/engine.cpp
     src/core/download_session.cpp
     src/core/subscription.cpp
@@ -47,10 +48,13 @@ target_include_directories(fetchkit_core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/sr
 find_package(Threads REQUIRED)
 target_link_libraries(fetchkit_core PRIVATE Threads::Threads)
 if(ANDROID)
-    target_link_libraries(fetchkit_core PRIVATE z)
+    target_link_libraries(fetchkit_core PRIVATE z log)
 else()
     find_package(ZLIB REQUIRED)
     target_link_libraries(fetchkit_core PRIVATE ZLIB::ZLIB)
+endif()
+if(MSVC)
+    target_compile_options(fetchkit_core PRIVATE /utf-8)
 endif()
 if(UNIX)
     target_compile_definitions(fetchkit_core PRIVATE _FILE_OFFSET_BITS=64)
@@ -200,6 +204,13 @@ if(FETCHKIT_BUILD_TESTS)
     endif()
     add_test(NAME c_api COMMAND fetchkit_c_api_test "${CMAKE_CURRENT_BINARY_DIR}/c-api-store")
     set_tests_properties(c_api PROPERTIES LABELS "unit" TIMEOUT 20)
+    add_executable(fetchkit_diagnostics_test tests/unit/diagnostics_test.cpp)
+    target_include_directories(fetchkit_diagnostics_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(fetchkit_diagnostics_test PRIVATE fetchkit::core)
+    add_test(NAME diagnostics COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/diagnostics_test.py"
+        --driver "$<TARGET_FILE:fetchkit_diagnostics_test>" --work-root "${CMAKE_CURRENT_BINARY_DIR}/diagnostics")
+    set_tests_properties(diagnostics PROPERTIES LABELS "unit" TIMEOUT 120)
     add_executable(fetchkit_session_test tests/unit/download_session_test.cpp)
     target_include_directories(fetchkit_session_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(fetchkit_session_test PRIVATE fetchkit::core)

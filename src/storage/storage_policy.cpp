@@ -6,6 +6,7 @@ namespace fetchkit::storage {
 void ResourceStore::requireOpen() const {if(closed_) throw core::Failure(FETCHKIT_CLOSED);}
 void ResourceStore::shutdown() {std::lock_guard<std::recursive_mutex> lock(mutex_);closed_=true;}
 bool ResourceStore::protectedId(const std::string& id) const {
+    // 调用方可持有存储事务锁；保护锁只做短时状态判断，不反向获取存储锁。
     std::lock_guard<std::mutex> lock(protection_mutex_);
     const auto lease=leases_.find(id);
     return protected_ids_.count(id) || deleting_ids_.count(id) || (lease!=leases_.end() && lease->second);
@@ -105,6 +106,7 @@ void ResourceStore::reserve(const std::string& id,std::uint64_t offset,std::opti
     requireOpen();
     if(!records_.count(id)) throw core::Failure(FETCHKIT_NOT_FOUND);
     const auto old=allocations_[id];
+    // 写入前先预留已知总长或下一个 64 KiB 块；淘汰失败必须回滚账本，不能超额写入。
     constexpr std::uint64_t block=65536;
     if(offset>INT64_MAX || (total && *total>INT64_MAX)) throw core::Failure(FETCHKIT_QUOTA_EXCEEDED);
     const auto requested=total ? std::max(offset,*total) : ((offset+block-1)/block)*block;
@@ -141,6 +143,7 @@ std::shared_ptr<ResourceLease> ResourceStore::acquire(const std::string& id) {
         if(found==records_.end() || found->second.state!=FETCHKIT_COMPLETED ||
             (found->second.expires_at_ms && found->second.expires_at_ms<=clock_->nowMs())) throw core::Failure(FETCHKIT_NOT_FOUND);
         r=found->second;
+        // 在打开/校验文件前建立 lease 保护，堵住与 remove/trim 并发删除的窗口。
         std::lock_guard<std::mutex> protection(protection_mutex_);
         if(protected_ids_.count(id) || deleting_ids_.count(id)) throw core::Failure(FETCHKIT_BUSY);
         if(lease_count_>=1024) throw core::Failure(FETCHKIT_BUSY);

@@ -1,5 +1,6 @@
 #include "storage/resource_store.h"
 #include "storage/fault.h"
+#include "core/diagnostics.h"
 #include <algorithm>
 
 namespace fetchkit::storage {
@@ -32,6 +33,8 @@ ResourceStore::ResourceStore(const std::string& root, std::uint64_t capacity, st
     std::shared_ptr<core::Clock> clock)
     : directory_(root), capacity_(capacity), retention_ms_(retention_ms), clock_(std::move(clock)) {
     scan(); recount();scanning_=false;
+    // 扫描最多输出一条汇总，不记录路径、资源身份或每个损坏文件的内容。
+    core::logRecovery(static_cast<std::uint32_t>(records_.size()), quarantined_, unsupported_, orphans_, repaired_);
 }
 std::filesystem::path ResourceStore::stagingPath(const std::string& id) const {
     if (!validId(id)) throw core::Failure(FETCHKIT_INVALID_ARGUMENT);
@@ -77,6 +80,7 @@ void ResourceStore::save(Record record, bool policy_update) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     requireOpen();
     if(!policy_update) {
+        // worker 的旧副本不能覆盖宿主刚提交的 pin/过期/LRU 策略。
         const auto old=records_.find(record.id);
         if(old!=records_.end()) {
             record.pinned=old->second.pinned;record.expires_at_ms=old->second.expires_at_ms;
@@ -88,7 +92,7 @@ void ResourceStore::save(Record record, bool policy_update) {
     const auto bytes=encodeRecord(record);
     const auto path=directory_.root()/"records"/(record.id+".rec");
     const auto next=directory_.root()/"records"/(record.id+".next");
-    // A failed prior commit may leave our own temporary record. Never trust it.
+    // 上次提交失败可能留下 .next；只信任正式记录，不采用临时记录中的偏移。
     removeFile(next);
     {
         StagingFile file(next,true);
@@ -124,7 +128,7 @@ Record ResourceStore::create(const core::DownloadRequest& request) {
     r.pinned=request.pin_on_create;
         if (blocked_ids_.count(r.id)) throw core::Failure(FETCHKIT_BUSY);
         while(records_.size()>=1024) if(!evictOne(r.id)) throw core::Failure(FETCHKIT_BUSY);
-    // An unrecognized/orphan file is never adopted or silently overwritten.
+    // 孤立文件可能属于未知版本；不能直接接管或覆盖。
     if (!missing(stagingPath(r.id)) || !missing(objectPath(r.id))) throw core::Failure(FETCHKIT_BUSY);
     slots_.insert(r.id);allocations_[r.id]=data_bytes_[r.id]=0;
     try {
@@ -133,18 +137,20 @@ Record ResourceStore::create(const core::DownloadRequest& request) {
         syncDirectory(stagingPath(r.id).parent_path());
         save(r,true);
     } catch(...) {
-        // Admission failed: no accepted task owns these newly-created leaves.
+        // 准入失败，新建文件尚未归属于任何已接受的任务。
         bool cleaned=false;
         try {
             removeFile(stagingPath(r.id));
             removeFile(directory_.root()/"records"/(r.id+".next"));
             removeFile(directory_.root()/"records"/(r.id+".rec"));
             cleaned=true;
-        } catch(...) {}
+        } catch(...) {
+            // 原始准入错误继续向上传递；清理失败的保守计费在下方保留至下次扫描。
+        }
         records_.erase(r.id);
         {std::lock_guard<std::mutex> protection(protection_mutex_);present_ids_.erase(r.id);}
         if(cleaned) {slots_.erase(r.id);allocations_.erase(r.id);data_bytes_.erase(r.id);record_bytes_.erase(r.id);}
-        // On a failed cleanup, retain the conservative slot charge until reopen.
+        // 清理失败时仍保留元数据/空间计费，避免把未删除文件占用的容量重新分配。
         throw;
     }
     r.request.request={};r.request.provider={};
@@ -154,7 +160,7 @@ Record ResourceStore::create(const core::DownloadRequest& request) {
 void ResourceStore::discard(Record& r) {
     r.state=FETCHKIT_TASK_CANCELLED; r.committed=0; r.total=r.request.expected_length;
     r.etag.clear(); r.integrity=FETCHKIT_INTEGRITY_NONE; r.error=FETCHKIT_CANCELLED;
-    save(r); // Tombstone first: a killed cleanup cannot resurrect data.
+    save(r); // 先提交取消记录，确保清理中断后不会把未完成数据恢复为有效任务。
     faultPoint("cancel_commit_after");
     removeFile(stagingPath(r.id));
     observeSize(r.id,0);
@@ -165,7 +171,7 @@ void ResourceStore::publish(Record& r, transport::Cancellation& cancellation, co
     faultPoint("verify_before",&cancellation);
     r.integrity=verifyFile(stagingPath(r.id),r,&cancellation);
     faultPoint("verify_after");
-    barrier(); // Serialize the final pause/cancel decision before Publishing.
+    barrier(); // 进入 Publishing 前最后确认暂停/取消；跨过此屏障后由发布事务完成收尾。
     r.total=r.committed; r.state=FETCHKIT_PUBLISHING; save(r);
     faultPoint("publishing_commit_after");
     faultPoint("object_rename_before");
@@ -175,6 +181,7 @@ void ResourceStore::publish(Record& r, transport::Cancellation& cancellation, co
     syncDirectory(stagingPath(r.id).parent_path());
     syncDirectory(objectPath(r.id).parent_path());
     faultPoint("object_directory_sync_after");
+    // 对象 rename 和两个目录同步完成后才能提交 Completed；中途退出由 scan 重新校验。
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         if(access_order_==UINT64_MAX-1) throw core::Failure(FETCHKIT_BUSY);
@@ -211,10 +218,12 @@ void ResourceStore::repair(Record& r) {
                 atomicRename(part,object,false);
                 syncDirectory(part.parent_path());syncDirectory(object.parent_path());
             }
+            if (r.state == FETCHKIT_PUBLISHING) ++repaired_;
             r.state=FETCHKIT_COMPLETED; r.error=FETCHKIT_OK; save(r);
             return;
         } catch (const core::Failure& error) {
             if (error.code!=FETCHKIT_INTEGRITY_MISMATCH && error.code!=FETCHKIT_PERMISSION_DENIED) throw;
+            ++repaired_;
             r.state=FETCHKIT_FAILED; r.error=FETCHKIT_INTEGRITY_MISMATCH;
             r.integrity=FETCHKIT_INTEGRITY_NONE; r.committed=0; r.total=r.request.expected_length; r.etag.clear();
             save(r);
@@ -225,8 +234,8 @@ void ResourceStore::repair(Record& r) {
         try { regularFile(part); }
         catch(const core::Failure& error) {
             if(error.code!=FETCHKIT_PERMISSION_DENIED) throw;
-            // Invalidate the record before isolating a suspicious leaf; never
-            // follow its target or infer a resumable prefix from it.
+            // 先使记录失效再隔离可疑文件；不跟随链接，也不从可疑文件推断可续传前缀。
+            ++repaired_;
             r.state=FETCHKIT_FAILED;r.error=FETCHKIT_INTEGRITY_MISMATCH;
             r.committed=0;r.etag.clear();r.total=r.request.expected_length;r.integrity=FETCHKIT_INTEGRITY_NONE;
             save(r);quarantine(part);
@@ -234,14 +243,16 @@ void ResourceStore::repair(Record& r) {
     }
     if (r.state==FETCHKIT_TASK_CANCELLED) { removeFile(part); return; }
     if (missing(part)) {
+        if (r.committed) ++repaired_;
         r.committed=0; r.etag.clear(); r.total=r.request.expected_length;
         save(r);
         StagingFile file(part,true); file.sync(); syncDirectory(part.parent_path());
     } else {
         StagingFile file(part,false);
         if (file.size()<r.committed) {
+            ++repaired_;
             r.committed=0; r.etag.clear(); r.total=r.request.expected_length;
-            save(r); // Invalidate before truncation/overwriting.
+            save(r); // 先提交零偏移，再截断或覆盖，防止旧 committed 指向新内容。
         }
         if (file.size()!=r.committed) { file.truncate(r.committed); file.sync(); }
     }
@@ -278,7 +289,7 @@ void ResourceStore::scan() {
             if (error.code!=FETCHKIT_INTEGRITY_MISMATCH && error.code!=FETCHKIT_UNSUPPORTED_METADATA && error.code!=FETCHKIT_PERMISSION_DENIED) throw;
             if (error.code==FETCHKIT_UNSUPPORTED_METADATA) ++unsupported_;
             blocked_ids_.insert(path.stem().u8string());
-            // Moving a symlink itself does not follow its target.
+            // 移动符号链接本身，不访问其目标；未知版本仅隔离保留。
             quarantine(path); ++quarantined_; continue;
         }
         if (records_.size()>=1024) throw core::Failure(FETCHKIT_BUSY);

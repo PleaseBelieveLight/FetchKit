@@ -5,7 +5,7 @@
 namespace fetchkit::storage {
 struct Record {
     std::string id;
-    core::DownloadRequest request; // Only identity, reference and constraints are encoded.
+    core::DownloadRequest request; // 仅编码身份、业务引用与约束，绝不保存 URL、headers 或 provider。
     std::uint64_t committed = 0, generation = 1;
     std::optional<std::uint64_t> total;
     std::string etag;

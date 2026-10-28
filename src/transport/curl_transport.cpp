@@ -182,7 +182,7 @@ Result CurlTransport::execute(const Request& request, Sink& sink, Cancellation& 
     set(CURLOPT_URL, url.url.c_str());
     set(CURLOPT_PROTOCOLS_STR, request.allow_http ? "http,https" : "https");
     set(CURLOPT_FOLLOWLOCATION, 0L);
-    set(CURLOPT_PROXY, ""); // Probe is deterministic and does not inherit proxy credentials.
+    set(CURLOPT_PROXY, ""); // 使用直连，不继承环境代理及其凭证；网络策略由宿主显式决定。
     set(CURLOPT_HTTPAUTH, static_cast<long>(CURLAUTH_NONE));
     set(CURLOPT_ACCEPT_ENCODING, "identity");
     set(CURLOPT_HTTP_CONTENT_DECODING, 0L);

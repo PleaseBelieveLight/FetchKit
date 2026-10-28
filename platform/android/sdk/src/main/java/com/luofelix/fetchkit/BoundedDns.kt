@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-/** A platform resolver may ignore interrupts. Its bounded workers never retain JNI/sink/provider state. */
+/** 系统 DNS 可能忽略中断；使用有界 worker 隔离，任务只持 hostname/值，不保留 JNI/sink/provider。 */
 internal object BoundedDns {
     private val pool = ThreadPoolExecutor(4, 4, 30, TimeUnit.SECONDS, ArrayBlockingQueue(64),
         { Thread(it, "fetchkit-dns").apply { isDaemon = true } }, ThreadPoolExecutor.AbortPolicy())

@@ -1,6 +1,7 @@
 #include "core/engine.h"
 #include "storage/fault.h"
 #include "core/retry_policy.h"
+#include "core/diagnostics.h"
 
 #include <algorithm>
 #include <set>
@@ -73,7 +74,7 @@ public:
     RunResult run() {
         try {
             if (file_.size() != task_.saved.offset) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
-            if (task_.saved.offset && task_.saved.strong_etag.empty()) reset();
+            if (task_.saved.offset && task_.saved.strong_etag.empty()) reset("缺少强 ETag，改为从头下载");
             request_ = task_.request.request;
             prepare(FETCHKIT_REQUEST_INITIAL, {}, 0);
             std::set<std::string> visited{current_.url};
@@ -107,7 +108,7 @@ public:
                 if (error_.error) throw Failure(error_.error, error_.platform_code);
                 if (action_ == Action::Restart) {
                     if (restarts_++ != 0) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
-                    reset();
+                    reset("续传响应不符合约束，改为完整重下");
                     visited.clear(); visited.insert(current_.url);
                     continue;
                 }
@@ -192,7 +193,7 @@ public:
                 if (oneHeader(response, "content-range")) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
                 if (length && *length > config_.max_bytes) throw Failure(FETCHKIT_QUOTA_EXCEEDED);
                 if (length && task_.request.expected_length && *length != *task_.request.expected_length) throw Failure(FETCHKIT_INTEGRITY_MISMATCH);
-                if (request_offset_) reset();
+                if (request_offset_) reset("服务端返回完整响应，丢弃旧前缀后重新下载");
                 task_.saved.total = length ? length : task_.request.expected_length;
                 task_.saved.strong_etag = strongEtag(response);
                 expected_body_ = length;
@@ -244,6 +245,7 @@ private:
     enum class Action { None, Restart, Redirect, Refresh };
     void checkpoint() {
         try {
+            // 先同步数据，再原子提交记录；只有两者成功后才能对外推进 committed_offset。
             storage::faultPoint("checkpoint_data_sync_before");
             file_.sync();
             storage::faultPoint("checkpoint_data_sync_after");
@@ -260,9 +262,8 @@ private:
             storage::faultPoint("checkpoint_commit_after");
         } catch (...) { checkpoint_failed_=true; throw; }
     }
-    void reset() {
-        // Commit zero BEFORE touching previously committed bytes. Otherwise a
-        // killed restart can pair an old ETag/offset with new representation data.
+    void reset(const char* reason) {
+        // 覆盖旧数据前先提交零偏移，避免中断后把旧 ETag/偏移与新内容配对。
         task_.saved = {0, task_.request.expected_length, {}};
         checkpoint();
         storage::faultPoint("reset_commit_after");
@@ -270,6 +271,12 @@ private:
         file_.sync();
         if(const auto store=task_.store.lock()) store->observeSize(task_.record.id,0);
         task_.progress(0, task_.saved.total);
+        if (!reset_logged_) {
+            reset_logged_ = true;
+            fetchkit_task_snapshot diagnostic;
+            { std::lock_guard<std::mutex> lock(task_.mutex); diagnostic = task_.snapshot; }
+            logTask(FETCHKIT_LOG_WARN, reason, diagnostic);
+        }
     }
     void prepare(std::uint32_t reason, const std::string& previous_origin, std::uint32_t status) {
         if (cancellation_.isCancelled()) throw Failure(FETCHKIT_CANCELLED);
@@ -290,6 +297,7 @@ private:
         if (!current_.secure && !config_.allow_http) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
         if (proposed && proposed->secure && !current_.secure) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
         if (proposed && proposed->origin != current_.origin) {
+            // 跨 origin 只保留本轮 provider 显式提供的字段，防止把旧站点凭证转交给新站点。
             std::vector<transport::Header> explicit_headers;
             for (const auto& header : request_.headers) {
                 const auto name = transport::lowerAscii(header.name);
@@ -315,6 +323,7 @@ private:
     std::string location_;
     RunResult error_;
     bool checkpoint_failed_=false;
+    bool reset_logged_=false;
     std::chrono::steady_clock::time_point last_checkpoint_=std::chrono::steady_clock::now();
 };
 

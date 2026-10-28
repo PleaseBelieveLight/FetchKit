@@ -24,16 +24,16 @@ struct Task : public std::enable_shared_from_this<Task> {
     DownloadRequest request;
     std::filesystem::path path;
     std::weak_ptr<Engine> owner;
-    std::atomic<Engine*> event_owner{nullptr}; // Engine joins workers before clearing/destroying this target.
+    std::atomic<Engine*> event_owner{nullptr}; // engine 先 join worker，再清空并销毁事件目标。
     std::mutex mutex;
     std::condition_variable changed;
     fetchkit_task_snapshot snapshot{};
     std::shared_ptr<transport::Cancellation> cancellation;
     std::atomic<StopReason> stop{StopReason::None};
-    ResumeData saved; // Worker-owned; never read by public API threads.
+    ResumeData saved; // 由 worker 独占，公共 API 线程不得读取；对外通过受锁保护的 snapshot 查询。
     storage::Record record;
     std::weak_ptr<storage::ResourceStore> store;
-    std::vector<std::weak_ptr<Subscription>> subscribers; // Engine mutex.
+    std::vector<std::weak_ptr<Subscription>> subscribers; // 由 engine mutex 保护。
     bool finishing = false, processing = false, queued = false, refresh = false;
     std::uint64_t retry_after_ms = 0;
     std::uint64_t retry_monotonic_at = 0;

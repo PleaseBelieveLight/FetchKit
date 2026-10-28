@@ -36,7 +36,7 @@ public:
     void trimTo(std::uint64_t target);
     void collectStaging();
     bool available(const std::string& id);
-    void shutdown(); // Stop mutation; existing lease reads retain their context.
+    void shutdown(); // 停止修改；已有 lease 继续持有读取上下文。
     static constexpr std::uint64_t metadataBudget() { return 2ULL * 65556; }
 private:
     void scan();
@@ -63,6 +63,7 @@ private:
     bool closed_ = false;
     void requireOpen() const;
     std::uint32_t quarantined_ = 0, unsupported_ = 0, orphans_ = 0;
+    std::uint32_t repaired_ = 0;
 };
 
 std::string sha256File(StagingFile& file, transport::Cancellation* cancellation = nullptr);
@@ -75,7 +76,7 @@ public:
     ~ResourceLease();
     std::uint32_t read(std::uint64_t offset, std::uint8_t* buffer, std::uint32_t capacity);
 private:
-    std::shared_ptr<ResourceStore> store_; // Lock outlives engine; declared before file.
+    std::shared_ptr<ResourceStore> store_; // 先声明以便最后销毁，保证文件关闭前目录锁仍有效。
     std::string id_;
     std::unique_ptr<StagingFile> file_;
     std::mutex mutex_;

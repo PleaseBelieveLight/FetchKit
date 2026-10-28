@@ -1,5 +1,6 @@
 #include "core/engine.h"
 #include "core/retry_policy.h"
+#include "core/diagnostics.h"
 #include <algorithm>
 #include <cstring>
 
@@ -77,7 +78,7 @@ void Engine::requestStopLocked(const std::shared_ptr<Task>& task,StopReason reas
     if(!task->processing) queueLocked(task);
 }
 void Engine::emitLocked(const std::shared_ptr<Task>& task,std::uint32_t kind) {
-    // Engine + task locks are held. No host code runs here.
+    // 锁顺序固定为 engine → task → subscription；此处仅入队，不执行宿主回调或日志输出。
     for(const auto& weak:task->subscribers) if(const auto sub=weak.lock()) {
         if(sub->released || sub->inactive || sub->suppressed) continue;
         auto event=eventFor(task->snapshot,kind,sub->id);
@@ -225,7 +226,7 @@ std::shared_ptr<Subscription> Engine::enqueue(DownloadRequest request,std::uint6
             task->subscribers.push_back(sub);subscriptions_[id]=sub;identities_[resource_id]=task;
             if(execute) {
                 if(task->snapshot.generation>=UINT64_MAX-1) throw Failure(FETCHKIT_BUSY);
-                // A new record starts at generation 1; recovered/restarted runs advance.
+                // 新记录从 generation 1 开始；恢复/重启时递增，便于宿主识别旧轮次事件。
                 if(!new_record) ++task->snapshot.generation;
                 task->stop.store(StopReason::None);task->cancellation=std::make_shared<transport::Cancellation>();
                 task->snapshot.error=FETCHKIT_OK;task->snapshot.http_status=0;task->snapshot.request_count=0;
@@ -238,7 +239,7 @@ std::shared_ptr<Subscription> Engine::enqueue(DownloadRequest request,std::uint6
                 task->request.provider=[this,weak=std::weak_ptr<Task>(task)](const ProviderContext& context,RequestData& data,transport::Cancellation& cancellation) {
                     const auto current=weak.lock();if(!current) throw Failure(FETCHKIT_CLOSED);provide(current,context,data,cancellation);
                 };
-                task->request.request={}; // Credentials belong to subscriptions, not duplicated task/record copies.
+                task->request.request={}; // 凭证仅由订阅持有，不在共享任务或记录中重复保存。
             }
             if(publish) publish(sub);
             if(execute) emitLocked(task);else sub->events.push_back(eventFor(task->snapshot,FETCHKIT_EVENT_STATE,id));
@@ -384,8 +385,7 @@ fetchkit_status Engine::close() {
         }
         changed_.notify_all();
     }
-    // Admission performs synchronous disk work on its caller, outside core locks.
-    // Fence it without holding the fence while joining cooperative providers.
+    // 等待已进入的磁盘准入事务完成，再释放屏障并等待 provider；持屏障 join 会导致重入死锁。
     {std::lock_guard<std::mutex> admission(admission_mutex_);}
     for(auto& worker:workers_) if(worker.joinable()) worker.join();
     if(store_) store_->shutdown();
@@ -430,6 +430,7 @@ void Engine::loop(bool controls_only) {
 
 void Engine::run(const std::shared_ptr<Task>& task) {
     RunResult result;
+    const char* failure_message = "下载准备失败";
     try {
         store_->protect(task->snapshot.persistent_id);
         if(task->refresh) {
@@ -443,6 +444,7 @@ void Engine::run(const std::shared_ptr<Task>& task) {
             store_->save(task->record);
             store_->reserve(task->record.id,task->saved.offset,task->saved.total);
             task->retry_after_ms=0;
+            failure_message = "下载失败";
             result=runDownload(*task,config_,*transport_);
         } else result.error=FETCHKIT_CANCELLED;
         if(result.error==FETCHKIT_OK && task->stop.load()==StopReason::None) {
@@ -450,10 +452,12 @@ void Engine::run(const std::shared_ptr<Task>& task) {
                 std::lock_guard<std::mutex> lock(mutex_);std::lock_guard<std::mutex> task_lock(task->mutex);
                 task->snapshot.state=FETCHKIT_VERIFYING;emitLocked(task);
             }
+            failure_message = "资源校验失败";
             store_->publish(task->record,*task->cancellation,[&] {
                 std::lock_guard<std::mutex> lock(mutex_);std::lock_guard<std::mutex> task_lock(task->mutex);
                 if(task->stop.load()!=StopReason::None) throw Failure(FETCHKIT_CANCELLED);
                 task->finishing=true;task->snapshot.state=FETCHKIT_PUBLISHING;emitLocked(task);
+                failure_message = "资源发布失败";
             });
         }
     } catch(const Failure& error) {result={error.code,error.platform_code};}
@@ -488,10 +492,13 @@ void Engine::run(const std::shared_ptr<Task>& task) {
             task->record.state=state;task->record.error=result.error;task->record.integrity=FETCHKIT_INTEGRITY_NONE;
             store_->save(task->record);
         }
-    } catch(const Failure& error) {result={error.code,error.platform_code};state=FETCHKIT_FAILED;retry=false;}
-    catch(...) {result.error=FETCHKIT_INTERNAL_ERROR;state=FETCHKIT_FAILED;retry=false;}
+    } catch(const Failure& error) {
+        result={error.code,error.platform_code};state=FETCHKIT_FAILED;retry=false;failure_message="任务收尾或记录提交失败";
+    }
+    catch(...) {result.error=FETCHKIT_INTERNAL_ERROR;state=FETCHKIT_FAILED;retry=false;failure_message="任务收尾异常";}
     store_->endAttempt(task->record.id);
     if(!retry) store_->unprotect(task->record.id);
+    fetchkit_task_snapshot diagnostic{};
     {
         std::lock_guard<std::mutex> lock(mutex_);std::lock_guard<std::mutex> task_lock(task->mutex);
         auto& s=task->snapshot;s.state=state;s.error=result.error;s.platform_code=result.platform_code;
@@ -505,7 +512,15 @@ void Engine::run(const std::shared_ptr<Task>& task) {
             else {task->cancellation=std::make_shared<transport::Cancellation>();task->stop.store(StopReason::None);}
             queueLocked(task);
         }
+        diagnostic=s;
         emitLocked(task);task->changed.notify_all();changed_.notify_all();
     }
+    // 每轮只记录一次结果；在释放核心锁后格式化，避免进度路径与日志输出相互阻塞。
+    if (retry) logTask(FETCHKIT_LOG_WARN, "下载失败，已安排重试", diagnostic);
+    else if (state == FETCHKIT_FAILED) {
+        const bool exhausted = config_.max_retries && diagnostic.retry_count >= config_.max_retries &&
+            retryable(result.error, diagnostic.http_status);
+        logTask(FETCHKIT_LOG_ERROR, exhausted ? "下载重试预算已耗尽" : failure_message, diagnostic);
+    } else if (state == FETCHKIT_COMPLETED) logTask(FETCHKIT_LOG_DEBUG, "资源校验与发布完成", diagnostic);
 }
 }

@@ -38,7 +38,7 @@ struct Response {
     std::string effective_url;
 };
 
-// Cancellation owns no transport resources. It outlives execute() and all callbacks.
+// Cancellation 不拥有传输资源；生命周期覆盖 execute 和全部回调。
 class Cancellation {
 public:
     void cancel() noexcept {
@@ -67,8 +67,8 @@ struct Result {
     int platform_code = 0;
 };
 
-// Callbacks run on execute's worker, never under an SDK lock.
-// Data is borrowed until onData returns. Waiting sinks must observe Cancellation.
+// 回调运行在 execute 的 worker 上，不持核心调度锁；data 仅借用至 onData 返回。
+// sink 等待背压时必须检查 Cancellation，避免取消/关闭长期无法完成。
 class Sink {
 public:
     virtual ~Sink() = default;
@@ -79,7 +79,7 @@ public:
 class HttpTransport {
 public:
     virtual ~HttpTransport() = default;
-    // Returning is the quiescence barrier: no later callbacks or buffer accesses.
+    // 返回即静止屏障：此后不得再回调或访问任何借用缓冲区。
     virtual Result execute(const Request& request, Sink& sink, Cancellation& cancellation) = 0;
     virtual UrlInfo resolveUrl(const std::string& base, const std::string& location) = 0;
 };

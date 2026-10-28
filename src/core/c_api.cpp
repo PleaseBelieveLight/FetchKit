@@ -1,6 +1,7 @@
 #include "fetchkit/fetchkit.h"
 #include "core/engine.h"
 #include "core/engine_factory.h"
+#include "core/diagnostics.h"
 
 #include <algorithm>
 #include <cstring>
@@ -45,7 +46,7 @@ template<class F> fetchkit_status boundary(F function) noexcept {
 std::string text(fetchkit_string value, std::size_t maximum, bool required = false) {
     if (value.size > maximum || (value.size && !value.data) || (required && !value.size)) throw Failure(FETCHKIT_INVALID_ARGUMENT);
     std::string result(value.data ? value.data : "", static_cast<std::size_t>(value.size));
-    // Strict UTF-8: reject NUL, overlong forms, surrogate code points and > U+10FFFF.
+    // 严格校验 UTF-8，拒绝 NUL、过长编码、surrogate 及超出 U+10FFFF 的码点。
     for (std::size_t i = 0; i < result.size();) {
         auto c = static_cast<unsigned char>(result[i++]);
         if (c == 0) throw Failure(FETCHKIT_INVALID_ARGUMENT);
@@ -135,7 +136,7 @@ const char* fetchkit_status_name(fetchkit_status status) noexcept {
 fetchkit_status fetchkit::core::createEngineWithTransport(const fetchkit_engine_config* input, fetchkit_engine* output,
     std::shared_ptr<transport::HttpTransport> transport) noexcept {
     if (output) *output = 0;
-    return boundary([&]() -> fetchkit_status {
+    const auto status = boundary([&]() -> fetchkit_status {
         if (!input || !output || input->struct_size < sizeof(*input) || input->allow_http > 1 || input->reserved ||
             input->max_download_bytes == 0 || input->max_download_bytes > static_cast<std::uint64_t>(INT64_MAX) ||
             !input->connect_timeout_ms || !input->read_timeout_ms || !input->provider_timeout_ms ||
@@ -172,6 +173,9 @@ fetchkit_status fetchkit::core::createEngineWithTransport(const fetchkit_engine_
         *output = id;
         return FETCHKIT_OK;
     });
+    logStatus(status == FETCHKIT_OK ? FETCHKIT_LOG_DEBUG : FETCHKIT_LOG_ERROR,
+        status == FETCHKIT_OK ? "引擎打开完成" : "引擎打开失败（含参数校验或存储初始化）", status);
+    return status;
 }
 
 extern "C" {
@@ -180,12 +184,15 @@ fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* input, fetc
 }
 
 fetchkit_status fetchkit_engine_close(fetchkit_engine id) noexcept {
-    return boundary([&]() -> fetchkit_status {
+    const auto status = boundary([&]() -> fetchkit_status {
         auto engine = engineFor(id);
         const auto status = engine->close();
         if (status == FETCHKIT_OK) { std::lock_guard<std::mutex> lock(registry().mutex); registry().engines.erase(id); }
         return status;
     });
+    if (status != FETCHKIT_CLOSED) logStatus(status == FETCHKIT_OK ? FETCHKIT_LOG_DEBUG : FETCHKIT_LOG_ERROR,
+        status == FETCHKIT_OK ? "引擎关闭完成" : "引擎关闭失败", status);
+    return status;
 }
 
 static fetchkit_status enqueueInternal(fetchkit_engine id, const fetchkit_download_request* input, fetchkit_task* output, bool start) noexcept {

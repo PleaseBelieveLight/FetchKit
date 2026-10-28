@@ -20,7 +20,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLHandshakeException
 import java.security.cert.CertificateException
 
-/** One isolated client per engine. Download policy stays in the C++ core. */
+/** 每个 engine 使用隔离的客户端；重试、鉴权、重定向与续传策略统一由 C++ 核心决定。 */
 internal class AndroidTransport(private val network: android.net.Network? = null) : AutoCloseable {
     private val cancellations = ScheduledThreadPoolExecutor(1) { Thread(it, "fetchkit-cancel").apply { isDaemon = true } }
         .apply { removeOnCancelPolicy = true }
@@ -40,11 +40,11 @@ internal class AndroidTransport(private val network: android.net.Network? = null
             if (canonical.isHttps) "1" else "0")
     }
 
-    // Values match transport::EndReason; Java exception messages are never exported.
+    // 低 8 位对应 transport::EndReason，高位为平台诊断分类；不回传 Java 异常消息。
     fun execute(operation: Long, url: String, headers: Array<String>, connectMs: Int, readMs: Int): Int {
         val request = Request.Builder().url(url)
         val requestHeaders = okhttp3.Headers.Builder()
-        // Core validation already rejects controls, CR/LF, invalid names and protected fields.
+        // 核心已校验控制字符、CR/LF、非法字段名和 SDK 保留字段。
         headers.asList().chunked(2).forEach { requestHeaders.addUnsafeNonAscii(it[0], it[1]) }
         request.headers(requestHeaders.build())
         request.header("Accept-Encoding", "identity")
@@ -66,9 +66,8 @@ internal class AndroidTransport(private val network: android.net.Network? = null
                     deadline.set(System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(readMs.toLong()))
                 }
             })
-            // OkHttp 5.5.1 can follow 503 Retry-After:0 even with connection retries off.
-            // Capture the wire status before its policy interceptor, which sees 599.
-            // Headers/body remain untouched; only the original status reaches the core.
+            // OkHttp 5.5.1 关闭连接重试后仍可能跟进 503 + Retry-After:0。
+            // 在策略层前暂存真实状态并替换为 599，避免绕过核心重试预算；headers/body 保持原样。
             .addNetworkInterceptor { chain ->
                 val response = chain.proceed(chain.request())
                 originalStatus = response.code
@@ -95,7 +94,7 @@ internal class AndroidTransport(private val network: android.net.Network? = null
                 for (i in 0 until response.headers.size) {
                     val name = response.headers.name(i)
                     val value = response.headers.value(i)
-                    // OkHttp exposes decoded Strings; non-ASCII opaque validators cannot be byte-exactly compared.
+                    // OkHttp 仅提供解码后的字符串；保守拒绝非 ASCII ETag，避免不同原始值折叠后错误追加。
                     if (name.equals("ETag", true) && value.any { it.code > 127 }) return 5
                     bytes += name.length + value.length + 4
                     if (i >= 256 || bytes > 65536) return 5
@@ -128,7 +127,7 @@ internal class AndroidTransport(private val network: android.net.Network? = null
         } catch (_: Exception) { return if (NativeBridge.cancelled(operation)) 1 else (if (timedOut.get()) 2 else 3) or (7 shl 8)
         } finally {
             monitor.cancel(false)
-            synchronized(gate) { finished = true } // Wait for an entered cancellation check.
+            synchronized(gate) { finished = true } // 等待已进入的取消检查完成，返回后不再访问 native operation。
             call.cancel()
         }
     }

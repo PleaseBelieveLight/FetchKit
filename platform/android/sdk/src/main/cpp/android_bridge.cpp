@@ -37,12 +37,12 @@ struct GlobalRef {
             if(java_vm->AttachCurrentThread(&env,nullptr)!=JNI_OK) return;
             attached=true;
         }
-        if(env) env->DeleteGlobalRef(object); // Also legal while a Java exception is pending.
+        if(env) env->DeleteGlobalRef(object); // 有待处理 Java 异常时也允许释放全局引用。
         if(attached) java_vm->DetachCurrentThread();
     }
 };
 
-// JNI modified UTF-8 cannot encode supplementary resource keys correctly.
+// JNI modified UTF-8 不能直接表示补充平面字符，资源键需显式在标准 UTF-8 与 UTF-16 之间转换。
 std::string utf8(JNIEnv* env,jstring value,std::size_t maximum=16384) {
     if(!value) throw Failure(FETCHKIT_INVALID_ARGUMENT);
     const auto length=env->GetStringLength(value);
@@ -121,6 +121,7 @@ std::shared_ptr<Operation> operationFor(jlong token) {
 }
 class OperationScope {
 public:
+    // 注册整数 token，不暴露 native 指针；注销后迟到回调只会查到失效，避免访问已销毁的 sink。
     std::shared_ptr<Operation> operation=std::make_shared<Operation>();
     std::uint64_t token;
     OperationScope(transport::Sink& sink,transport::Cancellation& cancellation) {
@@ -286,6 +287,8 @@ jobjectArray invoke(JNIEnv* env,jobject,jint code,jlong handle,jlongArray raw_nu
         case 16: shape(0,0);checked(fetchkit_storage_collect_staging(handle));break;
         case 17: {shape(0,0);std::uint32_t count=0;checked(fetchkit_task_dispatch(handle,event,&output,64,&count));break;}
         case 18: shape(0,0);checked(fetchkit_resource_release(handle));break;
+        case 19: shape(1,0);if(n[0]>FETCHKIT_LOG_DEBUG) throw Failure(FETCHKIT_INVALID_ARGUMENT);
+            checked(fetchkit_set_log_level(static_cast<std::uint32_t>(n[0])));break;
         default: throw Failure(FETCHKIT_INVALID_ARGUMENT);
         }
     } catch(const Failure& e) {output={std::to_string(e.code)};}
