@@ -1,0 +1,77 @@
+[
+  {
+    "component": "androidx.annotation:annotation:1.10.0",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": []
+  },
+  {
+    "component": "androidx.annotation:annotation-jvm:1.10.0",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": [
+      "annotation-jvm-1.10.0-META-INF_androidx_annotation_annotation_LICENSE.txt",
+      "annotation-jvm-1.10.0-sources-META-INF_androidx_annotation_annotation_LICENSE.txt"
+    ]
+  },
+  {
+    "component": "androidx.startup:startup-runtime:1.2.0",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": [
+      "startup-runtime-1.2.0-sources-META-INF_androidx_startup_startup-runtime_LICENSE.txt"
+    ]
+  },
+  {
+    "component": "androidx.tracing:tracing:1.0.0",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": []
+  },
+  {
+    "component": "com.squareup.okhttp3:okhttp:5.5.1",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": []
+  },
+  {
+    "component": "com.squareup.okhttp3:okhttp-android:5.5.1",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": []
+  },
+  {
+    "component": "com.squareup.okio:okio:3.18.1",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": []
+  },
+  {
+    "component": "com.squareup.okio:okio-jvm:3.18.1",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": []
+  },
+  {
+    "component": "org.jetbrains:annotations:13.0",
+    "declared_licenses": [
+      "The Apache Software License, Version 2.0"
+    ],
+    "embedded_notices": []
+  },
+  {
+    "component": "org.jetbrains.kotlin:kotlin-stdlib:2.2.21",
+    "declared_licenses": [
+      "Apache-2.0"
+    ],
+    "embedded_notices": []
+  }
+]

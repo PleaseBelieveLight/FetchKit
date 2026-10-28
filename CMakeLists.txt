@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(fetchkit VERSION 0.1.0 LANGUAGES CXX)
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" fetchkit_version LIMIT_COUNT 1)
+if(NOT fetchkit_version MATCHES "^[0-9]+[.][0-9]+[.][0-9]+$")
+    message(FATAL_ERROR "VERSION must contain a numeric major.minor.patch")
+endif()
+project(fetchkit VERSION ${fetchkit_version} LANGUAGES CXX)
+include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -35,7 +40,8 @@ add_library(fetchkit::core ALIAS fetchkit_core)
 
 target_compile_features(fetchkit_core PUBLIC cxx_std_17)
 target_include_directories(fetchkit_core PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 target_include_directories(fetchkit_core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
 find_package(Threads REQUIRED)
@@ -56,6 +62,7 @@ set_target_properties(fetchkit_core PROPERTIES
     CXX_EXTENSIONS OFF
     POSITION_INDEPENDENT_CODE ON
     OUTPUT_NAME fetchkit
+    EXPORT_NAME core
 )
 
 set(fetchkit_cli_default OFF)
@@ -119,9 +126,10 @@ if(FETCHKIT_WITH_CURL)
     endif()
     add_library(fetchkit_transport_curl STATIC src/transport/curl_transport.cpp)
     target_compile_features(fetchkit_transport_curl PUBLIC cxx_std_17)
-    target_include_directories(fetchkit_transport_curl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_include_directories(fetchkit_transport_curl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(fetchkit_transport_curl PRIVATE CURL::libcurl)
-    set_target_properties(fetchkit_transport_curl PROPERTIES CXX_EXTENSIONS OFF)
+    set_target_properties(fetchkit_transport_curl PROPERTIES
+        CXX_EXTENSIONS OFF POSITION_INDEPENDENT_CODE ON EXPORT_NAME transport_curl)
     target_compile_definitions(fetchkit_core PRIVATE FETCHKIT_WITH_CURL=1)
     target_link_libraries(fetchkit_core PRIVATE fetchkit_transport_curl)
 endif()
@@ -132,7 +140,46 @@ if(FETCHKIT_BUILD_PROBES)
     endif()
     find_package(Threads REQUIRED)
     add_executable(fetchkit_transport_probe tests/contract/transport_probe.cpp)
+    target_include_directories(fetchkit_transport_probe PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(fetchkit_transport_probe PRIVATE fetchkit_transport_curl CURL::libcurl Threads::Threads)
+endif()
+
+option(FETCHKIT_INSTALL "Install the production library, CLI and CMake package" OFF)
+if(FETCHKIT_INSTALL)
+    if(FETCHKIT_ENABLE_FAULT_INJECTION OR FETCHKIT_SANITIZERS)
+        message(FATAL_ERROR "An installable package must not contain fault injection or sanitizers")
+    endif()
+    include(GNUInstallDirs)
+    include(CMakePackageConfigHelpers)
+    if(ANDROID)
+        set(FETCHKIT_PACKAGE_ANDROID ON)
+    else()
+        set(FETCHKIT_PACKAGE_ANDROID OFF)
+    endif()
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/third_party/curl.lock.json" fetchkit_package_curl_lock)
+    string(JSON FETCHKIT_PINNED_CURL_VERSION GET "${fetchkit_package_curl_lock}" version)
+    install(TARGETS fetchkit_core EXPORT fetchkitTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    if(FETCHKIT_WITH_CURL)
+        install(TARGETS fetchkit_transport_curl EXPORT fetchkitTargets
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    endif()
+    if(FETCHKIT_BUILD_CLI)
+        install(TARGETS fetchkit_cli RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
+    install(DIRECTORY include/fetchkit DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    configure_package_config_file(cmake/fetchkit-config.cmake.in
+        "${CMAKE_CURRENT_BINARY_DIR}/fetchkit-config.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fetchkit")
+    write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/fetchkit-config-version.cmake"
+        VERSION ${PROJECT_VERSION} COMPATIBILITY ExactVersion)
+    install(EXPORT fetchkitTargets NAMESPACE fetchkit:: DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fetchkit")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fetchkit-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/fetchkit-config-version.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fetchkit")
+    install(FILES README.md VERSION DESTINATION ${CMAKE_INSTALL_DOCDIR})
+    install(DIRECTORY third_party/licenses/ DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/fetchkit")
+    install(FILES LICENSE DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/fetchkit")
 endif()
 
 if(FETCHKIT_BUILD_TESTS)

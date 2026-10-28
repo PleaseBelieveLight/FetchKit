@@ -1,0 +1,2006 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "large_file": false,
+  "cases": [
+    {
+      "id": "normal",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 4.734,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/normal",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "empty",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.766,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 0,
+      "total_known": true,
+      "total_bytes": 0,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/empty",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "unknown",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.75,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/unknown",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "unknown-close",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.797,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/unknown-close",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "no-head",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.015,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/no-head",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-normal",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.547,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 206,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-normal",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-normal",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-ignore",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 2.109,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-ignore",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-ignore",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-partial",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.797,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 206,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 4,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-partial",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-partial",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-partial",
+          "method": "GET",
+          "range": "bytes=66560-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-partial",
+          "method": "GET",
+          "range": "bytes=132096-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-partial",
+          "method": "GET",
+          "range": "bytes=197632-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-416",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 2.516,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-416",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-416",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-416",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-complete-416",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 2.5,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 262144,
+      "requests": [
+        {
+          "path": "/m1/resume-complete-416",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-complete-416",
+          "method": "GET",
+          "range": "bytes=262144-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-complete-416",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-changed",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 2.062,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-changed",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-changed",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-changed",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-length-changed",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 2.516,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262148,
+      "total_known": true,
+      "total_bytes": 262148,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262148,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-length-changed",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-length-changed",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-length-changed",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-bad-start",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 4.156,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-bad-start",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-bad-start",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-bad-start",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-bad-end",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.625,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-bad-end",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-bad-end",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-bad-end",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-bad-total",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 2.547,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-bad-total",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-bad-total",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-bad-total",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-overflow",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 2.344,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-overflow",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-overflow",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-overflow",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-missing-range",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.734,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-missing-range",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-missing-range",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-missing-range",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-missing-etag",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.921,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-missing-etag",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-missing-etag",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-missing-etag",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-weak206",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.844,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-weak206",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-weak206",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-weak206",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "weak-etag",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.469,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/weak-etag",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/weak-etag",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "no-etag",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.75,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/no-etag",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/no-etag",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "last-modified",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.687,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/last-modified",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/last-modified",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-on-error",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.485,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 206,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-on-error",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-on-error",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-auth",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.625,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 206,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-auth",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-auth",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-auth",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": true,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 1
+    },
+    {
+      "id": "resume-unknown",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.406,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 206,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-unknown",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-unknown",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-short206",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.391,
+      "state": 4,
+      "error": "Network",
+      "received_bytes": 1124,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 206,
+      "platform_code": 18,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 1124,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-short206",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-short206",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-extra206",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.187,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 1024,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 206,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 1,
+      "bytes": 1024,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-extra206",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-extra206",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "resume-invalid-after-restart",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.328,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 206,
+      "platform_code": 0,
+      "generation": 2,
+      "request_count": 2,
+      "bytes": 0,
+      "paused_bytes": 1024,
+      "requests": [
+        {
+          "path": "/m1/resume-invalid-after-restart",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-invalid-after-restart",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/resume-invalid-after-restart",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "gzip",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.562,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/gzip",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "conflicting-length",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.454,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 0,
+      "platform_code": 8,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/conflicting-length",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "overflow-length",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.656,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/overflow-length",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "length-mismatch",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.734,
+      "state": 4,
+      "error": "IntegrityMismatch",
+      "received_bytes": 0,
+      "total_known": true,
+      "total_bytes": 100,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/length-mismatch",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "not-found",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.672,
+      "state": 4,
+      "error": "HttpStatus",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 404,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/not-found",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "unavailable",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.547,
+      "state": 4,
+      "error": "HttpStatus",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 503,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/unavailable",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "fresh-416",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.672,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 416,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/fresh-416",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "truncated",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.703,
+      "state": 4,
+      "error": "Network",
+      "received_bytes": 1024,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 18,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 1024,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/truncated",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "timeout",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.844,
+      "state": 4,
+      "error": "Timeout",
+      "received_bytes": 1024,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 1024,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/timeout",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "unknown-limit",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.687,
+      "state": 4,
+      "error": "QuotaExceeded",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/unknown-limit",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "redirect-loop",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.625,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 302,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/redirect-loop",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "redirect-chain",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.703,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 302,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 6,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/redirect-chain",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/redirect-chain",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/redirect-chain",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/redirect-chain",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/redirect-chain",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/redirect-chain",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "userinfo-redirect",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.391,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 302,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/userinfo-redirect",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "auth-fail",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.734,
+      "state": 4,
+      "error": "AuthRequired",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 401,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 2,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/auth-fail",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/auth-fail",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 1
+    },
+    {
+      "id": "provider-throws",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.75,
+      "state": 4,
+      "error": "AuthRequired",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 0,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 0,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [],
+      "refreshes": 0
+    },
+    {
+      "id": "cancel",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.953,
+      "state": 5,
+      "error": "Cancelled",
+      "received_bytes": 1024,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 1024,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/cancel",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "provider-cancel",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.907,
+      "state": 5,
+      "error": "Cancelled",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 0,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 0,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [],
+      "refreshes": 0
+    },
+    {
+      "id": "auth-refresh",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.859,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/auth-refresh",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m1/auth-refresh",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": true,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 1
+    },
+    {
+      "id": "cross-origin",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.469,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/cross-origin",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": true,
+          "has_cookie": true,
+          "has_api_key": true
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "same-origin",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.234,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 2,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/same-origin",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": true,
+          "has_cookie": true,
+          "has_api_key": true
+        },
+        {
+          "path": "/m1/normal",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": true,
+          "has_cookie": true,
+          "has_api_key": true
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "provider-cross-origin",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.766,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [],
+      "refreshes": 0
+    },
+    {
+      "id": "tls-normal",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 1.484,
+      "state": 9,
+      "error": "Ok",
+      "received_bytes": 262144,
+      "total_known": true,
+      "total_bytes": 262144,
+      "http_status": 200,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 262144,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/tls-normal",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "untrusted-tls",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.718,
+      "state": 4,
+      "error": "CertificateError",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 0,
+      "platform_code": 60,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [],
+      "refreshes": 0
+    },
+    {
+      "id": "downgrade",
+      "passed": true,
+      "driver_exit": 0,
+      "seconds": 0.579,
+      "state": 4,
+      "error": "ProtocolMismatch",
+      "received_bytes": 0,
+      "total_known": false,
+      "total_bytes": 0,
+      "http_status": 302,
+      "platform_code": 0,
+      "generation": 1,
+      "request_count": 1,
+      "bytes": 0,
+      "paused_bytes": 0,
+      "requests": [
+        {
+          "path": "/m1/downgrade",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ],
+      "refreshes": 0
+    },
+    {
+      "id": "cli-shell-and-process-lock",
+      "passed": true,
+      "paused_bytes": 1024
+    },
+    {
+      "id": "cli-download-exit-codes",
+      "passed": true
+    },
+    {
+      "id": "http-explicit-permission",
+      "passed": true
+    }
+  ],
+  "failures": []
+}

@@ -1,5 +1,6 @@
 """Kill/force-stop only the instrumented sample process, then verify real durable resume."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import shlex
@@ -24,11 +25,15 @@ def main():
     parser.add_argument("--adb", default=shutil.which("adb"))
     parser.add_argument("--device-host", help="Explicit host alias; omitted uses a private adb reverse rule")
     parser.add_argument("--skip-build", action="store_true")
+    parser.add_argument("--reboot", action="store_true", help="Also reboot the selected emulator guest at the durable checkpoint")
+    parser.add_argument("--reboot-only", action="store_true", help="Run only emulator guest reboot recovery")
     parser.add_argument("--large-file", action="store_true", help="Actually transfer >4 GiB; requires at least 4.8 GiB free on device")
     parser.add_argument("--output", type=Path, default=ROOT / "build/m4-device-recovery")
     args = parser.parse_args()
     if not args.adb:
         parser.error("adb is required")
+    if (args.reboot or args.reboot_only) and not args.serial.startswith("emulator-"):
+        parser.error("Automated reboot is limited to emulator guests; physical-device reboot needs a separate operator procedure")
     args.output.mkdir(parents=True, exist_ok=True)
     adb = [args.adb, "-s", args.serial]
     if not args.skip_build:
@@ -37,11 +42,13 @@ def main():
             subprocess.run(command + [":sample:assembleDebug", ":sample:assembleDebugAndroidTest", "-Pfetchkit.probes=false", "--max-workers=2"],
                 cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=900)
     subprocess.run(adb + ["wait-for-device"], check=True, timeout=120, capture_output=True)
+    apk_fingerprints = {}
     for path in [ROOT / "platform/android/sample/build/outputs/apk/debug/sample-debug.apk",
                  ROOT / "platform/android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk"]:
         result = subprocess.run(adb + ["install", "-r", str(path)], timeout=120, capture_output=True, text=True)
         if result.returncode:
             raise RuntimeError(result.stdout + result.stderr)
+        apk_fingerprints[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
 
     def read(path, private=False):
         command = ["exec-out"] + (["run-as", PACKAGE] if private else []) + ["cat", path]
@@ -76,7 +83,10 @@ def main():
         return text
 
     report = {"actual_large_file_executed": args.large_file, "reboot_tested": False, "power_loss_tested": False,
-              "force_stop_scope": "Explicit instrumentation relaunch only; no automatic restart guarantee", "cases": [], "passed": False}
+              "force_stop_scope": "Explicit instrumentation relaunch only; no automatic restart guarantee", "cases": [], "passed": False,
+              "api": subprocess.check_output(adb + ["shell", "getprop", "ro.build.version.sdk"], text=True).strip(),
+              "abis": subprocess.check_output(adb + ["shell", "getprop", "ro.product.cpu.abilist"], text=True).strip(),
+              "apk_sha256": apk_fingerprints}
     rule = None
     try:
         with RunningFixture(handler=M4Handler) as fixture:
@@ -85,7 +95,8 @@ def main():
             else:
                 port, rule = allocate_reverse(adb, fixture.server.server_port)
                 url = f"http://127.0.0.1:{port}"
-            for kind in ["kill", "force-stop"] + (["large"] if args.large_file else []):
+            kinds = (["reboot"] if args.reboot_only else ["kill", "force-stop"] + (["reboot"] if args.reboot else []))
+            for kind in kinds + (["large"] if args.large_file else []):
                 run_id = str(uuid.uuid4())
                 child, stream, device_log = start(kind, "prepare", run_id, url)
                 try:
@@ -110,18 +121,38 @@ def main():
                     pids = subprocess.check_output(adb + ["shell", "pidof", PACKAGE], text=True).split()
                     if not pid.isdecimal() or pid not in pids:
                         raise RuntimeError("Prepared PID is not the sample process")
-                    command = ["shell", "am", "force-stop", PACKAGE] if kind == "force-stop" else ["shell", "run-as", PACKAGE,
-                        "touch", f"files/m4-process-{kind}-{run_id}-signal"]
+                    before_boot = read("/proc/sys/kernel/random/boot_id").strip() if kind == "reboot" else None
+                    command = (["reboot"] if kind == "reboot" else ["shell", "am", "force-stop", PACKAGE] if kind == "force-stop" else
+                               ["shell", "run-as", PACKAGE, "touch", f"files/m4-process-{kind}-{run_id}-signal"])
                     killed = subprocess.run(adb + command, timeout=20, capture_output=True, text=True)
                     if killed.returncode:
                         raise RuntimeError("Owned sample termination failed: " + killed.stdout + killed.stderr)
-                    for _ in range(50):
-                        remaining = subprocess.run(adb + ["shell", "pidof", PACKAGE], capture_output=True, text=True, timeout=15)
-                        if pid not in remaining.stdout.split():
-                            break
-                        time.sleep(0.1)
+                    if kind == "reboot":
+                        deadline = time.monotonic() + 300
+                        while time.monotonic() < deadline:
+                            after_boot = read("/proc/sys/kernel/random/boot_id").strip()
+                            boot = subprocess.run(adb + ["shell", "getprop", "sys.boot_completed"], capture_output=True, text=True, timeout=15)
+                            if before_boot and after_boot and before_boot != after_boot and boot.stdout.strip() == "1":
+                                break
+                            time.sleep(1)
+                        else:
+                            raise RuntimeError("Emulator reboot/boot-ID deadline")
+                        report["boot_id_before"] = before_boot
+                        report["boot_id_after"] = after_boot
+                        report["reboot_tested"] = True
+                        report["reboot_scope"] = "Orderly adb reboot of an emulator guest; no physical-device or power-loss claim"
+                        if rule is not None:
+                            subprocess.run(adb + ["reverse", "--remove", rule], timeout=15, capture_output=True)
+                            port, rule = allocate_reverse(adb, fixture.server.server_port)
+                            url = f"http://127.0.0.1:{port}"
                     else:
-                        raise RuntimeError("Sample process survived termination")
+                        for _ in range(50):
+                            remaining = subprocess.run(adb + ["shell", "pidof", PACKAGE], capture_output=True, text=True, timeout=15)
+                            if pid not in remaining.stdout.split():
+                                break
+                            time.sleep(0.1)
+                        else:
+                            raise RuntimeError("Sample process survived termination")
                 finally:
                     finish(child, stream, device_log, kind, "prepare")
                 child, stream, device_log = start(kind, "restore", run_id, url)
@@ -145,7 +176,8 @@ def main():
                     if kind == "large" and (result["bytes"] <= 2**32 or marker["committed_offset"] <= 2**32):
                         raise RuntimeError("Large-file test did not cross 4 GiB")
                     result["terminated_pid"] = marker["pid"]
-                    result["termination"] = "am-force-stop" if kind == "force-stop" else "controller-triggered-Process.killProcess-SIGKILL"
+                    result["termination"] = ("emulator-guest-adb-reboot" if kind == "reboot" else "am-force-stop" if kind == "force-stop"
+                                             else "controller-triggered-Process.killProcess-SIGKILL")
                     result["range"] = expected_range
                     result["requests"] = requests
                     report["cases"].append(result)

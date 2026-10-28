@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "version": "0.1.0",
+  "relocated": true,
+  "consumers": [
+    {
+      "passed": true,
+      "language": "C",
+      "bytes": 262144
+    },
+    {
+      "passed": true,
+      "language": "C++",
+      "bytes": 262144
+    }
+  ],
+  "commands": [
+    [
+      "cmake",
+      "-S",
+      "C:\\Users\\13436\\AppData\\Local\\Temp\\fetchkit-consumer-jz7aud8m\\consumer",
+      "-B",
+      "C:\\Users\\13436\\AppData\\Local\\Temp\\fetchkit-consumer-jz7aud8m\\build",
+      "-G",
+      "Ninja",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DCMAKE_PREFIX_PATH=C:\\Users\\13436\\AppData\\Local\\Temp\\fetchkit-consumer-jz7aud8m\\relocated-install;D:\\msys64\\ucrt64",
+      "-DCMAKE_C_COMPILER=gcc",
+      "-DCMAKE_CXX_COMPILER=g++"
+    ],
+    [
+      "cmake",
+      "--build",
+      "C:\\Users\\13436\\AppData\\Local\\Temp\\fetchkit-consumer-jz7aud8m\\build",
+      "--parallel",
+      "2"
+    ]
+  ]
+}

@@ -1,0 +1,2964 @@
+{
+  "run_id": "6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+  "api": 31,
+  "utc_ms": 1793096850138,
+  "abi": "x86_64",
+  "model": "sdk_gphone64_x86_64",
+  "fingerprint": "google/sdk_gphone64_x86_64/emulator64_x86_64_arm64:12/SE1A.211212.001.B1/8023802:user/release-keys",
+  "backend": "OkHttp 5.5.1 production JNI",
+  "cases": [
+    {
+      "id": "loopback-network-control",
+      "passed": true,
+      "milliseconds": 9571
+    },
+    {
+      "id": "normal",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 534
+    },
+    {
+      "id": "empty",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 124
+    },
+    {
+      "id": "unknown",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 150
+    },
+    {
+      "id": "unknown-close",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 185
+    },
+    {
+      "id": "no-head",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 182
+    },
+    {
+      "id": "same-origin",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 144
+    },
+    {
+      "id": "resume-normal",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 219
+    },
+    {
+      "id": "resume-ignore",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 189
+    },
+    {
+      "id": "resume-partial",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 4,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 217
+    },
+    {
+      "id": "resume-416",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 249
+    },
+    {
+      "id": "resume-complete-416",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 233
+    },
+    {
+      "id": "resume-changed",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 266
+    },
+    {
+      "id": "resume-length-changed",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262148,
+          "committed_offset": 262148
+        }
+      ],
+      "milliseconds": 266
+    },
+    {
+      "id": "resume-bad-start",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 235
+    },
+    {
+      "id": "resume-bad-end",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 271
+    },
+    {
+      "id": "resume-bad-total",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 300
+    },
+    {
+      "id": "resume-overflow",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 299
+    },
+    {
+      "id": "resume-missing-range",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 238
+    },
+    {
+      "id": "resume-missing-etag",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 231
+    },
+    {
+      "id": "resume-weak206",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 191
+    },
+    {
+      "id": "weak-etag",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 198
+    },
+    {
+      "id": "no-etag",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 235
+    },
+    {
+      "id": "last-modified",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 256
+    },
+    {
+      "id": "resume-unknown",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 249
+    },
+    {
+      "id": "resume-on-error",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 185
+    },
+    {
+      "id": "resume-auth",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 257
+    },
+    {
+      "id": "resume-short206",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "Network",
+          "platform_code": 4,
+          "requests": 1,
+          "received_bytes": 1124,
+          "committed_offset": 1124
+        }
+      ],
+      "milliseconds": 164
+    },
+    {
+      "id": "resume-extra206",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 1024,
+          "committed_offset": 1024
+        }
+      ],
+      "milliseconds": 249
+    },
+    {
+      "id": "resume-invalid-after-restart",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 224
+    },
+    {
+      "id": "gzip",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 102
+    },
+    {
+      "id": "conflicting-length",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 63
+    },
+    {
+      "id": "overflow-length",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 60
+    },
+    {
+      "id": "fresh-416",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 61
+    },
+    {
+      "id": "not-found",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "HttpStatus",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 51
+    },
+    {
+      "id": "truncated",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "Network",
+          "platform_code": 4,
+          "requests": 1,
+          "received_bytes": 1024,
+          "committed_offset": 1024
+        }
+      ],
+      "milliseconds": 78
+    },
+    {
+      "id": "timeout",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "Timeout",
+          "platform_code": 1,
+          "requests": 1,
+          "received_bytes": 1024,
+          "committed_offset": 1024
+        }
+      ],
+      "milliseconds": 1589
+    },
+    {
+      "id": "redirect-loop",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 110
+    },
+    {
+      "id": "redirect-chain",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 6,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 107
+    },
+    {
+      "id": "userinfo-redirect",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 157
+    },
+    {
+      "id": "digest-mismatch",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "IntegrityMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 329
+    },
+    {
+      "id": "length-mismatch",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "IntegrityMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 93
+    },
+    {
+      "id": "opaque-validator-byte-safety",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 54
+    },
+    {
+      "id": "utf8-request-header",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 82
+    },
+    {
+      "id": "unknown-limit",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "QuotaExceeded",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 48
+    },
+    {
+      "id": "tls-normal",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 1686
+    },
+    {
+      "id": "untrusted-tls",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "CertificateError",
+          "platform_code": 3,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 109
+    },
+    {
+      "id": "downgrade",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "ProtocolMismatch",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 59
+    },
+    {
+      "id": "retry-408",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 284
+    },
+    {
+      "id": "retry-429",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 298
+    },
+    {
+      "id": "retry-500",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 263
+    },
+    {
+      "id": "retry-502",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 255
+    },
+    {
+      "id": "retry-503",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 257
+    },
+    {
+      "id": "retry-504",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 280
+    },
+    {
+      "id": "no-hidden-503-retry",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "HttpStatus",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 61
+    },
+    {
+      "id": "retry-after-1",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 1232
+    },
+    {
+      "id": "retry-after-date",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 1913
+    },
+    {
+      "id": "auth-refresh",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 158
+    },
+    {
+      "id": "provider-throws",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "AuthRequired",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 62
+    },
+    {
+      "id": "auth-refresh-budget",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Failed",
+          "error": "AuthRequired",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 93
+    },
+    {
+      "id": "ambient-credentials-and-cross-origin",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 2,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        },
+        {
+          "state": "Failed",
+          "error": "AuthRequired",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Completed",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 262144,
+          "committed_offset": 262144
+        }
+      ],
+      "milliseconds": 247
+    },
+    {
+      "id": "shared-cancel-recovery-lease-close",
+      "passed": true,
+      "milliseconds": 355
+    },
+    {
+      "id": "slow-executor-close",
+      "passed": true,
+      "milliseconds": 79
+    },
+    {
+      "id": "future-close-reentrancy",
+      "passed": true,
+      "milliseconds": 85
+    },
+    {
+      "id": "header-absolute-deadline",
+      "passed": true,
+      "milliseconds": 372
+    },
+    {
+      "id": "pin-expiry-remove-lease-bindings",
+      "passed": true,
+      "snapshots": [],
+      "milliseconds": 127
+    },
+    {
+      "id": "partial-restore-object",
+      "passed": true,
+      "milliseconds": 157
+    },
+    {
+      "id": "partial-restore-record",
+      "passed": true,
+      "milliseconds": 100
+    },
+    {
+      "id": "retry-wait-across-reopen",
+      "passed": true,
+      "milliseconds": 360
+    },
+    {
+      "id": "provider-cancel-and-expired-scope",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Paused",
+          "error": "Ok",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 57
+    },
+    {
+      "id": "cancellation-release-stress",
+      "passed": true,
+      "snapshots": [
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 1,
+          "received_bytes": 1024,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        },
+        {
+          "state": "Cancelled",
+          "error": "Cancelled",
+          "platform_code": 0,
+          "requests": 0,
+          "received_bytes": 0,
+          "committed_offset": 0
+        }
+      ],
+      "milliseconds": 1287
+    },
+    {
+      "id": "parallel-stream-memory",
+      "passed": true,
+      "snapshots": [],
+      "milliseconds": 4392
+    },
+    {
+      "id": "close-query-reopen-race",
+      "passed": true,
+      "milliseconds": 1217
+    },
+    {
+      "id": "jobscheduler-system-stop",
+      "passed": true,
+      "milliseconds": 1620
+    }
+  ],
+  "cancel_to_release_ms_including_checkpoint": [
+    35,
+    59,
+    32,
+    35,
+    21,
+    31,
+    25,
+    33,
+    26,
+    27,
+    38,
+    24,
+    24,
+    22,
+    28,
+    35,
+    35,
+    28,
+    47,
+    31
+  ],
+  "memory": {
+    "small": {
+      "bytes_per_file": 262144,
+      "parallel_files": 3,
+      "baseline_pss_kib": 90579,
+      "peak_pss_kib": 91131
+    },
+    "large": {
+      "bytes_per_file": 33554432,
+      "parallel_files": 3,
+      "baseline_pss_kib": 91211,
+      "peak_pss_kib": 91551
+    },
+    "peak_growth_kib": 420
+  },
+  "job_stop": {
+    "api": 31,
+    "uidt": false,
+    "checkpoint_bytes": 1024,
+    "milliseconds": 65
+  },
+  "passed": true,
+  "failure_count": 0,
+  "instrumentation_output_on_device": true,
+  "apk_sha256": {
+    "sample-debug.apk": "8fcfb28ea4f82cf3238b0fa51eec6e58f86e5e1f2e9e81217ada76632590be43",
+    "sample-debug-androidTest.apk": "9c9c2f9300a30d3a8c7f1123c73fbabfa969481ac058e1cc89d4e37be15740dc"
+  },
+  "network_route": "owned-adb-reverse",
+  "junit_passed": true,
+  "fixture_requests": 172,
+  "requests": [
+    {
+      "path": "/m1/network-control-0",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-1",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-2",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-3",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-4",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-5",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-6",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-7",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-8",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/network-control-9",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/empty",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/unknown",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/unknown-close",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/no-head",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/same-origin",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-normal",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-ignore",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-ignore",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-partial",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-partial",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-partial",
+      "method": "GET",
+      "range": "bytes=66560-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-partial",
+      "method": "GET",
+      "range": "bytes=132096-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-partial",
+      "method": "GET",
+      "range": "bytes=197632-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-416",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-416",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-416",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-complete-416",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-complete-416",
+      "method": "GET",
+      "range": "bytes=262144-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-complete-416",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-changed",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-changed",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-changed",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-length-changed",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-length-changed",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-length-changed",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-start",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-start",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-start",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-end",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-end",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-end",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-total",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-total",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-bad-total",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-overflow",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-overflow",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-overflow",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-missing-range",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-missing-range",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-missing-range",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-missing-etag",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-missing-etag",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-missing-etag",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-weak206",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-weak206",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-weak206",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/weak-etag",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/weak-etag",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/no-etag",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/no-etag",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/last-modified",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/last-modified",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-unknown",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-unknown",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-on-error",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-on-error",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-auth",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-auth",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-auth",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": true,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-short206",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-short206",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-extra206",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-extra206",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-invalid-after-restart",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-invalid-after-restart",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-invalid-after-restart",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/gzip",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/conflicting-length",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/overflow-length",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/fresh-416",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/not-found",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/truncated",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/timeout",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/redirect-loop",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/redirect-chain",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/redirect-chain",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/redirect-chain",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/redirect-chain",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/redirect-chain",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/redirect-chain",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/userinfo-redirect",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/length-mismatch",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/nonascii-etag",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/request-unicode",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/unknown-limit",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-408",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-408",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-429",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-429",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-500",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-500",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-502",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-502",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-503",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-503",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-504",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-504",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-503",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-429",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-429",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-429",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-429",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/auth-refresh",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/auth-refresh",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": true,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/auth-fail",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/auth-fail",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/ambient-normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/auth-fail",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/cross-origin",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": true,
+      "has_cookie": true,
+      "has_api_key": true
+    },
+    {
+      "path": "/m1/resume-shared",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-shared",
+      "method": "GET",
+      "range": "bytes=1024-",
+      "if_range": "\"m1-v1\"",
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-slow-executor",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/resume-future-close",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/slow-headers",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/retry-503",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-0-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-1-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-2-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-3-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-4-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-5-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-6-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-7-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-8-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-9-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-10-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-11-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-12-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-13-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-14-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-15-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-16-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-17-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-18-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/cancel-19-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/stream",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/stream",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/stream",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/stream",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/stream",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m3/stream",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-0-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-1-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-2-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-3-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-4-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-5-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-6-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-7-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-8-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/query-race-9-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m4/job-6b33236d-1ca9-4db0-ab76-d3bf6303460e",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/normal",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    },
+    {
+      "path": "/m1/downgrade",
+      "method": "GET",
+      "range": null,
+      "if_range": null,
+      "accept_encoding": "identity",
+      "has_authorization": false,
+      "has_cookie": false,
+      "has_api_key": false
+    }
+  ],
+  "identity_request_failures": 0,
+  "ambient_cookie_sent": false,
+  "peer_credentials_sent": false,
+  "m3_request_counts": {
+    "android-408": 2,
+    "android-429": 2,
+    "android-500": 2,
+    "android-502": 2,
+    "android-503": 2,
+    "android-504": 2,
+    "android-no-hidden": 1,
+    "android-after-1": 2,
+    "android-after-date": 2,
+    "android-wait-reopen": 1,
+    "stream": 6
+  },
+  "no_hidden_503_retry": true,
+  "fixture_certificate_sha256": "f2bc70de5546e3804ff2c6fd9e28f23eb87773576570752c22af6a16cac2d60d"
+}

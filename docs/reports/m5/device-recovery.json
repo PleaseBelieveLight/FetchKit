@@ -1,0 +1,126 @@
+{
+  "actual_large_file_executed": false,
+  "reboot_tested": true,
+  "power_loss_tested": false,
+  "force_stop_scope": "Explicit instrumentation relaunch only; no automatic restart guarantee",
+  "cases": [
+    {
+      "run_id": "e396594c-ec94-4da2-9b40-497f48c3cb44",
+      "kind": "kill",
+      "phase": "restore",
+      "passed": true,
+      "pid": 6616,
+      "bytes": 262144,
+      "restored_committed_offset": 1024,
+      "sha256": "31a1f9dea0169551092d05e8bf4a446228c8c3eb4c9b713c66adcb7fd53c89be",
+      "integrity": "DigestVerified",
+      "terminated_pid": 6505,
+      "termination": "controller-triggered-Process.killProcess-SIGKILL",
+      "range": "bytes=1024-",
+      "requests": [
+        {
+          "path": "/m4/process-kill",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m4/process-kill",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ]
+    },
+    {
+      "run_id": "aa0dae7a-2f7b-47f5-bc62-5ef10c018b1d",
+      "kind": "force-stop",
+      "phase": "restore",
+      "passed": true,
+      "pid": 6791,
+      "bytes": 262144,
+      "restored_committed_offset": 1024,
+      "sha256": "31a1f9dea0169551092d05e8bf4a446228c8c3eb4c9b713c66adcb7fd53c89be",
+      "integrity": "DigestVerified",
+      "terminated_pid": 6688,
+      "termination": "am-force-stop",
+      "range": "bytes=1024-",
+      "requests": [
+        {
+          "path": "/m4/process-force-stop",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m4/process-force-stop",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ]
+    },
+    {
+      "run_id": "20f237b4-303a-4071-8aca-193a696adbbe",
+      "kind": "reboot",
+      "phase": "restore",
+      "passed": true,
+      "pid": 2044,
+      "bytes": 262144,
+      "restored_committed_offset": 1024,
+      "sha256": "31a1f9dea0169551092d05e8bf4a446228c8c3eb4c9b713c66adcb7fd53c89be",
+      "integrity": "DigestVerified",
+      "terminated_pid": 6863,
+      "termination": "emulator-guest-adb-reboot",
+      "range": "bytes=1024-",
+      "requests": [
+        {
+          "path": "/m4/process-reboot",
+          "method": "GET",
+          "range": null,
+          "if_range": null,
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        },
+        {
+          "path": "/m4/process-reboot",
+          "method": "GET",
+          "range": "bytes=1024-",
+          "if_range": "\"m1-v1\"",
+          "accept_encoding": "identity",
+          "has_authorization": false,
+          "has_cookie": false,
+          "has_api_key": false
+        }
+      ]
+    }
+  ],
+  "passed": true,
+  "api": "31",
+  "abis": "x86_64,arm64-v8a",
+  "apk_sha256": {
+    "sample-debug.apk": "8fcfb28ea4f82cf3238b0fa51eec6e58f86e5e1f2e9e81217ada76632590be43",
+    "sample-debug-androidTest.apk": "f7320fb3cddb1e95558ac2eaf3d4ff1b0e398c51360960b2f2f81b605055090f"
+  },
+  "boot_id_before": "6817e429-d065-4021-96b9-f5e7bea1e845",
+  "boot_id_after": "9f918d3d-db98-4e8f-b21f-db8618b5f56f",
+  "reboot_scope": "Orderly adb reboot of an emulator guest; no physical-device or power-loss claim"
+}

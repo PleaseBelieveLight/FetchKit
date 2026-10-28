@@ -1,6 +1,30 @@
 plugins {
     alias(libs.plugins.android.library)
+    `maven-publish`
 }
+
+abstract class GenerateProjectLicense : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val licenseFile: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val destination = outputDirectory.file("META-INF/fetchkit/LICENSE").get().asFile
+        destination.parentFile.mkdirs()
+        licenseFile.get().asFile.copyTo(destination, overwrite = true)
+    }
+}
+
+val projectLicense = rootProject.layout.projectDirectory.file("LICENSE")
+
+val sdkVersion = providers.fileContents(rootProject.layout.projectDirectory.file("VERSION")).asText.get().trim()
+require(sdkVersion.matches(Regex("[0-9]+[.][0-9]+[.][0-9]+")))
+group = "com.luofelix.fetchkit"
+version = sdkVersion
 
 val platformProbe = providers.gradleProperty("fetchkit.probes").orNull == "true"
 val probeBackend = providers.gradleProperty("fetchkit.probeBackend").orNull ?: "platform"
@@ -47,10 +71,17 @@ android {
     buildFeatures {
         buildConfig = false
     }
+    publishing {
+        singleVariant("release") { withSourcesJar() }
+    }
 }
 
 androidComponents {
     onVariants { variant ->
+        val licenseResources = tasks.register<GenerateProjectLicense>("generate${variant.name.replaceFirstChar { it.uppercase() }}ProjectLicense") {
+            licenseFile.set(projectLicense)
+        }
+        variant.sources.resources?.addGeneratedSourceDirectory(licenseResources, GenerateProjectLicense::outputDirectory)
         if (platformProbe) {
             variant.sources.kotlin?.addStaticSourceDirectory("src/probe/java")
             variant.sources.kotlin?.addStaticSourceDirectory(
@@ -63,4 +94,49 @@ androidComponents {
 dependencies {
     implementation(libs.okhttp)
     testImplementation(libs.junit)
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = project.group.toString()
+            artifactId = "fetchkit"
+            version = sdkVersion
+            pom {
+                name.set("FetchKit")
+                description.set("C++ resource downloader with Android Kotlin/JNI integration")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set("repo")
+                    }
+                }
+            }
+            afterEvaluate { from(components["release"]) }
+        }
+    }
+    repositories {
+        maven {
+            name = "preview"
+            url = uri(rootProject.layout.buildDirectory.dir("m5-maven"))
+        }
+    }
+}
+
+tasks.withType<Jar>().configureEach {
+    if (name == "sourceReleaseJar") {
+        from(projectLicense) { into("META-INF/fetchkit") }
+    }
+}
+
+tasks.withType<org.gradle.api.publish.maven.tasks.PublishToMavenRepository>().configureEach {
+    val publicationContainsProbe = platformProbe
+    val publicationAbis = selectedAbis.toSet()
+    doFirst {
+        require(!publicationContainsProbe) { "Publication must exclude experimental probes" }
+        require(publicationAbis == setOf("arm64-v8a", "x86_64")) {
+            "Publication requires both supported ABIs"
+        }
+    }
 }

@@ -6,6 +6,11 @@ SDK，以可靠、可扩展和控制接入体积为目标。首版围绕文件�
 当前状态：主机端已实现多任务调度、独立订阅、持久化重试、检查点/恢复、可选可信 SHA-256、原子发布、
 配额、LRU、pin/过期和只读租约，提供 alpha C ABI、C++ 包装和 CLI。
 Android 已接入异步 Kotlin/JNI 下载 API、独立 OkHttp 后端、Compose 与 JobScheduler 示例。
+M5 已加入 CMake 安装导出、本地 Maven AAR/sources 发布、外部 C/C++/Release R8 宿主、匹配符号归档与发布门槛检查。
+当前交付是 `0.1.0` alpha 本地预览；Linux、物理设备矩阵及完整第三方许可审核等门槛尚未满足，没有上传外部仓库。
+接入与打包步骤见 [M5 交付指南](docs/m5-release.md)，验证证据见 [M5 报告](docs/reports/m5-baseline.md)。
+
+项目采用 [Apache License 2.0](LICENSE)。第三方组件保留各自许可证，见 [依赖说明](third_party/README.md)。
 
 M0 已加入可控 HTTP 服务、主机/Android/JNI 探针、接口契约与体积对照工具。
 实测结论、后端调整和缺测项见 [M0 基线报告](docs/reports/m0-baseline.md)；实验接口不等于正式下载能力。

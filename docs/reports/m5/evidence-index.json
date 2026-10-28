@@ -1,0 +1,22 @@
+{
+  "base_commit": "0f4942434e308100a6ec16499df31db9b3b48a41",
+  "working_tree_dirty": true,
+  "scope": "Windows host and API31 x86_64 emulator; not Linux or physical-device acceptance",
+  "evidence": {
+    "android-consumer.json": "175bc38e83d629f0225bb9410bafacdd1a37954a11f8e82aa1ab80ef14db4702",
+    "android-dependencies.txt": "82d760b5ec6608e8516bafc28a20e17fc8690b9fe2cf1d07850630f5d4839298",
+    "android-matrix.json": "b46275d0c430faf3ef4308539a7d85dc024339f822ab6b78a468e4bca6e194c9",
+    "dependency-licenses.json": "4c6c784bd784e21d71c10cbd89c72fab05a6e87d44d9409237eaae4ff1407ccd",
+    "device-recovery.json": "5696a8933f77a7ccd895020f230d932eb6b2bdb2578e6a65fa3da803c728027f",
+    "host-ctest.txt": "4f42695669806c5b6cb750ce4233bda579864709a2454b966853d60564ff0637",
+    "host-curl-contract.json": "a541958efba29fb7117af428a2d2f2ea2320bf2f57866b9e6bfe79872a06eab6",
+    "host-protocol.json": "78665ac22a85011855dcdfea813189394a9b7245807b89b54f36abea48e557b6",
+    "host-recovery.json": "a7b21b92dd788c13d90f146fa341955b2edb4fa7cf22dd63a52d24d75adfbd8a",
+    "host-scheduler.json": "c653d7b6da65367b753085dbcd2ad34552362db873a9e1e8f8a1eab662405508",
+    "maven-publish.txt": "f2b262c03c72c3c029621f5f63e518e7dd3021bb1c97c4e7b83dc462d1422ab0",
+    "native-consumer.json": "b713c975cc53ba71980066dee21f6f1a114f1b427d08751a5c9ff5f539b213b7",
+    "package-manifest.json": "c6a590ae1e9bbbbe68db30fa72e19402b2f02b0728dac5a15150086b9ed252ba",
+    "size-arm64.json": "52c78ca93e67387023ce45e4181925ac756eff11818315d46ee983c7bc765a6a",
+    "stress.json": "ff365e12025046e0014694272fce96dcc4fd861105b3a9740e6e48b8f7c21157"
+  }
+}

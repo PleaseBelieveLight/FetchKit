@@ -12,6 +12,9 @@ SDK Native Release 的实际 CMake 配置需单列，不能与 M3 独立 `-Os` �
 `fetchkit.sizeMode=production` 支持 `fetchkit.aar` 文件接入和 `fetchkit.r8=true`；`fetchkit.smokeSign=true`
 只为设备烟测启用本机 debug 签名，不改变正式 AAR，也不进行外部发布。
 
+M5 复测证据见 [报告](../../docs/reports/m5-baseline.md)，外部 Maven/R8 运行使用
+`tools/ci/verify_android_package.py`。`tools/release/package_preview.py` 将测量依赖树、匹配符号与发布清单一同归档。
+
 M3 完整主机核心/ABI 的独立 arm64 测量在同一入口增加 `--include-engine --output build/m3-size-arm64`。
 engine 目标保留 Scheduler、存储、Verifier 和公开 C ABI，使用确定性假传输占位；不包含 Android 网络后端或 JNI 下载桥。
 与 baseline/digest 使用相同导出列表、静态 STL、优化和 strip。该口径与普通 JNI 版本入口、最终 AAR/APK 接入成本分别报告。
@@ -43,4 +46,5 @@ Gradle daemon 要求 JDK 25；可将当前终端 `JAVA_HOME` 指向已有安装�
 
 这些是未压缩优化的基线，不是最终发布成本承诺。设备安装大小、R8 优化结果、全部 ABI AAR、调度适配和 Android curl 配置需要分别实测；本工具不能推导这些数字。
 
-普通构建不设置 `fetchkit.probes`；实验必须明确设置 `-Pfetchkit.probes=true`。OkHttp 只在同时选择 `-Pfetchkit.probeBackend=okhttp` 时成为 SDK 实验构建依赖，不进入普通 SDK。
+M0 历史配置中，OkHttp 仅随 `-Pfetchkit.probes=true -Pfetchkit.probeBackend=okhttp` 进入实验构建。
+M4 起 OkHttp 5.5.1 已进入普通 SDK 运行图；普通构建仍不包含实验探针。

@@ -1,0 +1,16 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Threads)
+if(NOT @FETCHKIT_PACKAGE_ANDROID@)
+    find_dependency(ZLIB)
+endif()
+if(@FETCHKIT_WITH_CURL@)
+    if(@FETCHKIT_USE_PINNED_CURL@)
+        find_dependency(CURL @FETCHKIT_PINNED_CURL_VERSION@ EXACT CONFIG)
+    else()
+        find_dependency(CURL 7.85)
+    endif()
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/fetchkitTargets.cmake")
+check_required_components(fetchkit)

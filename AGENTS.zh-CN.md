@@ -8,8 +8,10 @@
 
 FetchKit 已实现 M3 主机下载器，包括有界调度、独立订阅、持久化重试、配额/LRU/pin/过期管理、校验发布和读取租约。
 M4 已增加异步 Kotlin/JNI API、隔离 OkHttp 传输与 Compose/JobScheduler 示例。
+M5 增加显式 CMake 安装导出、本地 Maven 发布、独立宿主和发布门槛。
 修改范围或架构前，先阅读 `README.md`、`docs/v1-design.md`、`docs/m3-host-api.md`、
 `docs/m4-android-api.md` 和 `docs/storage-record-v2.md`。
+修改打包或发布声明前，再阅读 `docs/m5-release.md` 和 `docs/release-checklist.md`。
 
 根目录 CMake 工程构建 `include/fetchkit/`、`src/core/` 和 `examples/cli/`。
 根目录 Gradle 配置将 `:sdk` 映射到 `platform/android/sdk/`，将 `:sample` 映射到
@@ -48,6 +50,16 @@ M4 正式设备矩阵使用 `tools/ci/run_m4_android.py` 和 `tools/ci/run_m4_re
 使用独立命名的 `adb reverse --no-rebind` 规则，只清理本次映射。ADB 33.0.3 的允许列表会覆盖多个 `tcp:0` 请求。
 模拟器启动还会继承 `http_proxy`；受控启动已有 AVD 可使用 `tools/ci/start_m4_emulator.ps1`。
 OkHttp 5.5.1 已成为正式运行依赖。测试 CA/网络例外只放示例 Debug；SDK/Release 产物不得包含探针、故障钩子或测试信任锚。
+`VERSION` 统一 native/Maven 版本。只有正式构建可设置 `FETCHKIT_INSTALL=ON`；故障注入和 sanitizer 构建禁止安装。
+本地 AAR 发布任务为 `:sdk:publishReleasePublicationToPreviewRepository`，要求双 ABI 且关闭 probes。
+M5 验收使用 `tools/ci/linux_m5.sh`、`verify_native_package.py`、`verify_android_package.py` 和 `run_m5_stress.py`；
+`run_m5_enospc.py` 要求 Linux 用户/挂载命名空间。用 `tools/release/package_preview.py` 生成预览，
+以 ELF Build ID 匹配未剥离符号并保留 SHA 清单。
+`run_m4_recovery.py --reboot` 只重启明确选择的模拟器 guest；物理设备重启与掉电分别提供证据。
+`tools/release/check_release.py` 必须在缺少必要证据时阻断发布。
+FetchKit 按根目录 `LICENSE` 中的 Apache-2.0 授权，第三方许可证分别保留。
+native 安装、AAR Java 资源和 sources JAR 必须包含相同的项目许可证，Maven POM 同步声明。
+没有所有者发布指令时不得上传产物。
 体积测量须使用完整文件 AAR 宿主。
 
 ## 编码风格与命名规范

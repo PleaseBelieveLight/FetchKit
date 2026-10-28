@@ -1,0 +1,174 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "cases": [
+    {
+      "id": "http-408",
+      "passed": true,
+      "retry_count": 1,
+      "requests": 2,
+      "seconds": 2.203
+    },
+    {
+      "id": "http-429",
+      "passed": true,
+      "retry_count": 1,
+      "requests": 2,
+      "seconds": 1.922
+    },
+    {
+      "id": "http-500",
+      "passed": true,
+      "retry_count": 1,
+      "requests": 2,
+      "seconds": 1.515
+    },
+    {
+      "id": "http-502",
+      "passed": true,
+      "retry_count": 1,
+      "requests": 2,
+      "seconds": 1.313
+    },
+    {
+      "id": "http-503",
+      "passed": true,
+      "retry_count": 1,
+      "requests": 2,
+      "seconds": 1.812
+    },
+    {
+      "id": "http-504",
+      "passed": true,
+      "retry_count": 1,
+      "requests": 2,
+      "seconds": 1.547
+    },
+    {
+      "id": "no-retry-400",
+      "passed": true,
+      "seconds": 0.719
+    },
+    {
+      "id": "no-retry-404",
+      "passed": true,
+      "seconds": 0.844
+    },
+    {
+      "id": "no-retry-501",
+      "passed": true,
+      "seconds": 0.687
+    },
+    {
+      "id": "no-retry-505",
+      "passed": true,
+      "seconds": 0.641
+    },
+    {
+      "id": "retry-after-seconds",
+      "passed": true,
+      "between_requests_seconds": 1.125,
+      "seconds": 2.297
+    },
+    {
+      "id": "retry-after-date",
+      "passed": true,
+      "between_requests_seconds": 1.859,
+      "seconds": 3.078
+    },
+    {
+      "id": "restart-retry-wait-and-cancel",
+      "passed": true,
+      "persisted_deadline": 1793097621311,
+      "seconds": 1.266
+    },
+    {
+      "id": "shared-public-handles",
+      "passed": true,
+      "seconds": 1.812
+    },
+    {
+      "id": "pin-expiry-trim-public-api",
+      "passed": true,
+      "seconds": 4.734
+    },
+    {
+      "id": "unknown-length-quota-public-api",
+      "passed": true,
+      "seconds": 1.11
+    },
+    {
+      "id": "persistent-pin-expiry-and-ledger",
+      "passed": true,
+      "seconds": 2.406
+    },
+    {
+      "id": "record-v1-migration",
+      "passed": true,
+      "seconds": 0.234
+    },
+    {
+      "id": "index-footprint-and-pagination",
+      "passed": true,
+      "tasks": 128,
+      "warm_tasks": 1,
+      "warm_rss": 10895360,
+      "after_rss": 12587008,
+      "additional_rss_bytes": 1691648,
+      "bytes_per_additional_task": 13320.1,
+      "metadata_budget_bytes": 16782336,
+      "seconds": 34.516
+    },
+    {
+      "id": "memory-small",
+      "passed": true,
+      "bytes_per_file": 262144,
+      "parallel_files": 3,
+      "baseline_rss": 2244608,
+      "peak_rss": 11186176,
+      "observed_threads": 9,
+      "samples": 146,
+      "seconds": 2.297
+    },
+    {
+      "id": "memory-large",
+      "passed": true,
+      "bytes_per_file": 33554432,
+      "parallel_files": 3,
+      "baseline_rss": 2260992,
+      "peak_rss": 11202560,
+      "observed_threads": 9,
+      "samples": 640,
+      "seconds": 9.969
+    }
+  ],
+  "failures": [],
+  "memory": {
+    "small": {
+      "bytes_per_file": 262144,
+      "parallel_files": 3,
+      "baseline_rss": 2244608,
+      "peak_rss": 11186176,
+      "observed_threads": 9,
+      "samples": 146
+    },
+    "large": {
+      "bytes_per_file": 33554432,
+      "parallel_files": 3,
+      "baseline_rss": 2260992,
+      "peak_rss": 11202560,
+      "observed_threads": 9,
+      "samples": 640
+    },
+    "peak_growth_bytes": 16384
+  },
+  "index": {
+    "tasks": 128,
+    "warm_tasks": 1,
+    "warm_rss": 10895360,
+    "after_rss": 12587008,
+    "additional_rss_bytes": 1691648,
+    "bytes_per_additional_task": 13320.1,
+    "metadata_budget_bytes": 16782336
+  },
+  "passed": true
+}

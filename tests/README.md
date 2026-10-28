@@ -1,5 +1,16 @@
 # FetchKit 主机与平台验证
 
+## M5 交付验证
+
+完整步骤和发布门槛见 [M5 指南](../docs/m5-release.md)。`bash tools/ci/linux_m5.sh` 运行主机协议/恢复、
+安装导出、源码树外 C/C++、固定 seed 压力和 Linux 隔离 tmpfs 真实 ENOSPC。
+Linux sanitizer 分别使用 `FETCHKIT_SANITIZERS=address,undefined` 与 `FETCHKIT_SANITIZERS=thread`；
+`FETCHKIT_RUN_LARGE_FILE=1` 执行真实 >4 GiB。缺少 Linux 不能用 Windows 结果替代。
+`tools/ci/verify_android_package.py` 在临时独立 Gradle 工程解析本地 Maven AAR，并运行 Release/R8 的下载、事件和租约校验。
+`run_m4_recovery.py --reboot` 增加模拟器 guest 正常重启、前后 boot_id、精确 Range 与摘要检查；
+默认仍为 SIGKILL/force-stop，自动重启仅接受 emulator serial，物理设备与掉电结果单列。
+本地证据由 `collect_m5_evidence.py` 归档，`tools/release/check_release.py` 区分预览通过和首版发布通过。
+
 ## M4 正式 Android SDK
 
 普通 SDK 已使用隔离 OkHttp 5.5.1；设备矩阵测试正式 Kotlin/JNI/C++ 链路，不启用 M0 探针。

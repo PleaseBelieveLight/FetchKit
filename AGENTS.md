@@ -10,8 +10,10 @@ changes; keep requirements, examples, and commands equivalent.
 FetchKit has an M3 host downloader with bounded scheduling, independent subscriptions, persisted
 retries, quota/LRU/pin/expiry management, verified publication and read leases. M4 adds asynchronous
 Kotlin/JNI APIs, isolated OkHttp transport and Compose/JobScheduler examples.
+M5 adds opt-in CMake install/export, local Maven publication, standalone consumers and release gates.
 Read `README.md`, `docs/v1-design.md`, `docs/m3-host-api.md`, `docs/m4-android-api.md` and `docs/storage-record-v2.md`
 before changing scope or architecture.
+Read `docs/m5-release.md` and `docs/release-checklist.md` before changing packaging or release claims.
 
 The root CMake project builds `include/fetchkit/`, `src/core/`, and `examples/cli/`.
 Root Gradle settings map `:sdk` to `platform/android/sdk/` and `:sample` to
@@ -54,6 +56,17 @@ collides multiple `tcp:0` requests in its allow-list. Emulator startup also inhe
 use `tools/ci/start_m4_emulator.ps1` for a controlled existing AVD.
 OkHttp 5.5.1 is now a production runtime dependency. Test CA/network exceptions belong only in sample Debug;
 SDK/Release artifacts must exclude probes, fault hooks and test trust anchors. Measure the full file-AAR host.
+`VERSION` is the shared native/Maven version. Use `FETCHKIT_INSTALL=ON` only in production builds;
+fault injection and sanitizers must never be installed. Local AAR publication uses
+`:sdk:publishReleasePublicationToPreviewRepository` and requires both ABIs with probes off.
+M5 acceptance uses `tools/ci/linux_m5.sh`, `verify_native_package.py`, `verify_android_package.py` and
+`run_m5_stress.py`. `run_m5_enospc.py` requires Linux user/mount namespaces. Package previews with
+`tools/release/package_preview.py`; match unstripped symbols by ELF Build ID and preserve SHA manifests.
+`run_m4_recovery.py --reboot` reboots only the explicitly selected emulator guest; physical reboot and power loss
+require separate evidence. `tools/release/check_release.py` must block release when required evidence is missing.
+FetchKit is licensed under Apache-2.0 in the root `LICENSE`; preserve third-party licenses separately.
+Include the identical project license in native installs, AAR Java resources and sources JARs, and declare it in the Maven POM.
+Do not upload artifacts without the owner's release instructions.
 
 ## Coding Style & Naming Conventions
 

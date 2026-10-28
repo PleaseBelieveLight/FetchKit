@@ -41,3 +41,11 @@ metadata and consumer rules. No networking JAR is embedded in the AAR. A direct 
 must also declare the documented OkHttp dependency graph. The SDK does not add WorkManager or Compose.
 `tools/size/measure_m4.py` records the resolved dependencies, complete JNI/AAR/APK cost and R8 comparison.
 Test TLS keys/certificates are synthetic fixtures; only the sample Debug variant trusts the local certificate.
+
+M5 archives resolved dependency metadata, embedded license/notice files and the NDK NOTICE alongside
+the local preview. Missing cached license texts require completion and review before distribution.
+The owner selected Apache-2.0 for FetchKit on 2026-10-28; the canonical project text is in the root `LICENSE`.
+Third-party licenses remain separate. Native installs, AAR Java resources, sources JARs and the preview
+retain the project license; the Maven POM declares it. Complete third-party license review remains a release gate.
+`VERSION` controls native and Maven artifact versions.
+See `docs/m5-release.md` for the complete dependency and symbol archive procedure.

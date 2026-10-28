@@ -1,0 +1,310 @@
+{
+  "version": "0.1.0",
+  "preview_only": true,
+  "uploaded": false,
+  "base_commit": "0f4942434e308100a6ec16499df31db9b3b48a41",
+  "working_tree_dirty": true,
+  "project_license_selected": true,
+  "project_license": {
+    "spdx_id": "Apache-2.0",
+    "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "native_symbols": [
+    {
+      "abi": "arm64-v8a",
+      "build_id": "b29483508dad81f45144a5b33238e4aefbd48a39",
+      "stripped": {
+        "bytes": 550736,
+        "sha256": "b73cfe44adb2434eba4a91ab810aad0fd27bc72e85de95818a78d5bede6f8176"
+      },
+      "symbols": {
+        "bytes": 9868576,
+        "sha256": "b79e6d1a64b06f6fa1f0a0daa0780c2c2a671808aa24ccb448567a4a6b8acd55"
+      }
+    },
+    {
+      "abi": "x86_64",
+      "build_id": "77db7045331d5c812b1cfdb7cd6718a0dc81db33",
+      "stripped": {
+        "bytes": 568480,
+        "sha256": "d39e186fb32f446e136e9b741be2d296360b21e4f3cede1c9c748f1c3c979885"
+      },
+      "symbols": {
+        "bytes": 9468864,
+        "sha256": "2cb5ca4a2b8a6b02dda50ef8b6b10e222ad3427d0c914d077010679af90ea0d5"
+      }
+    }
+  ],
+  "source_sha256": {
+    "cmake/fetchkit-config.cmake.in": "7095378fe792fd98590a10c3b40cd431d7b45c8afcb28404463fecd36fbb4b37",
+    "examples/android-consumer/build.gradle.kts": "a0bd88bcfc8f8c14e4739dcb61aa67d2327778dd859280e5383cb1c3b282d2c2",
+    "examples/android-consumer/gradle.properties": "198cfb414a6067fc813ba6dd9d8d927a5d9bd005567dc4bba8784a8deec518b9",
+    "examples/android-consumer/settings.gradle.kts": "8caba538f18b9a6ae2f7b125fc3da12b0a611e1b59ad39fd8461eefc282854c3",
+    "examples/android-consumer/src/main/AndroidManifest.xml": "a0967d83f08ca90641f570224fd72533a5ee923b1c12235721f9d57ca267cdab",
+    "examples/android-consumer/src/main/java/com/luofelix/fetchkit/sizehost/Integration.java": "3d288f8b664b29d7773fc71c644190741d33119ddba0e4e9b7525a50873ab4bf",
+    "examples/android-consumer/src/main/java/com/luofelix/fetchkit/sizehost/MainActivity.java": "ac4aeb74c79bc6e6694341942ce37f64aa772ca93b606ca2aa646550768b8cf9",
+    "examples/android-consumer/src/main/res/xml/measurement_network.xml": "73e3ba8b72f8e2fc3657b55fc5a59a67daad26805b3de59b68d837617a7ba195",
+    "examples/consumer/CMakeLists.txt": "06105670e6abf8382eedd862b494a3ec7a642a35e909aebcbf55ff8692c87124",
+    "examples/consumer/consumer.c": "6b67f5de3c74ff76346d6898395b8ef29dffd9c24028a28b64d7783e015b4e87",
+    "examples/consumer/consumer.cpp": "bf63715935ea89bfdab7e59b90f03a9bd79da8aca8b4bea2a646d1767d7a6ba8",
+    "examples/consumer/consumer_bridge.cpp": "a0cb02e5fa160b324819fae7627030d2823b4001575d4bf79f92decded4049e3",
+    "cmake/pinned_curl.cmake": "c49f03bf81dc85a6ae940b731f0e2778bf1c9f763ef2e515e34c700cec467179",
+    "examples/cli/main.cpp": "e153633903e51cc70beae2f2cbbcdf902f6b2867f4512ff079d412a66e4ddcc6",
+    "examples/cli/snapshot_json.h": "2390bd29c4335a8efeb8eae3419be1358de3d6f683cff22cc86b28a054cf66ed",
+    "gradle/gradle-daemon-jvm.properties": "6c13aa5ba36690ccfbbb25a8807d01d98c15833e446d7ae82ddc726472cb8ef7",
+    "gradle/libs.versions.toml": "97534c1935a180a73c6bac27142c0600b20db32779715ea613978b87cfb11efb",
+    "gradle/wrapper/gradle-wrapper.jar": "76805e32c009c0cf0dd5d206bddc9fb22ea42e84db904b764f3047de095493f3",
+    "gradle/wrapper/gradle-wrapper.properties": "88de3d1fa97bce1602ca50ad623a5fccc1af72310f2c3ed818ee7146b7084bde",
+    "include/fetchkit/fetchkit.h": "8b6989c6f4db27f0148c5f7d1472ef164056bf47d2cfaad5b259537f91f5b004",
+    "include/fetchkit/fetchkit.hpp": "e68580cb75156f279b415d953e590184638087da03aeccd4b72d7c76f284853d",
+    "include/fetchkit/version.h": "ef6f584f8afc3e4bf50424fcd4f93b84fe96fbf44d8dcfe4b3b2f610ac290014",
+    "platform/android/sdk/CMakeLists.txt": "e829625c14afd41475190efb578a976f693a674b5211c920e17baa9197e18e40",
+    "platform/android/sdk/build.gradle.kts": "1998495737ed41f521b2518e998da5cc2e1ce48a451ca037ed889ba99687d8ed",
+    "platform/android/sdk/consumer-rules.pro": "322c5ee0ae6ad841d6f3184d4b308f10ab23f4ea5d542b4c099805d61a1241e5",
+    "platform/android/sdk/src/main/AndroidManifest.xml": "4ec698c1582d49f016e6d9355399e068b752baf42c1da4f0c775b2155b8f579d",
+    "platform/android/sdk/src/main/cpp/android_bridge.cpp": "11f6e4cf37994f3dcc316bf24443768c37fa09acc3734ca9ca8029f6fc9e9fe3",
+    "platform/android/sdk/src/main/cpp/fetchkit.map": "4555b6278361a896e1e3be7806bac46c88cf3b4aa53e2719a4b1580f9ebd9859",
+    "platform/android/sdk/src/main/cpp/fetchkit_jni.cpp": "9f308844883bec08e8c101ea599f37ce3923a9b8b491ee3547ef893776b37f3b",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/AndroidTransport.kt": "14fee148037fab26588de1db006716f1ebdd994513480e68a86620747f2df3ee",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/BoundedDns.kt": "5029a31f4ebaf5be923bca94f31c560e319e9cfe20b7057c323da05ebdd5e614",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/DownloadEngine.kt": "2533e4cf750eb54137f755c3f969f3d0faea2a74a93b7051682437e026f9e8dc",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/FetchKit.kt": "709b43d2bd0874d6287ddf8e93a16af17fa6dee86f34ec0656cc28443572d810",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/Models.kt": "5ce5f1708fb2aab34c13070ae0edbf70706b8ad80add9f27c6650533ebdf84e4",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/NativeBridge.kt": "a7b8ec549b56ecfb0749772ed0f3e4ecf1e71e501c8f758f76a392a50ed3d361",
+    "platform/android/sdk/src/probe/cpp/platform_probe_jni.cpp": "41d2977768f57c041d610c83310e7c19b94a14af56527edf75fd58dc6ed035fc",
+    "platform/android/sdk/src/probe/java/com/luofelix/fetchkit/probe/PlatformProbe.kt": "fb2f5f3c090f10c39cbd87ba61f167495b80e1c4a783dd5ee6e6e97b6913222a",
+    "platform/android/sdk/src/probeOkHttp/java/com/luofelix/fetchkit/probe/ProbeBackend.kt": "80a44fd075a87bb47fa16aeb22ba599860b92bf7e7e252953e3b5eb789386714",
+    "platform/android/sdk/src/probePlatform/java/com/luofelix/fetchkit/probe/ProbeBackend.kt": "ae85acc0338c62d785ce7ec4ddd9055c48dba83de9e1d79d857ce18591202a50",
+    "platform/android/sdk/src/test/java/com/luofelix/fetchkit/BoundedDnsTest.kt": "bbbffeeb2e652c29ebc5ec2b38bb457edecf12fd3ab0c1a87e22e5a3475eee7d",
+    "platform/android/sdk/src/test/java/com/luofelix/fetchkit/ModelsTest.kt": "7642f7655601e9c2dbd682364d8abdbd8fd4224130304195e07d8e9854da0482",
+    "src/core/c_api.cpp": "7981df5af7a57f03d22f1c0fd647d3c9b44d110f56f3314fbdcc0877f75148ef",
+    "src/core/clock.h": "44472caa4abda51ee11cbd8bfcc0e49ab628bfd32bf3bb8a19cf8b68807837d3",
+    "src/core/download_session.cpp": "44cee08887f4b319ca6ac02269ec2a3499728d9ba26b5e3f45e25b6f819206f5",
+    "src/core/download_types.h": "b0cafb21a5b9b09c1e31efe2afe1e0d835aea5d6c7da28b50eb2ae2f5b479ce4",
+    "src/core/engine.cpp": "122e22af658d91e0df21be915a7f802dbb5645b99d0dbd6b091aa2fbc35377ad",
+    "src/core/engine.h": "d689194beace3cd0b682f1b60986bbd0ace64a15b2b01fca70137ad4d00ea1bf",
+    "src/core/engine_factory.h": "58430d691bcada27dcf02a7e65354923c422893990a60f1aa0aac553bcfb7d83",
+    "src/core/retry_policy.cpp": "1a413f9c26515c9042ec75dafdd22be0348e3da3ed65feab0647505cc9b4cfd6",
+    "src/core/retry_policy.h": "ea46aeccf7f97f158d94fd27045ba2ce165a48ef8b82ed50059762fd21f42e99",
+    "src/core/subscription.cpp": "d2d7774bea6016651420259f9802ed97263f1ffde0b97dff0907944462ea3c27",
+    "src/core/version.cpp": "22dbb4dff5b9da81298f282c18629aceaa6ae177ca2f07bd52230584510e63c7",
+    "src/storage/fault.cpp": "b33ced838edc78b977fb3b328f3403c6e45662b026d23b0f068bc792270e99a8",
+    "src/storage/fault.h": "29bbd749069d8e9efb4982777a7e718a6bb199d79499cf6996efe130853aebf2",
+    "src/storage/record.cpp": "62ca8f60d1f798cd59b99a38aa213d89345bca14570196c723ce9e35daac1e49",
+    "src/storage/record.h": "5b76a21619afa119799191c5bdde3a5e2ed1d867a2d2b4f3ce91a46fd6354051",
+    "src/storage/resource_store.cpp": "8954c70879a48777b33a9dc3c4f52d04b3f785526f7da18d592dcf554f7fb0c3",
+    "src/storage/resource_store.h": "ccf78b353dae0f02e7eac689ad593985830855c676d17c283fb34524c88900f3",
+    "src/storage/sha256.h": "47736acfe1232e7bbabdedd05e5136a3e7e3dcc5997a4463ea89d4640bdb00b6",
+    "src/storage/staging_file.cpp": "af37cb743a6305474721e9266e36c5a167369ce2a2642a0162f04d3b2cb267a1",
+    "src/storage/staging_file.h": "a72a62cc0b83d128506709bab810aab2e06c1c41fe652120cc47ff1d75f6ef64",
+    "src/storage/storage_policy.cpp": "4fc1973b2ec899e806a9be417a3e7ef423b76da209acec236d04457e485e6438",
+    "src/storage/verifier.cpp": "a63c9cbe34be65641eedede6286706d37f70e890eaf053ede856698bf5fe624a",
+    "src/transport/curl_transport.cpp": "a98022b3cd2b48e9d166fe58a3e59a67c50772f8b142d854a67d32f7ab92b96b",
+    "src/transport/http_transport.h": "1177df2173f7d3eb9094ed72bd9de419601b62924cd742d50a8372df142ffebf",
+    "third_party/README.md": "45e801ed78de1e2cb9febb8fdc8a36a7e10a0c869ab12b26e0cf2174cd6bc210",
+    "third_party/curl.lock.json": "18f1b5bf6e73af306f8f87d056201e98b43c24354c693571bcd7b88bac5349f5",
+    "third_party/licenses/curl.txt": "82f2f4427d6545ee5aaac4f0b80428da6cc8ba41c2cf5da3a03680ec327b9681",
+    "third_party/licenses/picosha2.txt": "6c30eb1f37554ec4199cb82a8c86d9e7a852da78a757832bebb03ac9ddc44ff1",
+    "third_party/picosha2.lock.json": "ae066e89b413635692f9d294ccb4276e80b7ce352b64075a72df784bb44e8208",
+    "third_party/picosha2/picosha2.h": "b13c180161ffac8d0adc81e033e493c409457c4d1258ab9781ac80579ba3bdd8",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "VERSION": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+    "CMakeLists.txt": "9fc5159126ccff29ae7a41ef2d40dbe93b710c124827573bf992cb70a4152f5f",
+    "settings.gradle.kts": "5dd4a8d264d8e25de44e7bce43d245eec30da62f1b518ee90ede209e746e3196"
+  },
+  "artifacts": {
+    "dependency-licenses.json": {
+      "bytes": 2078,
+      "sha256": "15a7c5c2c44f82b3d8da0b640692b34024fc51d6e74f4ca5e54c884a916ea13a"
+    },
+    "fetchkit-native-0.1.0.zip": {
+      "bytes": 1509336,
+      "sha256": "2e0b299d7a932663d935568e9ef1e7ee036ebbf4791e6c0834ba1152a5aa48e5"
+    },
+    "licenses/Android-NDK-NOTICE": {
+      "bytes": 516438,
+      "sha256": "faf0dc52cf6ce9ab09a04b0c074a378dd2565ee1ed9bc1179d83793bcdba012e"
+    },
+    "licenses/curl.txt": {
+      "bytes": 1088,
+      "sha256": "82f2f4427d6545ee5aaac4f0b80428da6cc8ba41c2cf5da3a03680ec327b9681"
+    },
+    "licenses/FetchKit-LICENSE": {
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "licenses/maven/androidx.annotation/annotation/1.10.0/annotation-1.10.0.pom": {
+      "bytes": 2286,
+      "sha256": "880f7bf4b35d060746cbef319d4a052b4bd826bb71b40500e55319721ffa4e76"
+    },
+    "licenses/maven/androidx.annotation/annotation-jvm/1.10.0/annotation-jvm-1.10.0-META-INF_androidx_annotation_annotation_LICENSE.txt": {
+      "bytes": 10175,
+      "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+    },
+    "licenses/maven/androidx.annotation/annotation-jvm/1.10.0/annotation-jvm-1.10.0-sources-META-INF_androidx_annotation_annotation_LICENSE.txt": {
+      "bytes": 10175,
+      "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+    },
+    "licenses/maven/androidx.annotation/annotation-jvm/1.10.0/annotation-jvm-1.10.0.pom": {
+      "bytes": 2103,
+      "sha256": "5eece0903b4810aa1da85414dc4c2746046d878a543aa12dd4f1fe74171f7506"
+    },
+    "licenses/maven/androidx.startup/startup-runtime/1.2.0/startup-runtime-1.2.0-sources-META-INF_androidx_startup_startup-runtime_LICENSE.txt": {
+      "bytes": 10175,
+      "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+    },
+    "licenses/maven/androidx.startup/startup-runtime/1.2.0/startup-runtime-1.2.0.pom": {
+      "bytes": 2020,
+      "sha256": "69594163d8bb148df97a9fbb5aa8a92486bb8961db5f73871b8a84122616593b"
+    },
+    "licenses/maven/androidx.tracing/tracing/1.0.0/tracing-1.0.0.pom": {
+      "bytes": 1717,
+      "sha256": "cd0299a90d4720d78f1cfb5ff7505f4dbc1a70d05fe23fd9f4d4b77ea59ca05e"
+    },
+    "licenses/maven/com.squareup.okhttp3/okhttp/5.5.1/okhttp-5.5.1.pom": {
+      "bytes": 1862,
+      "sha256": "a834a8f02cbcaaf6a3968b439596e14d528a32160d4b235d95f2ab51163bbf2f"
+    },
+    "licenses/maven/com.squareup.okhttp3/okhttp-android/5.5.1/okhttp-android-5.5.1.pom": {
+      "bytes": 2270,
+      "sha256": "d9aa6a615a54146f08ce0e298b382e79ebe310161992040b07ed52ed29de8c3b"
+    },
+    "licenses/maven/com.squareup.okio/okio/3.18.1/okio-3.18.1.pom": {
+      "bytes": 1703,
+      "sha256": "3320a24236b2b43db1515b56587b18a8a1cdf238f4465e20e3e19e5f4fd10214"
+    },
+    "licenses/maven/com.squareup.okio/okio-jvm/3.18.1/okio-jvm-3.18.1.pom": {
+      "bytes": 1715,
+      "sha256": "6457712bf7dfdfa0d1b25a303600288c34a1ff8613d55c24c8c99bcc63301dd0"
+    },
+    "licenses/maven/org.jetbrains/annotations/13.0/annotations-13.0.pom": {
+      "bytes": 4930,
+      "sha256": "965aeb2bedff369819bdde1bf7a0b3b89b8247dd69c88b86375d76163bb8c397"
+    },
+    "licenses/maven/org.jetbrains.kotlin/kotlin-stdlib/2.2.21/kotlin-stdlib-2.2.21.pom": {
+      "bytes": 2301,
+      "sha256": "cf31f923196c63aedecd0a57c24269bd3702a4e47c0bf0bd64b5ada5de522272"
+    },
+    "licenses/picosha2.txt": {
+      "bytes": 1064,
+      "sha256": "6c30eb1f37554ec4199cb82a8c86d9e7a852da78a757832bebb03ac9ddc44ff1"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0-sources.jar": {
+      "bytes": 15270,
+      "sha256": "4ef6d77413c714291208d54e172f54562eb4a8d3964bbeabf7b5e66661591b8b"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0-sources.jar.md5": {
+      "bytes": 32,
+      "sha256": "e42d9efeddee046b1e19bd81a66e54c339c525a594c3a6b7c6c6ee68ff20eda5"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0-sources.jar.sha1": {
+      "bytes": 40,
+      "sha256": "05d2d163c12a1376b9b83eb5ed62b8f569e32339e408afbd908ed3e4d9de7eb7"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0-sources.jar.sha256": {
+      "bytes": 64,
+      "sha256": "9fdf5bb56b008f0d110c668f5c61c5ec6cd52843bcce3355b44475ec85ca94e8"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0-sources.jar.sha512": {
+      "bytes": 128,
+      "sha256": "4c6eb8ca5658ba0c62af2b6391dfca7aa98208f7c62ce65b819ec02ce20ee7f9"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.aar": {
+      "bytes": 539293,
+      "sha256": "f6e2b28caf13251df2260088ff9a6c0422725c293bc386e8457eb73eae5b60e9"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.aar.md5": {
+      "bytes": 32,
+      "sha256": "0c2027c4583d27972efe350dc3fb3e124e35c98839e693e6d7efa6ad0153a4ce"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.aar.sha1": {
+      "bytes": 40,
+      "sha256": "870bf9459801ca7f94230cf4825e9ab996cb1fd327b52bee1873e9367f0a6a14"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.aar.sha256": {
+      "bytes": 64,
+      "sha256": "b94c63cd446c8efe6d2dc54544f16a965ddf86c7448934c96be75be7d22e6494"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.aar.sha512": {
+      "bytes": 128,
+      "sha256": "1a8de90ca9e60428b94b4773c6f71ecd8fe852b227eecd7529893e37b9b90428"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.module": {
+      "bytes": 3230,
+      "sha256": "9a73053d99bede1050c70c21f89b74616d204b5b785bf505e9d315f5655ba6b6"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.module.md5": {
+      "bytes": 32,
+      "sha256": "10b690f1d2c6e5b23cad8295e0bf954e71e4eb832b65118344caf3db5d7701d8"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.module.sha1": {
+      "bytes": 40,
+      "sha256": "fc529326467da98b2eb81158f4d785c03924093bf9ecc0c1f8559d156927dc52"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.module.sha256": {
+      "bytes": 64,
+      "sha256": "5b6d25ff8805371ad60cd8cf4b4c83a4ef534382277ffc07e0e526cd87f1fde4"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.module.sha512": {
+      "bytes": 128,
+      "sha256": "9442a20f0195587848f0d8ad0c75904e28cd35c41de7a7c05302b6d4cf36a53f"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.pom": {
+      "bytes": 1552,
+      "sha256": "70fb7ac133960e6b9eabd7ae912753b3329034c61273c2501df2feec2a05ca34"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.pom.md5": {
+      "bytes": 32,
+      "sha256": "ee6ccdd1afff657220dba36f4cfeabe47da1847960f0f0b5293d53886f458a26"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.pom.sha1": {
+      "bytes": 40,
+      "sha256": "fae0fbda81b8378f037de0103f99f0fb0033430163dc633c2118dd8add537e93"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.pom.sha256": {
+      "bytes": 64,
+      "sha256": "79199e05ad02712060c0bf308de2522fa66e1e11f777077bedd9a7be94da5049"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/0.1.0/fetchkit-0.1.0.pom.sha512": {
+      "bytes": 128,
+      "sha256": "a98781698951169de206c964b1d2778acb5e1eff6545d4032be6e2529491e254"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/maven-metadata.xml": {
+      "bytes": 349,
+      "sha256": "7842c5d754ac1b6fbbe498d0a3cc034af16ffad90b69ddbbff8f1cfe9b07dd29"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/maven-metadata.xml.md5": {
+      "bytes": 32,
+      "sha256": "e888af879fca3ce81cfe2bc8102621eb4884fee974b44f5543f02b31d9311912"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/maven-metadata.xml.sha1": {
+      "bytes": 40,
+      "sha256": "aa87683232747d3d4a2f1a1d85aba7f8b28b84f3ec19e4e21feb6c0e46345406"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/maven-metadata.xml.sha256": {
+      "bytes": 64,
+      "sha256": "2bca1dfc90fe981f1ff36267e67b7dcd091a763d4d58655f7f093203ad2d6a12"
+    },
+    "maven/com/luofelix/fetchkit/fetchkit/maven-metadata.xml.sha512": {
+      "bytes": 128,
+      "sha256": "4687672df75ac358ec58dd375e7ce342a886809681f579a177e1e16bc39c1994"
+    },
+    "native-runtime-imports.txt": {
+      "bytes": 703048,
+      "sha256": "6874077290fa7aa812f4844b07be0bc36cb12ca562f4d9a4973687ef91bd1911"
+    },
+    "runtime-dependencies.txt": {
+      "bytes": 1737,
+      "sha256": "f6580620ed8dfc4ca37bb3127a49d44eeacf08931f033d5e200fce283fb22281"
+    },
+    "symbols/arm64-v8a/libfetchkit_jni.so": {
+      "bytes": 9868576,
+      "sha256": "b79e6d1a64b06f6fa1f0a0daa0780c2c2a671808aa24ccb448567a4a6b8acd55"
+    },
+    "symbols/x86_64/libfetchkit_jni.so": {
+      "bytes": 9468864,
+      "sha256": "2cb5ca4a2b8a6b02dda50ef8b6b10e222ad3427d0c914d077010679af90ea0d5"
+    }
+  }
+}

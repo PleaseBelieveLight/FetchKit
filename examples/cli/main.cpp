@@ -58,6 +58,18 @@ fetchkit_download_request requestFor(const std::string& url, const std::string& 
 
 int main(int argc, char** argv) {
     if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << fetchkit::version() << '\n'; return 0; }
+    if (argc == 2 && (std::string(argv[1]) == "--help" || std::string(argv[1]) == "help")) {
+        std::cout << "fetchkit_cli --version | download URL --root DIR [OPTIONS] | shell --root DIR [OPTIONS]\n"
+            "Options: --allow-http --key KEY --max-bytes N --expected-length N --sha256 HEX\n"
+            "         --require-digest --pin --capacity N --active N --retries N --ca-bundle FILE\n"
+            "         --retry-base-ms N --retry-max-ms N --retention-ms N --pause-after N\n"
+            "Shell: enqueue KEY URL; attach KEY URL; query/pause/resume/cancel/release/events TOKEN;\n"
+            "       list [OFFSET]; stats; pin/unpin/remove ID; expiry ID UTC_MS; trim BYTES; collect;\n"
+            "       read ID OFFSET CAPACITY (1..65536, hex JSON); quit\n"
+            "Exit: 0 completed/help; 2 arguments; 3 network/TLS; 4 HTTP/auth; 5 protocol/integrity;\n"
+            "      6 storage/quota; 7 cancelled; 8 other. Shell errors are per-command JSON.\n";
+        return 0;
+    }
     if (argc < 2 || (std::string(argv[1]) != "download" && std::string(argv[1]) != "shell")) {
         std::cerr << "Usage: fetchkit_cli --version | download URL --root DIR [--allow-http] [--expected-length N] [--sha256 HEX --require-digest --pin]\n"
             "       fetchkit_cli shell --root DIR [--allow-http]\n"
@@ -112,7 +124,22 @@ int main(int argc, char** argv) {
                 if (command.empty()) continue;
                 if (command == "quit") break;
                 try {
-                    if(command=="stats") {
+                    if(command=="read") {
+                        std::string resource_id, offset, capacity;
+                        if (!(input >> std::quoted(resource_id) >> offset >> capacity)) throw std::runtime_error("InvalidArgument");
+                        const auto size = smallNumber(capacity);
+                        if (!size || size > 65536) throw std::runtime_error("InvalidArgument");
+                        auto lease = engine.acquire(resource_id);
+                        std::vector<unsigned char> bytes(size);
+                        const auto count = lease.read(number(offset), bytes.data(), size);
+                        static constexpr char digits[] = "0123456789abcdef";
+                        std::string hex;
+                        hex.reserve(count * 2);
+                        for (std::uint32_t i = 0; i < count; ++i) {
+                            hex += digits[bytes[i] >> 4]; hex += digits[bytes[i] & 15];
+                        }
+                        std::cout << "{\"bytes\":" << count << ",\"hex\":\"" << hex << "\"}\n";
+                    } else if(command=="stats") {
                         fetchkit_storage_stats stats{};stats.struct_size=sizeof(stats);
                         fetchkit::checkStatus(fetchkit_engine_storage_stats(engine.nativeHandle(),&stats));
                         std::cout<<"{\"capacity_bytes\":"<<stats.capacity_bytes<<",\"used_bytes\":"<<stats.used_bytes

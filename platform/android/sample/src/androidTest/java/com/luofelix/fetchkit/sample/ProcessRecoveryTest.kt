@@ -23,7 +23,7 @@ class ProcessRecoveryTest {
         val args = InstrumentationRegistry.getArguments()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val kind = requireNotNull(args.getString("fetchkitM4DeathKind"))
-        require(kind in setOf("kill", "force-stop", "large"))
+        require(kind in setOf("kill", "force-stop", "large", "reboot"))
         val large = kind == "large"
         val phase = requireNotNull(args.getString("fetchkitM4Phase"))
         require(phase in setOf("prepare", "restore"))
@@ -60,8 +60,12 @@ class ProcessRecoveryTest {
                 }
                 assertEquals(TaskState.Running, snapshot.state)
                 assertTrue(snapshot.committedOffset >= target)
-                readyFile.writeText(JSONObject().put("run_id", runId).put("pid", Process.myPid())
-                    .put("committed_offset", snapshot.committedOffset).put("persistent_id", snapshot.persistentId).toString())
+                java.io.FileOutputStream(readyFile).use { stream ->
+                    stream.write(JSONObject().put("run_id", runId).put("pid", Process.myPid())
+                        .put("committed_offset", snapshot.committedOffset).put("persistent_id", snapshot.persistentId)
+                        .toString().toByteArray(Charsets.UTF_8))
+                    stream.fd.sync()
+                }
                 val trigger = File(context.filesDir, "m4-process-$kind-$runId-signal")
                 repeat(300) {
                     if (trigger.exists()) {

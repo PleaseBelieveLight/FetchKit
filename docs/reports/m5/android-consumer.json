@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "version": "0.1.0",
+  "abi": "x86_64",
+  "r8": true,
+  "source_tree_dependency": false,
+  "apk_sha256": "fe2dd06b712a6ed10ed35181143c85e1e8f7e7a06aad65e56fecb0ef206456cc",
+  "publication_aar_sha256": "f6e2b28caf13251df2260088ff9a6c0422725c293bc386e8457eb73eae5b60e9",
+  "api": "31",
+  "device_abis": "x86_64,arm64-v8a",
+  "result": {
+    "run_id": "7b6e363f-ed9c-4080-bfc3-83548f9ff6ee",
+    "passed": true,
+    "bytes": 262144,
+    "events": 6
+  }
+}
