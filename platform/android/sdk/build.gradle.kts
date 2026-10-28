@@ -45,6 +45,7 @@ android {
         consumerProguardFiles("consumer-rules.pro")
 
         ndk {
+            //noinspection ChromeOsAbiSupport
             abiFilters += selectedAbis
         }
         externalNativeBuild {
@@ -78,9 +79,11 @@ android {
 
 androidComponents {
     onVariants { variant ->
-        val licenseResources = tasks.register<GenerateProjectLicense>("generate${variant.name.replaceFirstChar { it.uppercase() }}ProjectLicense") {
-            licenseFile.set(projectLicense)
-        }
+        val licenseResources =
+            tasks.register<GenerateProjectLicense>("generate${variant.name.replaceFirstChar { it.uppercase() }}ProjectLicense") {
+                description = ""
+                licenseFile.set(projectLicense)
+            }
         variant.sources.resources?.addGeneratedSourceDirectory(licenseResources, GenerateProjectLicense::outputDirectory)
         if (platformProbe) {
             variant.sources.kotlin?.addStaticSourceDirectory("src/probe/java")
@@ -96,7 +99,7 @@ dependencies {
     testImplementation(libs.junit)
 }
 
-publishing {
+extensions.configure<PublishingExtension> {
     publications {
         register<MavenPublication>("release") {
             groupId = project.group.toString()
@@ -113,7 +116,12 @@ publishing {
                     }
                 }
             }
-            afterEvaluate { from(components["release"]) }
+        }
+    }
+    project.afterEvaluate {
+        val releaseComponent = components["release"]
+        publications.named<MavenPublication>("release") {
+            from(releaseComponent)
         }
     }
     repositories {
@@ -130,7 +138,7 @@ tasks.withType<Jar>().configureEach {
     }
 }
 
-tasks.withType<org.gradle.api.publish.maven.tasks.PublishToMavenRepository>().configureEach {
+tasks.withType<PublishToMavenRepository>().configureEach {
     val publicationContainsProbe = platformProbe
     val publicationAbis = selectedAbis.toSet()
     doFirst {
