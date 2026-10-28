@@ -52,8 +52,8 @@ compileSdk/targetSdk 37、minSdk 24、NDK 28.2.13676358、CMake 3.22.1，ABI 为
 | `include/fetchkit/`                                                    | C ABI、公共类型、C++ RAII 包装；不暴露 curl/JNI/STL 容器到 C ABI    | M0 契约、M1 最小 API     |
 | `src/core/` / `fetchkit_core`                                          | TaskManager、DownloadSession、Scheduler、事件、身份、错误和重试策略 | M0～M3                   |
 | `src/transport/` / `fetchkit_transport_curl`                           | 内部传输契约与 Linux libcurl 适配；只接受核心构造的单次请求         | M0 探针、M1 正式后端     |
-| `src/storage/`（随 `fetchkit_core` 编译）                              | 文件系统、目录锁、检查点、记录、扫描、发布与 Verifier              | M1 最小写盘、M2 完整恢复 |
-| `src/storage/storage_policy.cpp`                                      | 配额预留、LRU、pin、租约及遗留暂存清理，共用存储事务与保护锁        | M3                       |
+| `src/storage/`（随 `fetchkit_core` 编译）                              | 文件系统、目录锁、检查点、记录、扫描、发布与 Verifier               | M1 最小写盘、M2 完整恢复 |
+| `src/storage/storage_policy.cpp`                                       | 配额预留、LRU、pin、租约及遗留暂存清理，共用存储事务与保护锁        | M3                       |
 | `platform/android/sdk/src/main/cpp/`                                   | JNI handle 注册表、线程附着、缓冲桥接、异常转换                     | M0 探针、M4 正式接入     |
 | `platform/android/sdk/src/main/java/com/luofelix/fetchkit/`            | Kotlin API、平台网络、宿主请求信息提供入口；不重复实现核心策略      | M0 探针、M4              |
 | `platform/android/sample/`                                             | Compose 演示、宿主调度选择、通知、网络约束和生命周期验证            | M4                       |
@@ -161,8 +161,8 @@ M0 门槛：
 
 目标：从提交资源到正确接收字节，首先解决协议正确性；此阶段不承诺进程崩溃恢复。
 
-2026-10-26 实施记录：已交付主机 alpha API、CurlTransport、暂存写盘和 CLI，真实协议、HTTPS、跨 origin
-及 >4 GiB 验证已在 Windows 执行，详见 [M1 报告](reports/m1-baseline.md)。固定 curl 源码配置与 Linux CI
+2026-10-26 实施记录：已交付主机 alpha API、CurlTransport、暂存写盘和 CLI，真实协议、HTTPS、跨 origin 及 >4
+GiB 验证已在 Windows 执行，详见 [M1 报告](reports/m1-baseline.md)。固定 curl 源码配置与 Linux CI
 脚本已建立；Linux 执行记录尚缺，因此 M1 不标为全部验收完成。M0 的 Linux/真机缺测继续保留。
 
 | 编号  | 工作包与具体产物                                                                              | 依赖         | 完成依据                                                                                  |
@@ -188,7 +188,8 @@ M1 门槛：协议用例 T01～T07 通过 Linux 真后端测试；Linux 上进�
 ### M2：检查点、可信校验与发布恢复
 
 2026-10-27 实施状态：M2-01～M2-05 的主机代码、恢复/故障测试入口、记录格式与租约已加入，
-见 [M2 用法](m2-storage.md) 和 [阶段证据](reports/m2-baseline.md)。当前 Windows 验证不能代替 Linux 或系统重启/掉电验收。
+见 [M2 用法](m2-storage.md) 和 [阶段证据](reports/m2-baseline.md)。当前 Windows 验证不能代替 Linux
+或系统重启/掉电验收。
 
 目标：进程退出后可保守恢复，错误内容永不成为可读资源。
 
@@ -212,9 +213,9 @@ M2 门槛：T09～T12 的恢复与损坏用例通过；TransportComplete 与 Dig
 ### M3：任务调度、重试与资源生命周期
 
 2026-10-27 实施状态：M3-01～M3-05 的主机代码与测试入口已加入，见 [M3 API](m3-host-api.md) 和
-[阶段报告](reports/m3-baseline.md)。事件通过宿主 executor 主动 dispatch；记录升级 v2，保留 v1 迁移。
-缺少 Linux/sanitizer 与真实小容量文件系统证据，阶段门槛不标为整体验收通过。
-缓存策略与记录删除需要同一事务和保护锁，实际归入 `src/storage/`，未另建 cache 目标。
+[阶段报告](reports/m3-baseline.md)。事件通过宿主 executor 主动 dispatch；记录升级 v2，保留 v1 迁移。 缺少
+Linux/sanitizer 与真实小容量文件系统证据，阶段门槛不标为整体验收通过。 缓存策略与记录删除需要同一事务和保护锁，实际归入
+`src/storage/`，未另建 cache 目标。
 
 目标：多个任务和多个调用方共存时，空间、线程、状态和回调仍然受控。
 
@@ -237,11 +238,11 @@ HTTP 缓存协商。
 
 ### M4：Android 正式接入与后台示例
 
-2026-10-27 实施状态：M4-01～M4-05 的 Kotlin/JNI、网络、UI 和宿主 JobScheduler 实现已加入，
-M4-06 增加真实进程终止/强制停止恢复、独立大文件入口、Release 文件 AAR/R8 与体积工具。
+2026-10-27 实施状态：M4-01～M4-05 的 Kotlin/JNI、网络、UI 和宿主 JobScheduler 实现已加入， M4-06
+增加真实进程终止/强制停止恢复、独立大文件入口、Release 文件 AAR/R8 与体积工具。
 接口与限制见 [Android API](m4-android-api.md)，实测范围与缺测项见 [M4 报告](reports/m4-baseline.md)。
-正式后端使用 M0 已选择的隔离 OkHttp 5.5.1；该依赖现在进入普通 SDK。缺少真机、API 24/目标 API 和 Linux 等证据时，
-阶段门槛不标记为整体验收通过。后台示例使用系统 JobScheduler，不新增 WorkManager 模块。
+正式后端使用 M0 已选择的隔离 OkHttp 5.5.1；该依赖现在进入普通 SDK。缺少真机、API 24/目标 API 和 Linux
+等证据时， 阶段门槛不标记为整体验收通过。后台示例使用系统 JobScheduler，不新增 WorkManager 模块。
 
 目标：将已验证核心能力映射至 Android，复用同一批协议场景，验证真实生命周期。
 
@@ -272,10 +273,10 @@ M4 门槛：Android 与 Linux 的协议结果一致；真机完成实际超过 4
 
 ### M5：发布验证与可交付产物
 
-2026-10-27 实施状态：已加入统一版本、生产 CMake 安装导出、本地 Maven AAR/sources 发布、独立 C/C++ 与 Android R8 宿主、
-Build ID 符号归档、有限压力/真实 ENOSPC 入口、模拟器 guest 重启恢复和严格发布检查。
-用法见 [M5 交付指南](m5-release.md)，逐项结果与剩余门槛见 [M5 报告](reports/m5-baseline.md)。
-项目自身已采用 Apache-2.0；代码与本地预览已准备不代表 Linux、物理设备、完整第三方许可审核和首版发布门槛全部通过；未上传产物。
+2026-10-27 实施状态：已加入统一版本、生产 CMake 安装导出、本地 Maven AAR/sources 发布、独立 C/C++ 与
+Android R8 宿主、 Build ID 符号归档、有限压力/真实 ENOSPC 入口、模拟器 guest 重启恢复和严格发布检查。
+用法见 [M5 交付指南](m5-release.md)，逐项结果与剩余门槛见 [M5 报告](reports/m5-baseline.md)。 项目自身已采用
+Apache-2.0；代码与本地预览已准备不代表 Linux、物理设备、完整第三方许可审核和首版发布门槛全部通过；未上传产物。
 
 目标：从干净环境构建、接入和验证首版，交付内容与声明相符。
 

@@ -9,11 +9,12 @@ API/ABI 真机矩阵、实际 >4 GiB、Linux/sanitizer 和重启/掉电仍须分
 
 2026-10-27 M3 进展：多任务、独立订阅、持久化重试、配额/LRU/pin/过期及读取保护已有主机实现，
 见 [M3 API](m3-host-api.md)、[v2 记录](storage-record-v2.md) 和 [报告](reports/m3-baseline.md)。
-宿主在自己的 executor 上主动分发有界事件；Android 正式接入仍待 M4，Linux/sanitizer 等缺测不由 Windows 代替。
+宿主在自己的 executor 上主动分发有界事件；Android 正式接入仍待 M4，Linux/sanitizer 等缺测不由 Windows
+代替。
 
 2026-10-27 M2 进展：已增加检查点、跨进程重新绑定、可信 SHA-256、发布恢复与最小只读租约。
-当前实现与同步边界见 [M2 存储](m2-storage.md)、[记录格式](storage-record-v1.md) 和 [报告](reports/m2-baseline.md)。
-Linux/重启/掉电尚无执行证据；完整阶段门槛仍受这些缺测项约束。以下保留原始设计和阶段目标。
+当前实现与同步边界见 [M2 存储](m2-storage.md)、[记录格式](storage-record-v1.md)
+和 [报告](reports/m2-baseline.md)。 Linux/重启/掉电尚无执行证据；完整阶段门槛仍受这些缺测项约束。以下保留原始设计和阶段目标。
 
 2026-10-26 M1 进展：主机暂存下载与续传校验已有实现，详见 [M1 API](m1-host-api.md) 和
 [阶段报告](reports/m1-baseline.md)。Android 下载、持久化检查点、摘要验证、资源发布和缓存仍待后续里程碑；
@@ -23,7 +24,8 @@ Linux 尚未实测，不能将 M1 标为整体验收通过。
 `platform/android/sample`），根目录 CMake 单独构建 C++ 核心及主机 CLI。已打通版本查询链路，本文的下载能力和里程碑仍是实现目标。
 
 M0 的可执行探针与阶段证据见 [M0 基线报告](reports/m0-baseline.md)，细化契约见
-[传输契约](transport-contract.md) 和 [API/存储契约](api-contract.md)。探针不等于正式下载 API；阶段缺测项仍须补齐。
+[传输契约](transport-contract.md) 和 [API/存储契约](api-contract.md)。探针不等于正式下载
+API；阶段缺测项仍须补齐。
 
 ## 1. 产品定位与边界
 
@@ -83,13 +85,14 @@ Android      libcurl   TaskJournal   CacheManager
 
 ### 2.1 网络后端
 
-M0 后 Android 默认实现方向调整为通过 JNI 接入独立配置的 OkHttp 客户端，Linux 采用 libcurl。
-Android 仍复用平台 TLS 和证书能力，但必须计入 OkHttp、Okio、Kotlin 标准库及其他传递依赖的实际接入成本。
+M0 后 Android 默认实现方向调整为通过 JNI 接入独立配置的 OkHttp 客户端，Linux 采用 libcurl。 Android
+仍复用平台 TLS 和证书能力，但必须计入 OkHttp、Okio、Kotlin 标准库及其他传递依赖的实际接入成本。
 当前仅交付可选实验，正式适配仍在 M4 完成，版本和体积证据见 [M0 报告](reports/m0-baseline.md)。
 
 最初候选 `HttpURLConnection` / `HttpsURLConnection` 在 API 31 探针中会使用宿主全局 CookieHandler 和
 Authenticator，绕过核心凭证与鉴权策略，因此不能直接作为默认后端。不能通过临时替换宿主全局处理器规避该问题。
-独立客户端必须显式关闭自动重试、重定向、Cookie、Authenticator 和缓存，并使用 identity 编码；M1/M4 继续验证完整协议。
+独立客户端必须显式关闭自动重试、重定向、Cookie、Authenticator 和缓存，并使用 identity 编码；M1/M4
+继续验证完整协议。
 
 Android 中需要统一 native 网络栈的集成方，可以选择后续适配的 libcurl 构建配置。首版不要求交付 Android
 的两个后端。
@@ -124,10 +127,10 @@ M0 必须实测“阻塞读取时取消”的行为。仅设置取消标记不�
 `pause` 请求发出后，应等到进入 Paused 才认为检查点完成。取消默认清理未完成数据；已完成资源由显式删除
 API 管理。
 
-M1 alpha 接口仅提供单个活动任务、同进程暂停/恢复和 TransferComplete 暂存结果，未交付发布/读取 API。
-此阶段 Paused 只确认数据文件同步与内存偏移，不能承诺跨进程恢复。M2 才形成完整持久化检查点；
-多订阅、回调 executor、总配额与缓存生命周期已由 M3 主机实现补齐，详见 [M3 API](m3-host-api.md)。
-缓存策略放在 `src/storage/storage_policy.cpp`，与记录变更、删除和租约共用事务及保护锁。
+M1 alpha 接口仅提供单个活动任务、同进程暂停/恢复和 TransferComplete 暂存结果，未交付发布/读取 API。 此阶段
+Paused 只确认数据文件同步与内存偏移，不能承诺跨进程恢复。M2 才形成完整持久化检查点； 多订阅、回调
+executor、总配额与缓存生命周期已由 M3 主机实现补齐，详见 [M3 API](m3-host-api.md)。 缓存策略放在
+`src/storage/storage_policy.cpp`，与记录变更、删除和租约共用事务及保护锁。
 
 M0 将共享控制细化为：pause/resume 对共享 task 生效；cancel 只撤销指定订阅，最后一个订阅显式取消时才取消共享下载。
 普通订阅释放在最后一个订阅退出时停止 I/O、尽力提交并保留暂停任务；engine 关闭同样保留恢复信息。
@@ -198,9 +201,9 @@ Running 恢复为可恢复的待调度状态，是否启动取决于宿主策略
 
 每份资源采用暂存数据文件与独立元数据记录。记录包含格式版本、有限长度字段和记录校验值；写入通过临时文件和同目录原子替换进行。首版采用可扫描的独立记录，避免强制引入数据库，任务数量较大时再评估索引。
 
-M0 将编码方向细化为有界二进制 TLV，记录使用 CRC32 检测损坏，字段上限和版本隔离见 API 契约。
-M2 已固定 [字节格式与黄金样本](storage-record-v1.md)，CRC 使用平台 zlib，内容 SHA-256 使用固定提交的 MIT 许可 PicoSHA2。
-记录校验不能代替可信内容摘要；Windows 同步边界与缺测项单列。
+M0 将编码方向细化为有界二进制 TLV，记录使用 CRC32 检测损坏，字段上限和版本隔离见 API 契约。 M2
+已固定 [字节格式与黄金样本](storage-record-v1.md)，CRC 使用平台 zlib，内容 SHA-256 使用固定提交的 MIT
+许可 PicoSHA2。 记录校验不能代替可信内容摘要；Windows 同步边界与缺测项单列。
 
 检查点写入顺序：
 
@@ -286,7 +289,9 @@ Android 的系统执行许可与 SDK 的下载策略分层：
 1. 核心、JNI、网络后端、调度适配和示例分目标构建，可按需链接。
 2. 评估 `-Os` / `-Oz`、LTO、函数与数据分段、无用代码删除，并对性能做必要回归。
 3.
+
 限制动态导出符号，保留调试符号的独立归档；参考 [NDK 符号可见性](https://developer.android.com/ndk/guides/symbol-visibility)。
+
 4. 控制公共头文件模板和强制依赖；日志、CLI、测试工具独立交付。
 5. libcurl
    构建仅启用业务所需协议和能力；裁剪依据见 [curl 构建文档](https://curl.se/docs/install.html#reducing-size)。
@@ -308,8 +313,9 @@ Android 的系统执行许可与 SDK 的下载策略分层：
 | M5：首版发布     | CLI、AAR、接入示例、版本与错误文档、体积报告         | 故障测试清单通过，发布包内容与报告一致              |
 
 M5 已提供 [本地交付预览和发布流程](m5-release.md)、[检查表](release-checklist.md) 与
-[实际证据](reports/m5-baseline.md)。版本统一在根目录 VERSION，CMake 导出采用精确版本匹配，AAR 通过本地 Maven
-保留传递依赖。项目自身采用 Apache-2.0，第三方许可独立保留。当前仍为 alpha；Linux/物理设备矩阵和完整许可审核等门槛未满足时，发布检查保持阻断。
+[实际证据](reports/m5-baseline.md)。版本统一在根目录 VERSION，CMake 导出采用精确版本匹配，AAR 通过本地
+Maven 保留传递依赖。项目自身采用 Apache-2.0，第三方许可独立保留。当前仍为
+alpha；Linux/物理设备矩阵和完整许可审核等门槛未满足时，发布检查保持阻断。
 
 首版必须覆盖的自动化或设备测试：
 
