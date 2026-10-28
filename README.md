@@ -8,6 +8,8 @@ FetchKit 是面向 Android 与 Linux 的 C++ 文件下载 SDK，提供断点续�
 
 ## 最小演示
 
+### Android 单文件下载
+
 以下 Kotlin 函数在宿主后台线程调用，传入实际 HTTPS 文件地址。示例同步等待结果， 不可在主线程或 SDK
 回调中调用；UI 的异步接入见 [Android API](docs/reference/android-api.md)。
 依赖接入见 [接入与打包](docs/release/packaging.md#maven-aar-与外部-android-宿主)。
@@ -44,6 +46,70 @@ fun download(context: Context, url: String): TaskSnapshot {
 
 资源身份由业务域、key、版本和内容变体组成，URL 不参与身份；下载不同内容时应更换身份。
 `Completed` 表示已校验发布，可信 SHA-256 匹配另由 `DigestVerified` 表示；读取文件须先获取租约。
+
+### Android 多文件下载与列表进度
+
+一次入队多个请求，由同一个引擎调度，最多同时下载 3 个文件。以下函数可从主线程调用；
+`onUpdate` 可选，传入时在主线程通知对应资源的进度、状态和错误，不传则不观察事件。
+
+```kotlin
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import com.luofelix.fetchkit.*
+import java.io.File
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+
+fun downloadFiles(
+    context: Context,
+    requests: List<DownloadRequest>,
+    onUpdate: ((ResourceIdentity, TaskEvent) -> Unit)? = null,
+): CompletableFuture<DownloadEngine> {
+    val handler = Handler(Looper.getMainLooper())
+    val mainExecutor = Executor { handler.post(it) }
+    val config = EngineConfig(
+        storageRoot = File(context.noBackupFilesDir, "fetchkit-batch-demo"),
+        maxDownloadBytes = 64L * 1024 * 1024,
+        storageCapacityBytes = 256L * 1024 * 1024,
+        stagingRetentionMs = 7L * 86400000,
+        maxActiveDownloads = 3,
+    )
+    return FetchKit.open(config).thenCompose { engine ->
+        val submissions = requests.map { request ->
+            engine.enqueue(request).thenAccept { subscription ->
+                if (onUpdate != null) {
+                    subscription.observe(mainExecutor) { event ->
+                        onUpdate(request.identity, event)
+                    }
+                }
+            }
+        }
+        CompletableFuture.allOf(*submissions.toTypedArray()).handle { _, error ->
+            if (error == null) CompletableFuture.completedFuture(engine)
+            else engine.closeAsync().thenApply<DownloadEngine> { throw error }
+        }.thenCompose { it } // 部分入队失败也先关闭引擎，释放已创建的订阅。
+    }
+}
+```
+
+调用示例（将地址替换为实际 HTTPS 文件地址）：
+
+```kotlin
+val batch = downloadFiles(context, listOf(
+    DownloadRequest(ResourceIdentity("demo", "photo", "1"), RequestInfo("https://example.com/photo.jpg")),
+    DownloadRequest(ResourceIdentity("demo", "video", "1"), RequestInfo("https://example.com/video.mp4")),
+)) { identity, event ->
+    // 主线程：按完整 identity 定位列表项，更新 receivedBytes、totalBytes、state 和 error。
+    // RecyclerView 按需 notifyItemChanged(position, "progress")；Compose 更新对应条目的状态。
+}
+```
+
+进度事件约每 200 ms 合并一次，`totalBytes == null` 或为 0 时不计算百分比；回调保持轻量且不抛异常。
+`batch` 完成表示请求已入队，下载结果通过事件中的 `state/error` 判断。
+页面或 ViewModel 生命周期结束时执行 `batch.thenCompose { it.closeAsync() }`，释放全部订阅并尽力保留未完成检查点；
+宿主须处理入队及关闭 Future 的异常。单独停止观察、暂停或取消的用法见
+[订阅与生命周期](docs/reference/android-api.md#订阅事件与恢复)。
 
 ## 架构说明
 
