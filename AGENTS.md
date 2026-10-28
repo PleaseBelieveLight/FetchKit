@@ -83,6 +83,37 @@ exceptions from crossing C ABI or JNI boundaries.
 No formatter/linter is configured; include configuration when introducing one. Update design
 documents when architecture changes.
 
+## Comments & Logging
+
+- Write code comments and human-readable log messages primarily in Chinese. Keep English for
+  established technical terms or concepts that Chinese cannot express clearly; preserve API names,
+  identifiers, protocol fields, error codes and machine-readable output formats.
+- Document public C/C++/Kotlin API contracts at their declarations, using KDoc where appropriate:
+  parameter bounds/units, result and error semantics, threading/callback constraints, ownership and
+  release requirements. Explain shared-task effects of pause/resume, subscription cancellation versus
+  release, provider cancellation and lease lifetime. Describe actual outcomes, including races.
+- Add concise comments beside non-obvious invariants: lock order, generation fencing, cancellation
+  barriers, data/record synchronization, publication/recovery ordering, quota protection and protocol
+  workarounds. Explain the reason and failure being prevented. Update comments with behavior changes;
+  remove obsolete milestone notes and commented-out code. Avoid narrating obvious statements or
+  adding comments to every function.
+- Add diagnostic logs at boundaries that help locate failures: engine/storage open or close failures,
+  abnormal recovery/quarantine, exhausted retries or significant fallback decisions, validation or
+  publication failures, and provider/listener/executor failures. Log once at the layer with enough
+  context; retain the existing error/snapshot/event result. Do not silently discard unexpected
+  exceptions without an observable error or safe diagnostic.
+- Keep SDK logging quiet by default and allow the host to enable diagnostics and control levels.
+  Use Error for failed operations, Warn for recoverable anomalies and Debug for diagnostic detail;
+  expected pause/cancel actions are not errors. Avoid per-buffer, per-read/write, per-poll and
+  per-progress logs. Sample or rate-limit repeated messages and bound any retained history.
+- Include available, relevant context such as operation/stage, taskId/persistentId, generation,
+  status, HTTP status, platform code and retry count. Do not log token, Cookie, authorization headers,
+  full signed URLs or response bodies. Use explicitly selected safe fields; never dump request
+  objects or raw exception messages/stacks without redaction, including through `toString()`.
+- Keep log formatting and sinks lightweight. Do not invoke host logging callbacks under SDK locks
+  or introduce blocking I/O/unbounded queues in hot paths. Keep CLI/test machine-readable output
+  separate from diagnostic logs.
+
 ## Testing Guidelines
 
 Android uses JUnit4. Sample instrumentation verifies application identity and SDK JNI loading.
