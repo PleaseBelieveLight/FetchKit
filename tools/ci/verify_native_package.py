@@ -36,7 +36,8 @@ def main():
             shutil.copytree(ROOT / "examples/consumer", source, ignore=shutil.ignore_patterns("build"))
             prefixes = [str(prefix)] + [str(path.resolve()) for path in args.dependency_prefix]
             commands = [["cmake", "-S", str(source), "-B", str(workspace / "build"), "-G", "Ninja",
-                         "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_PREFIX_PATH=" + ";".join(prefixes)],
+                         "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_PREFIX_PATH=" + ";".join(prefixes),
+                         "-DFETCHKIT_EXPECTED_VERSION=" + report["version"]],
                         ["cmake", "--build", str(workspace / "build"), "--parallel", "2"]]
             if sys.platform == "win32":
                 commands[0] += ["-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++"]

@@ -50,6 +50,9 @@ def main():
     tree = ET.parse(pom)
     if tree.findtext("m:version", namespaces=ns) != version:
         raise RuntimeError("POM version mismatch")
+    metadata = json.loads((coordinates / f"fetchkit-{version}.module").read_text(encoding="utf-8"))
+    if metadata["component"]["version"] != version:
+        raise RuntimeError("Gradle module version mismatch")
     project_license = (ROOT / "LICENSE").read_bytes()
     license_url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
     pom_licenses = tree.findall("m:licenses/m:license", ns)
@@ -99,6 +102,8 @@ def main():
             directory.mkdir(parents=True, exist_ok=True)
             stripped = directory / "stripped.so"
             stripped.write_bytes(archive.read(name))
+            if version.encode("ascii") + b"\0" not in stripped.read_bytes():
+                raise RuntimeError("JNI version differs from publication: " + abi)
             if b"FETCHKIT_FAULT" in stripped.read_bytes():
                 raise RuntimeError("Fault hook in production JNI")
             identity = build_id(stripped)

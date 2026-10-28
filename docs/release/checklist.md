@@ -2,7 +2,9 @@
 
 [文档中心](../README.md)
 
-当前是本地 `0.1.0` alpha 预览，尚未通过首版发布验收。自动结果见 [M5 报告](../reports/m5-baseline.md)。
+当前源码版本是 `0.1.0-alpha.1`，尚未通过首版正式发布验收。GitHub Packages 配置与 Alpha 分发流程见
+[接入与打包](packaging.md)。以下自动结果属于历史 `0.1.0` 本地预览，见 [M5 报告](../reports/m5-baseline.md)，
+不能代替当前 Alpha 产物的重新构建与验证。
 
 | 门槛                               | 所需证据                                                | 当前范围                                                        |
 |------------------------------------|---------------------------------------------------------|-----------------------------------------------------------------|
@@ -16,7 +18,7 @@
 | T18 Native 接入                    | Release install/export，移到源码树外 C/C++ 实际下载     | Windows 已提供；Linux 待执行                                    |
 | T18 AAR                            | 外部 Maven Release/R8 下载、JNI、事件和 lease           | API 31 x86_64 模拟器                                            |
 | T18 版本、符号、内容、体积         | VERSION、POM、sources、Build ID、依赖树、SHA manifest   | 本地预览；新候选提交后重建                                      |
-| 许可和分发                         | 所有者选择 LICENSE、完整第三方原文审核、坐标所有权/签名 | 项目已采用 Apache-2.0；第三方许可审核与远程渠道待完成，没有上传 |
+| 许可和分发                         | 所有者选择 LICENSE、完整第三方原文审核、坐标所有权/签名 | 项目已采用 Apache-2.0；已配置 GitHub Packages，第三方许可审核及实际远程发布验证待完成 |
 
 严格检查需要 `linux-acceptance.json`、`linux-asan-ubsan.json`、`linux-tsan.json`、`linux-enospc.json`、
 `android-device-matrix.json`、`android-large-file.json`、`physical-reboot.json`、`license-review.json`

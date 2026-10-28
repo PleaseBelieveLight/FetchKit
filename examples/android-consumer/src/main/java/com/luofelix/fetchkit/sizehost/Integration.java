@@ -55,7 +55,8 @@ final class Integration {
     }
     private static void report(Activity activity, TextView text, String runId, boolean passed, long bytes, int events) {
         try {
-            JSONObject value = new JSONObject().put("run_id", runId).put("passed", passed).put("bytes", bytes).put("events", events);
+            JSONObject value = new JSONObject().put("run_id", runId).put("passed", passed).put("bytes", bytes)
+                .put("events", events).put("version", FetchKit.INSTANCE.version());
             File file = new File(activity.getExternalFilesDir(null), "m4-release.json");
             try (java.io.FileOutputStream stream = new java.io.FileOutputStream(file)) {
                 stream.write(value.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));

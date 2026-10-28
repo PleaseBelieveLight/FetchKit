@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" fetchkit_version LIMIT_COUNT 1)
-if(NOT fetchkit_version MATCHES "^[0-9]+[.][0-9]+[.][0-9]+$")
-    message(FATAL_ERROR "VERSION must contain a numeric major.minor.patch")
+if(NOT fetchkit_version MATCHES "^((0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*))(-(alpha|beta|rc)[.](0|[1-9][0-9]*))?$")
+    message(FATAL_ERROR "VERSION must contain major.minor.patch with an optional -alpha.N, -beta.N or -rc.N suffix")
 endif()
-project(fetchkit VERSION ${fetchkit_version} LANGUAGES CXX)
+# CMake 的项目版本仅接受数字；运行时和发布产物必须保留预发布后缀，避免误标为正式版。
+set(fetchkit_numeric_version "${CMAKE_MATCH_1}")
+project(fetchkit VERSION ${fetchkit_numeric_version} LANGUAGES CXX)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
 include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -60,7 +63,7 @@ if(UNIX)
     target_compile_definitions(fetchkit_core PRIVATE _FILE_OFFSET_BITS=64)
 endif()
 target_compile_definitions(fetchkit_core PRIVATE
-    FETCHKIT_VERSION="${PROJECT_VERSION}"
+    FETCHKIT_VERSION="${fetchkit_version}"
 )
 set_target_properties(fetchkit_core PROPERTIES
     CXX_EXTENSIONS OFF
@@ -266,8 +269,10 @@ if(FETCHKIT_BUILD_TESTS)
         endif()
     endif()
     if(FETCHKIT_BUILD_CLI)
-        add_test(NAME core_version COMMAND fetchkit_cli --version)
-        set_tests_properties(core_version PROPERTIES LABELS "unit" PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
+        add_test(NAME core_version COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/version_test.py"
+            --cli "$<TARGET_FILE:fetchkit_cli>" --version-file "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+        set_tests_properties(core_version PROPERTIES LABELS "unit" TIMEOUT 10)
     endif()
     if(FETCHKIT_BUILD_PROBES)
         add_test(NAME curl_contract COMMAND "${Python3_EXECUTABLE}"

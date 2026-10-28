@@ -1,9 +1,13 @@
-# 接入、打包与本地发布预览
+# 接入、打包与 Alpha 发布
 
 [文档中心](../README.md) · [发布检查表](checklist.md)
 
-版本源是根目录 `VERSION`，当前 `0.1.0`。这是 alpha 接口的本地交付预览，尚未冻结 C ABI；升级库后重新编译宿主。
-当前结果与未通过的发布门槛见 [M5 报告](../reports/m5-baseline.md)。未配置远程仓库，也没有上传产物。
+版本源是根目录 `VERSION`，当前 `0.1.0-alpha.1`，Tag 命名使用 `v<VERSION>`。支持
+`major.minor.patch`，以及附加 `-alpha.N`、`-beta.N` 或 `-rc.N` 的预发布版本；数字不使用前导零。
+完整版本用于 Maven 坐标、`fetchkit_version()`、`FetchKit.version()` 和安装包中的 `VERSION`。
+尚未冻结 C ABI；升级库后重新编译宿主。当前结果与未通过的正式发布门槛见
+[M5 报告](../reports/m5-baseline.md) 和 [发布检查表](checklist.md)。已配置 GitHub Packages 发布入口，
+配置和本地验证本身不代表已经上传。
 
 ## Native 安装与独立接入
 
@@ -27,6 +31,10 @@ AAR。
 
 ```cmake
 find_package(fetchkit 0.1.0 EXACT CONFIG REQUIRED)
+# find_package 的版本参数仅支持数字；需要区分预发布版本时另查完整版本。
+if(NOT fetchkit_VERSION_FULL STREQUAL "0.1.0-alpha.1")
+    message(FATAL_ERROR "Unexpected FetchKit version: ${fetchkit_VERSION_FULL}")
+endif()
 target_link_libraries(my_app PRIVATE fetchkit::core)
 ```
 
@@ -67,8 +75,8 @@ stderr，最终快照写 stdout。快照的 staging_path 仅供诊断，不能�
 .\gradlew.bat :sdk:publishReleasePublicationToPreviewRepository '-Pfetchkit.probes=false' --max-workers=2
 ```
 
-产物位于 `build/m5-maven/com/luofelix/fetchkit/fetchkit/0.1.0/`，含双 ABI AAR、sources、POM、Gradle
-module metadata 和校验文件。 本地草案坐标是 `com.luofelix.fetchkit:fetchkit:0.1.0`，远程坐标所有权与发布权限尚未配置。
+产物位于 `build/m5-maven/com/luofelix/fetchkit/fetchkit/0.1.0-alpha.1/`，含双 ABI AAR、sources、POM、Gradle
+module metadata 和校验文件。坐标是 `com.luofelix.fetchkit:fetchkit:0.1.0-alpha.1`。
 publish 拒绝 probes=true 或缺少 arm64-v8a/x86_64 的配置；普通构建仍可选择单 ABI 做诊断。 POM 声明
 Kotlin 标准库和 OkHttp 5.5.1，最终版本以依赖解析结果为准。直接复制 AAR 文件仍须自行声明运行依赖。
 
@@ -77,7 +85,7 @@ Adoptium JDK 25：
 
 ```sh
 gradle assembleRelease -Pfetchkit.repository=file:///absolute/path/build/m5-maven \
-  -Pfetchkit.version=0.1.0 -Pfetchkit.abi=arm64-v8a
+  -Pfetchkit.version=0.1.0-alpha.1 -Pfetchkit.abi=arm64-v8a
 ```
 
 也可用验证器在临时目录自动构建、安装并运行 R8 后的真实下载：
@@ -94,6 +102,62 @@ python tools/ci/verify_android_package.py --repository build/m5-maven --sdk D:/A
 executor、Network、备份排除与 JobScheduler 接入规则见 [M4 API](../reference/android-api.md)；
 存储、鉴权、重试、错误恢复及读取保护见 [M3 API](../reference/host-api.md)。不要在 UI 或 provider 中阻塞等待 SDK
 Future。
+
+### GitHub Packages 发布与接入
+
+默认发布仓库是 `https://maven.pkg.github.com/pleasebelievelight/fetchkit`，对应源码仓库
+`PleaseBelieveLight/FetchKit`。迁移或 fork 时可用 `-Pfetchkit.githubRepository=OWNER/REPOSITORY`
+覆盖，其次读取 `GITHUB_REPOSITORY`；owner/repository 在 Maven URL 中统一转为小写。
+
+本地发布使用有仓库访问权限、具备 `write:packages` 的 personal access token (classic)。凭证放在
+**用户级** `~/.gradle/gradle.properties`（Windows 为 `$env:USERPROFILE/.gradle/gradle.properties`），
+不要写入仓库内的 `gradle.properties`、构建脚本或提交到 Git：
+
+```properties
+gpr.user=YOUR_GITHUB_USERNAME
+gpr.key=YOUR_PERSONAL_ACCESS_TOKEN_CLASSIC
+```
+
+也可通过环境变量 `GITHUB_ACTOR`（GitHub 用户名）、`GITHUB_TOKEN` 提供；用户级属性优先。
+GitHub Actions 可使用该仓库的 `GITHUB_TOKEN`，工作流需授予 `contents: read` 和 `packages: write`。
+普通构建和本地 Maven 预览发布无需这些凭证，远程发布缺少凭证时会在上传前失败。
+GitHub 的认证和权限要求见 [Gradle registry 官方文档](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)。
+
+确认本地双 ABI 产物、外部接入和 Alpha 说明后，显式执行远程发布任务。发布时关闭配置缓存，避免将认证信息保存到配置缓存：
+
+```powershell
+.\gradlew.bat :sdk:publishReleasePublicationToGitHubPackagesRepository '-Pfetchkit.probes=false' --max-workers=2 --no-configuration-cache
+```
+
+不要用聚合任务 `:sdk:publish` 代替本地预览命令，它会包含所有已配置仓库的发布任务。
+发布后在 GitHub 仓库的 Packages 区域查看包；同一版本不要重复用于不同源码。
+已有 Tag 不会自动包含后续构建配置的修改：先提交并确定实际发布提交，保留已公开 Tag，
+需要包含这些修改的新源码快照时递增 Alpha 序号并创建新 Tag，避免让产物与所标记源码不一致。
+
+使用方在 `settings.gradle.kts` 的 `dependencyResolutionManagement.repositories` 中添加：
+
+```kotlin
+maven {
+    url = uri("https://maven.pkg.github.com/pleasebelievelight/fetchkit")
+    credentials {
+        username = providers.gradleProperty("gpr.user")
+            .orElse(providers.environmentVariable("GITHUB_ACTOR")).orNull
+        password = providers.gradleProperty("gpr.key")
+            .orElse(providers.environmentVariable("GITHUB_TOKEN")).orNull
+    }
+    content { includeGroup("com.luofelix.fetchkit") }
+}
+```
+
+保留 `google()` 和 `mavenCentral()` 以解析依赖，然后在应用模块添加：
+
+```kotlin
+implementation("com.luofelix.fetchkit:fetchkit:0.1.0-alpha.1")
+```
+
+公开的 Maven/Gradle 包下载也需要认证，使用方 token 至少需要 `read:packages`。
+也可在对应的 GitHub Release 附上 AAR、校验值和 Alpha 限制说明，供直接下载；直接使用 AAR
+仍须自行声明运行依赖。Alpha 分发不表示已通过首版正式发布验收，不改变现有发布门槛。
 
 ## 符号、依赖与产物一致性
 

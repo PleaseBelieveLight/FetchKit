@@ -9,9 +9,19 @@
 Linux sanitizer 分别使用 `FETCHKIT_SANITIZERS=address,undefined` 与 `FETCHKIT_SANITIZERS=thread`；
 `FETCHKIT_RUN_LARGE_FILE=1` 执行真实 >4 GiB。缺少 Linux 不能用 Windows 结果替代。
 `tools/ci/verify_android_package.py` 在临时独立 Gradle 工程解析本地 Maven AAR，并运行 Release/R8 的下载、事件和租约校验。
+验证器同时比较实际 JNI 完整版本与 `VERSION`；主机 `core_version` 也精确校验 CLI 版本，防止预发布后缀丢失。
 `run_m4_recovery.py --reboot` 增加模拟器 guest 正常重启、前后 boot_id、精确 Range 与摘要检查；
 默认仍为 SIGKILL/force-stop，自动重启仅接受 emulator serial，物理设备与掉电结果单列。
 本地证据由 `collect_m5_evidence.py` 归档，`tools/release/check_release.py` 区分预览通过和首版发布通过。
+
+发布配置变更后，运行实际 Gradle 拒绝路径检查（已有依赖缓存时加 `--offline`）：
+
+```powershell
+python tests/packaging/publication_guards_test.py --output build/publication-guards --offline
+```
+
+覆盖实验探针、缺少 ABI 和缺少认证三种情况；检查跳过产物生成并清空发布凭证，不上传产物。
+正常双 ABI 本地发布及外部 Release/R8 接入仍按打包指南单独验证。
 
 ## M4 正式 Android SDK
 

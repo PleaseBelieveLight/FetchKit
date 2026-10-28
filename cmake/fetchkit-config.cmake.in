@@ -1,5 +1,7 @@
 @PACKAGE_INIT@
 
+set(fetchkit_VERSION_FULL "@fetchkit_version@")
+
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
 if(NOT @FETCHKIT_PACKAGE_ANDROID@)

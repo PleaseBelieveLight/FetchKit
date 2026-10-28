@@ -100,6 +100,8 @@ def main():
                     raise RuntimeError("R8 consumer result deadline")
                 if value.get("passed") is not True or value.get("bytes") != len(CONTENT) or value.get("events", 0) < 1:
                     raise RuntimeError("R8 consumer download/lease/event assertions failed")
+                if value.get("version") != version:
+                    raise RuntimeError("R8 consumer JNI version differs from publication")
                 report["result"] = value
                 report["passed"] = True
     finally:

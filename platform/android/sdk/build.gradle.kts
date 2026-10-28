@@ -22,7 +22,18 @@ abstract class GenerateProjectLicense : DefaultTask() {
 val projectLicense = rootProject.layout.projectDirectory.file("LICENSE")
 
 val sdkVersion = providers.fileContents(rootProject.layout.projectDirectory.file("VERSION")).asText.get().trim()
-require(sdkVersion.matches(Regex("[0-9]+[.][0-9]+[.][0-9]+")))
+require(sdkVersion.matches(Regex("(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)(-(alpha|beta|rc)[.](0|[1-9][0-9]*))?"))) {
+    "VERSION 必须为 major.minor.patch，可附加 -alpha.N、-beta.N 或 -rc.N"
+}
+
+val githubRepository = providers.gradleProperty("fetchkit.githubRepository")
+    .orElse(providers.environmentVariable("GITHUB_REPOSITORY"))
+    .orElse("PleaseBelieveLight/FetchKit").get()
+require(githubRepository.matches(Regex("[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+"))) {
+    "fetchkit.githubRepository 必须为 OWNER/REPOSITORY"
+}
+val githubUsername = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR"))
+val githubToken = providers.gradleProperty("gpr.key").orElse(providers.environmentVariable("GITHUB_TOKEN"))
 group = "com.luofelix.fetchkit"
 version = sdkVersion
 
@@ -108,6 +119,7 @@ extensions.configure<PublishingExtension> {
             pom {
                 name.set("FetchKit")
                 description.set("C++ resource downloader with Android Kotlin/JNI integration")
+                url.set("https://github.com/$githubRepository")
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
@@ -129,6 +141,15 @@ extensions.configure<PublishingExtension> {
             name = "preview"
             url = uri(rootProject.layout.buildDirectory.dir("m5-maven"))
         }
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${githubRepository.lowercase()}")
+            // 凭证由宿主提供；普通构建和本地预览发布不要求 GitHub 认证。
+            credentials {
+                username = githubUsername.orNull
+                password = githubToken.orNull
+            }
+        }
     }
 }
 
@@ -141,10 +162,15 @@ tasks.withType<Jar>().configureEach {
 tasks.withType<PublishToMavenRepository>().configureEach {
     val publicationContainsProbe = platformProbe
     val publicationAbis = selectedAbis.toSet()
+    val githubPublication = repository.name == "GitHubPackages"
+    val githubCredentialsPresent = !githubUsername.orNull.isNullOrBlank() && !githubToken.orNull.isNullOrBlank()
     doFirst {
-        require(!publicationContainsProbe) { "Publication must exclude experimental probes" }
+        require(!publicationContainsProbe) { "发布产物不得包含实验探针" }
         require(publicationAbis == setOf("arm64-v8a", "x86_64")) {
-            "Publication requires both supported ABIs"
+            "发布产物必须包含 arm64-v8a 和 x86_64 两种 ABI"
+        }
+        require(!githubPublication || githubCredentialsPresent) {
+            "GitHub Packages 发布需要认证：配置用户级 gpr.user/gpr.key 或环境变量 GITHUB_ACTOR/GITHUB_TOKEN"
         }
     }
 }

@@ -2,7 +2,7 @@
 
 首次接入可按「[构建与运行](guides/development.md) → [Android API](reference/android-api.md) 或
 [主机 API](reference/host-api.md)」阅读；已有产物的集成方直接查看 [接入与打包](release/packaging.md)。
-当前为 `0.1.0` alpha 本地预览，验收结果与限制以 [发布检查表](release/checklist.md) 和
+当前为 `0.1.0-alpha.1`，支持本地预览和 GitHub Packages 发布配置，验收结果与限制以 [发布检查表](release/checklist.md) 和
 [验证报告](reports/README.md) 为准。
 
 ## 接入与开发 · `guides/`
@@ -27,7 +27,7 @@
 
 ## 接入与发布 · `release/`
 
-- [接入与打包](release/packaging.md)：CMake 安装、Maven AAR、CLI、符号与本地预览。
+- [接入与打包](release/packaging.md)：CMake 安装、Maven AAR、GitHub Packages、CLI、符号与本地预览。
 - [发布检查表](release/checklist.md)：必需证据和未完成门槛。
 - [依赖与第三方许可](../third_party/README.md)：依赖锁定、构建与授权材料。
 

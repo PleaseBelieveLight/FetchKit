@@ -320,8 +320,9 @@ Android 的系统执行许可与 SDK 的下载策略分层：
 | M5：首版发布     | CLI、AAR、接入示例、版本与错误文档、体积报告         | 故障测试清单通过，发布包内容与报告一致              |
 
 M5 已提供 [本地交付预览和发布流程](../release/packaging.md)、[检查表](../release/checklist.md) 与
-[实际证据](../reports/m5-baseline.md)。版本统一在根目录 VERSION，CMake 导出采用精确版本匹配，AAR 通过本地
-Maven 保留传递依赖。项目自身采用 Apache-2.0，第三方许可独立保留。当前仍为
+[实际证据](../reports/m5-baseline.md)。版本统一在根目录 VERSION，预发布后缀保留在运行时和 Maven 产物中；
+CMake 导出精确匹配数字版本，完整版本由 `fetchkit_VERSION_FULL` 提供，详见打包指南。AAR 通过本地 Maven
+或 GitHub Packages 保留传递依赖。项目自身采用 Apache-2.0，第三方许可独立保留。当前仍为
 alpha；Linux/物理设备矩阵和完整许可审核等门槛未满足时，发布检查保持阻断。
 
 首版必须覆盖的自动化或设备测试：
