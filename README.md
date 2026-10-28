@@ -39,10 +39,14 @@ Windows 结果代替。
 | 命令行目标                   | `fetchkit_cli`                 |
 | 项目构建选项前缀             | `FETCHKIT_`                    |
 | Android SDK 包名与 namespace | `com.luofelix.fetchkit`        |
+| Android 演示 App 中文名      | 拾流                           |
 | 演示 App namespace           | `com.luofelix.fetchkit.sample` |
 | 演示 App applicationId       | `com.luofelix.fetchkit`        |
 
 演示界面使用独立子包，避免与 SDK 的资源和生成类冲突。SDK 包名固定为 `com.luofelix.fetchkit`。
+
+演示 App「拾流」寓意将网络数据流收集到本地，品牌图标以流线、下载箭头和承接托盘表达下载与可靠存储。
+图标源文件、配色和 Android 适配说明见 [品牌资源](platform/android/sample/branding/README.md)。
 
 ## 工程结构
 

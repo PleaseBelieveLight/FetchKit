@@ -1,0 +1,9 @@
+Use case: logo-brand.
+Asset type: production Android launcher foreground for a Chinese downloader app named 拾流 (Shiliu).
+Primary request: create ONE original, exceptionally clean and memorable geometric brand symbol combining a flowing stream ribbon and a downward download arrow over a receiving U-shaped tray. The stream gently bends from upper left toward the central vertical stem, ending in a crisp rounded downward chevron; a separate wide softly rounded U tray beneath catches it. Minimal, balanced, a clever single cohesive silhouette rather than a generic system download glyph.
+Style/medium: perfectly flat vector-like logo, broad solid shapes, precision curves, professional modern utility brand, no outlines, no 3D, no texture, no shadows, no gradients.
+Color palette: warm ivory #F5FAF7 main stream/arrow, pale jade #79D7BD tray, only these two flat colors.
+Composition/framing: square canvas. Center all visible artwork inside the central 54 percent of BOTH the width and height (bounds approximately x=23%..77%, y=23%..77%). The outer 23 percent border on EVERY side is fully transparent empty padding; this is essential Android adaptive icon mask safe area. The mark should have thick strokes and remain legible at 24px.
+Scene/backdrop: actual fully transparent alpha background, no colored square or container at all.
+Text: none. No letters, no Chinese characters, no words, no labels, no watermark.
+Constraints: one symbol only, centered, very simple, crisp anti-aliased edges. Do not add ornaments, stars, dots, fine lines, backgrounds, device mockups, presentation boards or multiple variants.

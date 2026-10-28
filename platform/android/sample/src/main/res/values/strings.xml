@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">FetchKit Sample</string>
+    <string name="app_name">拾流</string>
+    <string name="app_subtitle">FetchKit 下载演示</string>
 </resources>

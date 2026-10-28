@@ -1,5 +1,6 @@
 package com.luofelix.fetchkit.sample
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.*
@@ -21,6 +22,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -76,12 +79,13 @@ internal fun DownloadApp() {
 private fun AppHeader() {
     Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primary) {
-            SampleIcon("download", Modifier.padding(10.dp).size(24.dp), Color.White)
+        Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF153E43)) {
+            Image(painter = painterResource(R.drawable.ic_shiliu_mark), contentDescription = null,
+                modifier = Modifier.size(44.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text("FetchKit", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("下载 SDK 实验室", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.app_subtitle), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
             Text("v${remember { FetchKit.version() }}", Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
