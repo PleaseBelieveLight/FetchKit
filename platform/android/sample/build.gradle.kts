@@ -38,8 +38,8 @@ android {
         release {
             signingConfig = signingConfigs.getByName("publicDemo")
             optimization {
+                // 统一优化应用与依赖，避免选择性优化后 Kotlin 继承链跨包导致访问错误；JNI 入口由 SDK consumer rules 保留。
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
     }

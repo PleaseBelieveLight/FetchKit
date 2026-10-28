@@ -190,6 +190,11 @@ Release 包，卸载会清除该 App 的本地数据。
 debuggable、包含两种 ABI、JNI 完整版本与 `VERSION` 一致，并对拟上传文件生成 SHA-256。 体积比较使用同一
 SDK 版本和 ABI 的 Debug/Release 产物，不能用 APK 总大小代表 SDK 接入增量。
 
+Release 使用完整 R8 优化，JNI 入口由 SDK consumer rules 保留。不要恢复仅优化 AndroidX/Kotlin 的实验性
+`packageScope`：该配置曾使 Kotlin 继承链跨包后失去访问权限，导致页面图标首帧绘制时出现 `IllegalAccessError`。
+签名与构建检查不能代替运行验证；上传前按 [Release 启动回归](../../tests/README.md#release-演示-apk-启动回归)
+在明确选中的设备上验证实际拟分发 APK。
+
 ## 符号、依赖与产物一致性
 
 ```powershell
