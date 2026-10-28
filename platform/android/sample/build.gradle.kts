@@ -23,8 +23,20 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("publicDemo") {
+            // 所有者授权公开的演示密钥，仅供 sample 使用，不作为生产应用的签名身份。
+            storeFile = file("signing/fetchkit-public-demo.p12")
+            storeType = "PKCS12"
+            storePassword = "fetchkit-demo-public"
+            keyAlias = "fetchkit-public-demo"
+            keyPassword = "fetchkit-demo-public"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("publicDemo")
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")

@@ -21,6 +21,9 @@ Ubuntu 24.04.5 Netboot；可多选以下预设，无需输入地址：
 镜像站点可能限速、拒绝请求或改变 Range/validator 支持；应根据任务详情判断实际结果。
 实际文件大小以服务端响应为准，预设没有预填未经验证的长度或 SHA-256，由用户明确点击开始后才下载。
 
+供 GitHub Release 下载体验的已签名 Release APK，按
+[演示 APK 的公开签名](../release/packaging.md#演示-apk-的公开签名) 构建；签名与 Debug 包不同，安装前注意旧包的数据保留。
+
 示例的前台和后台请求显式携带 `User-Agent: FetchKitSample/1.0`，表明宿主应用身份。 调试设备曾在清华
 Netboot 地址复现默认 `okhttp/5.5.1` 的 GET 返回 403，而同一网络、链接和 Range 使用示例应用标识返回
 206；去掉查询参数仍然 403，HEAD 则可返回 200，因此仅检查 HEAD 不能验证下载。

@@ -42,9 +42,10 @@ or the relevant tool README, and link to them here.
 
 ## Documentation Structure
 
-- Keep root `README.md` concise and limited to a project introduction, a minimal code example, an
-  architecture overview and core SDK interfaces. Link to `docs/README.md` for setup, build, sample
-  operations, tests, release steps and history.
+- Keep root `README.md` lightweight and self-contained for basic SDK integration and usage. Include
+  the project introduction, minimal integration steps and code examples, an architecture overview
+  and core SDK interfaces. Do not direct readers to other documents unless necessary; basic
+  integration and minimal examples must be usable from the README alone. 
 - Use `docs/README.md` as the entry point: `guides/` for development/usage, `reference/` for APIs
   and contracts, `design/` for architecture/plans, `release/` for packaging/gates, `reports/` for
   validation evidence and `archive/` for superseded guides. Do not add loose topic pages under

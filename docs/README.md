@@ -27,7 +27,7 @@
 
 ## 接入与发布 · `release/`
 
-- [接入与打包](release/packaging.md)：CMake 安装、Maven AAR、GitHub Packages、CLI、符号与本地预览。
+- [接入与打包](release/packaging.md)：CMake 安装、Maven AAR、GitHub Packages、演示 APK 签名、CLI、符号与本地预览。
 - [发布检查表](release/checklist.md)：必需证据和未完成门槛。
 - [依赖与第三方许可](../third_party/README.md)：依赖锁定、构建与授权材料。
 
