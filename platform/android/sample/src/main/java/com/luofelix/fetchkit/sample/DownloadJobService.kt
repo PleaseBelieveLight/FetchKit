@@ -14,6 +14,10 @@ import android.os.PersistableBundle
 import java.net.URI
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import com.luofelix.fetchkit.DownloadRequest
+import com.luofelix.fetchkit.FetchKitException
+import com.luofelix.fetchkit.Status
+import java.util.concurrent.CompletableFuture
 
 /** Finite, interruptible regular jobs below API 34; user-initiated jobs on API 34+. */
 class DownloadJobService : JobService() {
@@ -28,8 +32,19 @@ class DownloadJobService : JobService() {
                 .setContentTitle("FetchKit 正在下载").setContentText("可在应用内暂停或取消").setOngoing(true).build()
             setNotification(params, 4101, notification, JOB_END_NOTIFICATION_POLICY_REMOVE)
         }
-        val request = SampleDownloads.request(params.extras.getString("url") ?: "",
-            params.extras.getString("sha256") ?: "", params.extras.getString("version") ?: "v1", params.extras.getBoolean("pin"))
+        val request = try {
+            val preset = downloadPresets.firstOrNull { it.id == params.extras.getString("preset") }
+            val base = if (preset != null) preset.request(params.extras.getString("version") ?: "v1",
+                params.extras.getString("sha256") ?: "", params.extras.getBoolean("pin")) else
+                SampleDownloads.request(params.extras.getString("url") ?: "", params.extras.getString("sha256") ?: "",
+                    params.extras.getString("version") ?: "v1", params.extras.getBoolean("pin"))
+            base.copy(expectedLength = if (params.extras.containsKey("length")) params.extras.getLong("length") else null)
+        } catch (error: Exception) {
+            SampleDownloads.showError(error)
+            active = null
+            SampleDownloads.jobRunning = false
+            return false
+        }
         val manager = getSystemService(ConnectivityManager::class.java)
         val selected = (if (Build.VERSION.SDK_INT >= 28) params.network else null) ?: manager.allNetworks.firstOrNull { network ->
             val caps = manager.getNetworkCapabilities(network)
@@ -38,11 +53,18 @@ class DownloadJobService : JobService() {
         }
         if (selected == null) {
             SampleDownloads.main.execute {
-                active = null; SampleDownloads.jobRunning = false; jobFinished(params, true)
+                if (active === params) {
+                    active = null; SampleDownloads.jobRunning = false; jobFinished(params, true)
+                }
             }
             return true
         }
-        SampleDownloads.jobEngine(this, selected).thenCompose { it.enqueue(request) }.thenCompose { it.awaitStopped() }
+        SampleDownloads.jobEngine(this, selected).thenComposeAsync({
+            if (active === params) SampleDownloads.bind(this, request, true)
+            else CompletableFuture<com.luofelix.fetchkit.DownloadSubscription>().apply {
+                completeExceptionally(FetchKitException(Status.Closed))
+            }
+        }, SampleDownloads.main).thenCompose { it.awaitStopped() }
             .whenCompleteAsync({ _, error ->
                 if (active === params) {
                     active = null
@@ -64,11 +86,24 @@ class DownloadJobService : JobService() {
         const val JOB_ID = 4100
         fun schedule(context: Context, url: String, digest: String, version: String, pin: Boolean, unmetered: Boolean): Boolean {
             // Persist only public addresses; signed/private URLs need a host provider.
-            val address = URI(url)
-            require(address.scheme in setOf("http", "https") && address.host != null &&
-                address.rawUserInfo == null && address.rawQuery == null && address.rawFragment == null)
+            return schedule(context, SampleDownloads.request(url, digest, version, pin), unmetered)
+        }
+        internal fun schedule(context: Context, request: DownloadRequest, unmetered: Boolean): Boolean {
+            require(!SampleDownloads.jobRunning) { "已有后台任务正在执行，请先暂停或取消该任务" }
+            val preset = downloadPresets.firstOrNull {
+                request.addressReference == "sample-preset:${it.id}" && request.request.url == it.url
+            }
+            val address = URI(request.request.url)
+            require(preset != null || (address.scheme in setOf("http", "https") && address.host != null &&
+                address.rawUserInfo == null && address.rawQuery == null && address.rawFragment == null)) {
+                "后台自定义地址不能包含凭证、查询参数或片段；带参数的 Cloudflare 地址请使用预设"
+            }
+            require(request.provider == null && request.request.headers.isEmpty())
             val extras = PersistableBundle().apply {
-                putString("url", url); putString("sha256", digest); putString("version", version); putBoolean("pin", pin); putBoolean("unmetered", unmetered)
+                if (preset != null) putString("preset", preset.id) else putString("url", request.request.url)
+                putString("sha256", request.expectedSha256); putString("version", request.identity.version)
+                putBoolean("pin", request.pinOnCreate); putBoolean("unmetered", unmetered)
+                request.expectedLength?.let { putLong("length", it) }
             }
             val job = JobInfo.Builder(JOB_ID, ComponentName(context, DownloadJobService::class.java))
                 .setRequiredNetworkType(if (unmetered) JobInfo.NETWORK_TYPE_UNMETERED else JobInfo.NETWORK_TYPE_ANY)

@@ -119,8 +119,18 @@ Completed/TransportComplete 与 DigestVerified 分别呈现；不要把前者说
 
 ## 示例的后台执行许可
 
-前台页面显示核心快照、暂停恢复、订阅取消、校验结果、pin 和租约读取；页面离开且没有后台任务时关闭 engine。
-后台示例只持久化没有 userinfo/query/fragment 的公开地址，签名 URL 和凭证应由宿主 provider 重新获取。
+示例分为下载、存储和能力指南三个页面，操作与验证方式见 [Android 示例指南](android-sample.md)。
+前台页面显示多文件进度、采样速度、核心快照、检查点、重试信息和有界状态事件，提供批量/逐任务暂停恢复、
+独立订阅取消/释放、可选长度/SHA-256、pin/过期、LRU 回收、暂存清理和可手动释放的读取租约。
+每个资源使用自己的请求与订阅，控制现有任务不会再从公共输入框构造其他资源的请求。
+页面离开且没有后台任务时释放租约并关闭 engine；重新打开只扫描记录，用户明确恢复后才运行。
+
+预设请求的资源 ID、版本、长度、可信摘要和创建时 pin 配置由宿主异步保存到 noBackupFilesDir，使用 AtomicFile；
+URL 从固定预设目录重建。SDK 记录格式不变，仍不保存 URL、凭证或回调。
+自定义请求仅存在内存中，重启后需要重新提供原约束并绑定对应身份。
+后台示例接受固定预设（包括带 bytes 参数的 Cloudflare 资源），Job extras 只保存预设 ID 与非敏感约束；
+自定义后台地址仍限没有 userinfo/query/fragment 的公开地址。签名 URL 和凭证应由宿主 provider 重新获取。
+示例一次只排队一个系统任务（相同 Job ID 的新排队会替换旧排队），前台批量下载使用 SDK 调度。
 
 用户可见操作在 API 34+ 使用 JobScheduler UIDT，并声明 RUN_USER_INITIATED_JOBS、网络约束与通知；
 低版本使用有限、可中断的普通 JobScheduler 任务，不保证立即启动或长时间运行。

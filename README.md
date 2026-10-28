@@ -75,7 +75,9 @@ Gradle 工程。
 .\gradlew.bat :sdk:assembleDebug :sdk:testDebugUnitTest :sample:assembleDebug :sample:testDebugUnitTest
 ```
 
-Android Studio 中选择 `sample` 运行，可操作任务、检查点、校验结果、pin 和租约读取。AAR 位于
+Android Studio 中选择 `sample` 运行。示例提供下载、存储和能力指南三个页面，内置 Hetzner 100 MB / 1 GB 与
+Cloudflare 500 MiB 预设，可直接多选下载，自定义 URL 为可选。支持逐任务和批量暂停恢复、独立订阅、
+检查点/重试信息、可信 SHA-256、pin/过期、LRU 回收与租约读取，操作路径见 [示例指南](docs/android-sample.md)。AAR 位于
 `platform/android/sdk/build/outputs/aar/`，APK 位于 `platform/android/sample/build/outputs/apk/`。
 
 有可用设备或模拟器时，单独验证安装标识与 JNI 加载：

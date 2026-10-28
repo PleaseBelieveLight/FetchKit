@@ -264,6 +264,8 @@ fetchkit_status fetchkit_list_tasks(fetchkit_engine id,std::uint32_t offset,fetc
             s.can_resume=r.state==FETCHKIT_PAUSED || (r.state==FETCHKIT_FAILED && (r.error==FETCHKIT_NETWORK || r.error==FETCHKIT_TIMEOUT));
             s.retry_count=r.retry_count;s.next_retry_at_ms=r.next_retry_at_ms;s.expires_at_ms=r.expires_at_ms;s.pinned=r.pinned;
             if(const auto live=engine->liveSnapshot(r.id)) s=*live;
+            // Runtime progress may be newer, but policy changes are committed by the store.
+            s.expires_at_ms=r.expires_at_ms;s.pinned=r.pinned;
             s.available=store->available(r.id);
             auto copy=[](auto& out,const std::string& value) { std::memcpy(out,value.c_str(),value.size()+1); };
             copy(s.persistent_id,r.id); copy(item.resource_namespace,r.request.resource_namespace);

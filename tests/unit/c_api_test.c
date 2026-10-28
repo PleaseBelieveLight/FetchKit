@@ -4,6 +4,10 @@
 
 #define CHECK(expression) do { if (!(expression)) { fprintf(stderr, "C API check failed at line %d\n", __LINE__); return 1; } } while (0)
 static fetchkit_string view(const char* text) { fetchkit_string result = {text, (uint64_t)strlen(text)}; return result; }
+static fetchkit_status no_network_provider(void* user, const fetchkit_request_context* context, fetchkit_request_builder* builder) {
+    (void)user; (void)context; (void)builder;
+    return FETCHKIT_AUTH_REQUIRED;
+}
 
 int main(int argc, char** argv) {
     fetchkit_engine_config config;
@@ -48,6 +52,26 @@ int main(int argc, char** argv) {
         CHECK(fetchkit_resource_read(UINT64_MAX, 0, NULL, 1, &count) == FETCHKIT_INVALID_ARGUMENT && count == 0);
         CHECK(fetchkit_resource_read(UINT64_MAX, 0, NULL, 0, &count) == FETCHKIT_CLOSED);
         CHECK(fetchkit_resource_release(UINT64_MAX) == FETCHKIT_CLOSED);
+    }
+    {
+        uint32_t count = 0;
+        fetchkit_task_info item = {0}; item.struct_size = sizeof(item);
+        fetchkit_task_snapshot current = {0}; current.struct_size = sizeof(current);
+        request.pin_on_create = 0; request.url = view(""); request.provider = no_network_provider;
+        CHECK(fetchkit_enqueue(engine, &request, &task) == FETCHKIT_OK);
+        CHECK(fetchkit_task_wait(task, 10000, &current) == FETCHKIT_OK && current.state == FETCHKIT_FAILED);
+        CHECK(fetchkit_resource_pin(engine, view(current.persistent_id), 1) == FETCHKIT_OK);
+        CHECK(fetchkit_resource_set_expiry(engine, view(current.persistent_id), 12345) == FETCHKIT_OK);
+        CHECK(fetchkit_list_tasks(engine, 0, &item, 1, &count) == FETCHKIT_OK && count == 1);
+        CHECK(fetchkit_task_query(task, &current) == FETCHKIT_OK);
+        CHECK(item.snapshot.pinned == 1 && item.snapshot.expires_at_ms == 12345);
+        CHECK(item.snapshot.pinned == current.pinned && item.snapshot.expires_at_ms == current.expires_at_ms);
+        CHECK(fetchkit_resource_pin(engine, view(current.persistent_id), 0) == FETCHKIT_OK);
+        CHECK(fetchkit_resource_set_expiry(engine, view(current.persistent_id), 0) == FETCHKIT_OK);
+        CHECK(fetchkit_list_tasks(engine, 0, &item, 1, &count) == FETCHKIT_OK && count == 1);
+        CHECK(item.snapshot.pinned == 0 && item.snapshot.expires_at_ms == 0);
+        CHECK(fetchkit_task_release(task) == FETCHKIT_OK);
+        CHECK(fetchkit_resource_remove(engine, view(current.persistent_id)) == FETCHKIT_OK);
     }
     CHECK(fetchkit_engine_close(engine) == FETCHKIT_OK);
     CHECK(fetchkit_engine_close(engine) == FETCHKIT_CLOSED);
