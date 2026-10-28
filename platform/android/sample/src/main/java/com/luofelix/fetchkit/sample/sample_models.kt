@@ -8,15 +8,21 @@ import java.net.URI
 import java.security.MessageDigest
 import java.util.Locale
 
+// Identify the host application explicitly instead of relying on OkHttp's default UA.
+internal const val sampleUserAgent = "FetchKitSample/1.0"
+
 internal data class DownloadPreset(val id: String, val title: String, val size: String, val url: String) {
     fun request(version: String = "v1", digest: String = "", pinned: Boolean = false) =
         sampleRequest(url, digest, version, pinned).copy(addressReference = "sample-preset:$id")
 }
 
 internal val downloadPresets = listOf(
-    DownloadPreset("hetzner-100", "Hetzner · 100 MB", "100 MB", "https://fsn1-speed.hetzner.com/100MB.bin"),
-    DownloadPreset("hetzner-1024", "Hetzner · 1 GB", "1 GB", "https://fsn1-speed.hetzner.com/1GB.bin"),
-    DownloadPreset("cloudflare-500", "Cloudflare · 500 MiB", "500 MiB", "https://speed.cloudflare.com/__down?bytes=524288000"),
+    DownloadPreset("tuna-ubuntu-24-04-5-netboot", "清华镜像 · Netboot", "大小未知",
+        "https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/24.04.5/ubuntu-24.04.5-netboot-amd64.tar.gz?utm_source=chatgpt.com"),
+    DownloadPreset("tuna-ubuntu-24-04-5-wsl", "清华镜像 · WSL", "大小未知",
+        "https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/24.04.5/ubuntu-24.04.5-wsl-amd64.wsl?utm_source=chatgpt.com"),
+    DownloadPreset("aliyun-ubuntu-24-04-5-netboot", "阿里云镜像 · Netboot", "大小未知",
+        "https://mirrors.aliyun.com/ubuntu-releases/24.04.5/ubuntu-24.04.5-netboot-amd64.tar.gz?utm_source=chatgpt.com"),
 )
 
 internal fun resourceKey(url: String): String = MessageDigest.getInstance("SHA-256")
@@ -28,7 +34,8 @@ internal fun sampleRequest(url: String, digest: String, version: String, pinned:
         address.rawUserInfo == null && address.rawFragment == null) { "请输入有效的 HTTP(S) 地址，勿包含凭证或片段" }
     require(version.trim().isNotEmpty()) { "业务版本不能为空" }
     require(digest.isBlank() || digest.trim().matches(Regex("[a-fA-F0-9]{64}"))) { "SHA-256 需要 64 位十六进制字符" }
-    return DownloadRequest(ResourceIdentity("sample", resourceKey(url.trim()), version.trim()), RequestInfo(url.trim()),
+    return DownloadRequest(ResourceIdentity("sample", resourceKey(url.trim()), version.trim()),
+        RequestInfo(url.trim(), mapOf("User-Agent" to sampleUserAgent)),
         addressReference = "sample-session", expectedSha256 = digest.trim().lowercase(Locale.ROOT),
         requireDigest = digest.isNotBlank(), pinOnCreate = pinned)
 }

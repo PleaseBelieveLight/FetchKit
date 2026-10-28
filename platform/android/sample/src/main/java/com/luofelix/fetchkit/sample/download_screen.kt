@@ -296,8 +296,8 @@ private fun NewDownloadSheet(restoring: StoredTask?, onDismiss: () -> Unit) {
             ToggleRow("交给系统后台调度", "API 34+ 使用用户发起的数据传输任务", background, { background = it }, count == 1 && restoring == null)
             if (background && count == 1) ToggleRow("仅非计费网络", "等待满足网络条件后由系统决定执行时间", unmetered, { unmetered = it })
             if (background && count == 1) Hint("一次排队 1 个文件，新排队会替换待执行任务；后台开始执行时，其他前台下载会暂停并保留检查点。")
-            Hint(if (background && count == 1) "后台仅支持单个公开预设，或无查询参数的公开自定义地址。Cloudflare 预设按资源 ID 重建地址。"
-                else "最多同时下载 3 个文件，网络错误自动重试最多 3 次。公共测速服务的可用性与续传能力由服务端决定。")
+            Hint(if (background && count == 1) "后台仅支持单个公开预设，或无查询参数的公开自定义地址。预设地址按资源 ID 重建。"
+                else "最多同时下载 3 个文件，网络错误自动重试最多 3 次。下载站点的可用性与续传能力由服务端决定。")
             if (error.isNotEmpty()) Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             Button(enabled = !SampleDownloads.busy && count > 0 && (!custom || url.isNotBlank()),
                 modifier = Modifier.fillMaxWidth().testTag("submit-download"), contentPadding = PaddingValues(16.dp), onClick = {
@@ -319,7 +319,7 @@ private fun NewDownloadSheet(restoring: StoredTask?, onDismiss: () -> Unit) {
                 Spacer(Modifier.width(8.dp))
                 Text(if (background && count == 1) "后台排队" else if (restoring != null) "绑定并恢复" else "开始下载 · $count 个文件")
             }
-            Hint("测试文件较大，建议使用 Wi-Fi。选择多个预设时约需 1.6 GB 流量。")
+            Hint("文件较大，建议使用 Wi-Fi。实际文件大小以服务端响应为准。")
         }
     }
 }

@@ -96,9 +96,11 @@ class DownloadJobService : JobService() {
             val address = URI(request.request.url)
             require(preset != null || (address.scheme in setOf("http", "https") && address.host != null &&
                 address.rawUserInfo == null && address.rawQuery == null && address.rawFragment == null)) {
-                "后台自定义地址不能包含凭证、查询参数或片段；带参数的 Cloudflare 地址请使用预设"
+                "后台自定义地址不能包含凭证、查询参数或片段；带参数的公开资源请使用预设"
             }
-            require(request.provider == null && request.request.headers.isEmpty())
+            // The static application UA is reconstructed by sampleRequest, never stored in extras.
+            require(request.provider == null && (request.request.headers.isEmpty() ||
+                request.request.headers == mapOf("User-Agent" to sampleUserAgent)))
             val extras = PersistableBundle().apply {
                 if (preset != null) putString("preset", preset.id) else putString("url", request.request.url)
                 putString("sha256", request.expectedSha256); putString("version", request.identity.version)

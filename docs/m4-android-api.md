@@ -128,7 +128,7 @@ Completed/TransportComplete 与 DigestVerified 分别呈现；不要把前者说
 预设请求的资源 ID、版本、长度、可信摘要和创建时 pin 配置由宿主异步保存到 noBackupFilesDir，使用 AtomicFile；
 URL 从固定预设目录重建。SDK 记录格式不变，仍不保存 URL、凭证或回调。
 自定义请求仅存在内存中，重启后需要重新提供原约束并绑定对应身份。
-后台示例接受固定预设（包括带 bytes 参数的 Cloudflare 资源），Job extras 只保存预设 ID 与非敏感约束；
+后台示例接受固定预设（包括带查询参数的 Ubuntu 镜像资源），Job extras 只保存预设 ID 与非敏感约束；
 自定义后台地址仍限没有 userinfo/query/fragment 的公开地址。签名 URL 和凭证应由宿主 provider 重新获取。
 示例一次只排队一个系统任务（相同 Job ID 的新排队会替换旧排队），前台批量下载使用 SDK 调度。
 

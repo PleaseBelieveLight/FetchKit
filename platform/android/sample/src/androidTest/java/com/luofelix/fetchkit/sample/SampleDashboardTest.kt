@@ -29,17 +29,17 @@ class SampleDashboardTest {
     @Test fun presetsAreReadyWithoutTypingAndBatchSelectionChangesAction() {
         capture("home")
         compose.onNodeWithTag("new-download").performClick()
-        compose.onNodeWithText("Hetzner · 100 MB").assertIsDisplayed()
-        compose.onNodeWithText("Cloudflare · 500 MiB").assertIsDisplayed()
-        compose.onNodeWithTag("preset-hetzner-100").assertIsOn()
+        compose.onNodeWithText("清华镜像 · Netboot").assertIsDisplayed()
+        compose.onNodeWithText("阿里云镜像 · Netboot").assertIsDisplayed()
+        compose.onNodeWithTag("preset-tuna-ubuntu-24-04-5-netboot").assertIsOn()
         capture("presets")
         compose.onNodeWithTag("submit-download").performScrollTo().assertIsEnabled()
         compose.onNodeWithText("开始下载 · 1 个文件", useUnmergedTree = true).assertExists()
-        compose.onNodeWithTag("preset-cloudflare-500").performScrollTo().performClick().assertIsOn()
+        compose.onNodeWithTag("preset-aliyun-ubuntu-24-04-5-netboot").performScrollTo().performClick().assertIsOn()
         compose.onNodeWithTag("submit-download").performScrollTo().assertIsEnabled()
         compose.onNodeWithText("开始下载 · 2 个文件", useUnmergedTree = true).assertExists()
-        compose.onNodeWithTag("preset-hetzner-100").performScrollTo().performClick().assertIsOff()
-        compose.onNodeWithTag("preset-cloudflare-500").performScrollTo().performClick().assertIsOff()
+        compose.onNodeWithTag("preset-tuna-ubuntu-24-04-5-netboot").performScrollTo().performClick().assertIsOff()
+        compose.onNodeWithTag("preset-aliyun-ubuntu-24-04-5-netboot").performScrollTo().performClick().assertIsOff()
         compose.onNodeWithTag("submit-download").performScrollTo().assertIsNotEnabled()
     }
 

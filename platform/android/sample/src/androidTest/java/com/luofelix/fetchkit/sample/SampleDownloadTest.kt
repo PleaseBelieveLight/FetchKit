@@ -45,7 +45,9 @@ class SampleDownloadTest {
                         socket.soTimeout = 15000
                         val reader = socket.getInputStream().bufferedReader(Charsets.US_ASCII)
                         val requestLine = reader.readLine()
-                        while (!reader.readLine().isNullOrEmpty()) { }
+                        val headers = generateSequence { reader.readLine() }.takeWhile { it.isNotEmpty() }.toList()
+                        assertTrue("Sample application identity must reach the HTTP server",
+                            headers.any { it.equals("User-Agent: $sampleUserAgent", ignoreCase = true) })
                         socket.getOutputStream().apply {
                             write("HTTP/1.1 200 OK\r\nContent-Length: ${body.size}\r\nConnection: close\r\n\r\n"
                                 .toByteArray(Charsets.US_ASCII))

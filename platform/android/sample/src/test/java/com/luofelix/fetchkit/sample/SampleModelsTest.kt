@@ -2,12 +2,14 @@ package com.luofelix.fetchkit.sample
 
 import org.junit.Assert.*
 import org.junit.Test
+import java.net.URI
 
 class SampleModelsTest {
-    @Test fun presetsAreDistinctAndKeepCloudflareQuery() {
+    @Test fun presetsAreDistinctAndKeepQueryParameters() {
         val requests = downloadPresets.map { it.request() }
         assertEquals(3, requests.map { it.identity }.toSet().size)
-        assertEquals("https://speed.cloudflare.com/__down?bytes=524288000", requests.last().request.url)
+        requests.forEach { assertEquals("utm_source=chatgpt.com", URI(it.request.url).rawQuery) }
+        requests.forEach { assertEquals(sampleUserAgent, it.request.headers["User-Agent"]) }
         assertTrue(requests.all { it.expectedLength == null && !it.requireDigest })
         assertEquals(requests.first().identity, downloadPresets.first().request(pinned = true).identity)
         assertNotEquals(requests.first().identity, downloadPresets.first().request(version = "v2").identity)
@@ -22,6 +24,7 @@ class SampleModelsTest {
         assertEquals("sample-session", request.addressReference)
         assertTrue(request.pinOnCreate)
         assertEquals("https://example.org/file?signature=secret", request.request.url)
+        assertEquals(sampleUserAgent, request.request.headers["User-Agent"])
         listOf("abc", "g".repeat(64)).forEach { invalid ->
             assertThrows(IllegalArgumentException::class.java) { sampleRequest("https://example.org/file", invalid, "v1", false) }
         }
