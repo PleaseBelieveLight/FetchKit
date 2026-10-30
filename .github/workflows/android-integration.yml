@@ -44,6 +44,8 @@ jobs:
           python tests/packaging/publication_guards_test.py --output build/ci/publication-guards
       - name: 允许当前 Runner 使用 KVM
         run: |
+          ./gradlew --stop
+          free -m > build/ci/emulator-host-memory.txt
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-fetchkit-kvm.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
@@ -60,10 +62,22 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
+          cores: 2
+          ram-size: 3072M
+          heap-size: 512M
           avd-name: fetchkit-ci
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none ${{ inputs.api-level == 37 && '-show-kernel' || '' }}
+          disable-animations: false
           script: bash tools/ci/android_device_ci.sh
+      - name: 保存模拟器失败上下文
+        if: failure()
+        run: |
+          mkdir -p build/ci
+          free -m > build/ci/emulator-host-memory-after.txt
+          sudo dmesg | { grep -Ei 'oom-kill|Out of memory|Killed process|segfault' || test "$?" -eq 1; } | tail -n 40 > build/ci/emulator-host-errors.txt
+          if [[ -f "$HOME/.android/avd/fetchkit-ci.avd/config.ini" ]]; then
+            cp "$HOME/.android/avd/fetchkit-ci.avd/config.ini" build/ci/emulator-config.txt
+          fi
       - name: 归档本次环境与证据
         if: always()
         env:

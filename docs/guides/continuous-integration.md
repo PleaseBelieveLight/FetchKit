@@ -24,9 +24,15 @@ Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 
 
 模拟器工作流使用明确的 Pixel 6 手机硬件配置，新建独占的 `fetchkit-ci` AVD，不使用快照。
 避免依赖 AVD 默认的低分辨率通用设备配置；Release 页面检查仍要求实际按钮文字与页面入口完整可用。
+保留正常系统动画，真实 Release 的 Compose 动画和页面可访问性节点也属于启动回归范围。
+模拟器固定 2 核、3 GiB RAM、512 MiB heap，启动前停止本次构建的 Gradle daemon。
+图形使用受支持的 `software` 模式；旧 `swiftshader_indirect` 已被弃用，见
+[Android 模拟器加速说明](https://developer.android.com/studio/run/emulator-acceleration#accel-graphics)。
+失败时归档内存、AVD 配置及 OOM/崩溃上下文；API 37 额外输出 guest 内核启动日志。
 先验证公开演示签名的真实 Release APK，再验证
 外部 AAR；随后仅卸载该新建 guest 中的演示包以切换 Debug 签名，执行正式 SDK 协议与 SIGKILL/force-stop 恢复。
 `android_device_ci.sh` 同时检查 Actions 标识和 AVD 名，不允许直接用于本地已有设备。
+已安装 APK 通过二进制 `exec-out` 读取，兼容旧镜像的文件同步接口差异；读取失败和 SHA-256 不匹配均会失败。
 
 ## 日志与门槛
 
@@ -43,6 +49,11 @@ CTest 启用 `--no-tests=error` 并生成 JUnit；Android 检查两个模块 Deb
 平台和原始日志，按[发布检查表](../release/checklist.md)生成对应汇总。
 
 Linux ENOSPC 依赖用户/挂载命名空间；Runner 禁止时工作流失败，不静默跳过或改用注入结果。
+托管 Ubuntu Runner 的验收任务显式设置 `FETCHKIT_ENOSPC_SUDO=1`，只使用特权控制器运行隔离 ENOSPC
+实验；其余构建/测试保持普通用户，实验仍创建私有命名空间和 tmpfs，不修改宿主 sysctl 或全局挂载布局。
+本地脚本默认不使用 sudo。若特权实验也不可用，仍报告失败。
+驱动将子进程脚本、CLI 副本与实验输出置于控制器拥有的系统临时目录，避免命名空间内的映射用户无法
+穿越 Runner 私有 home；完成后取回报告并清理临时目录，不放宽工作区权限。
 sanitizer 运行时或模拟器镜像不可用也按失败报告。托管模拟器不覆盖物理 arm64、物理重启/掉电；
 正式发布仍须独立完成所有门槛。扩展任务不安装 sanitizer 或故障注入产物。
 

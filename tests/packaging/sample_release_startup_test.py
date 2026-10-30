@@ -13,6 +13,34 @@ PACKAGE = "com.luofelix.fetchkit"
 COMPONENT = PACKAGE + "/com.luofelix.fetchkit.sample.MainActivity"
 
 
+def node_has_label(node, label):
+    return node.get("package") == PACKAGE and label in (node.get("text", ""), node.get("content-desc", ""))
+
+
+def visible_labels(tree):
+    # Compose 合并语义后，按钮名称可能通过 content-desc 暴露；仍限定为当前应用的实际节点。
+    return {node.get(field, "") for node in tree.iter("node") if node.get("package") == PACKAGE
+            for field in ("text", "content-desc")}
+
+
+def adb_failure_code(output):
+    # 仅保留平台机器码，不将 ADB 原始错误文本或路径带入通用诊断。
+    match = re.search(r"\b(?:INSTALL_[A-Z_]+|DELETE_FAILED_[A-Z_]+)\b", output)
+    if match:
+        return match.group(0)
+    return "Unknown"
+
+
+def read_installed_apk(adb, remote, local):
+    # exec-out 保留二进制字节，不依赖旧镜像的 adb 文件同步接口，也不经过文本解码或 PTY。
+    # 读取错误仍然失败，成功后仍由调用方与候选 APK 做完整 SHA-256 比对。
+    with local.open("wb") as output:
+        result = subprocess.run(adb + ["exec-out", "cat", remote], stdout=output,
+                                stderr=subprocess.PIPE, timeout=60)
+    if result.returncode:
+        raise RuntimeError(f"读取设备 APK 失败，退出码 {result.returncode}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--adb", default="adb")
@@ -30,7 +58,8 @@ def main():
         result = subprocess.run(adb + arguments, capture_output=True, encoding="utf-8",
                                 errors="replace", timeout=timeout)
         if result.returncode:
-            raise RuntimeError(f"ADB 操作失败：{arguments[0]}，退出码 {result.returncode}")
+            code = adb_failure_code(result.stdout + result.stderr)
+            raise RuntimeError(f"ADB 操作失败：{arguments[0]}，退出码 {result.returncode}，平台码 {code}")
         return result.stdout
 
     def pid():
@@ -50,8 +79,7 @@ def main():
                 xml = raw[start:end + len("</hierarchy>")]
                 (args.output / f"{name}-{attempt}.xml").write_text(xml, encoding="utf-8")
                 tree = ET.fromstring(xml)
-                texts = {node.get("text", "") for node in tree.iter("node") if node.get("package") == PACKAGE}
-                if required <= texts:
+                if required <= visible_labels(tree):
                     return tree
             attempt += 1
             time.sleep(0.5)
@@ -60,7 +88,7 @@ def main():
     def tap(tree, text):
         # 只点击本应用中明确匹配的文字；同名文字优先选择底部导航项。
         bounds = [tuple(map(int, re.findall(r"\d+", node.get("bounds", ""))))
-                  for node in tree.iter("node") if node.get("package") == PACKAGE and node.get("text") == text]
+                  for node in tree.iter("node") if node_has_label(node, text)]
         bounds = [value for value in bounds if len(value) == 4 and value[2] > value[0] and value[3] > value[1]]
         if not bounds:
             raise AssertionError("未找到页面入口：" + text)
@@ -76,7 +104,7 @@ def main():
                        "emulator": command(["shell", "getprop", "ro.kernel.qemu"]).strip() == "1"})
         if not args.skip_install:
             # 同签名覆盖安装保留数据；签名不匹配时失败，绝不卸载或清空用户数据。
-            install = command(["install", "-r", str(apk)], timeout=120)
+            install = command(["install", "--no-streaming", "-r", str(apk)], timeout=120)
             (args.output / "install.txt").write_text(install, encoding="utf-8")
             if "Success" not in install:
                 raise AssertionError("Release APK 覆盖安装失败")
@@ -84,7 +112,8 @@ def main():
         if len(paths) != 1 or not paths[0].startswith("package:"):
             raise AssertionError("预期安装单个独立 Release APK")
         installed = args.output / "installed.apk"
-        command(["pull", paths[0][8:], str(installed)], timeout=60)
+        read_installed_apk(adb, paths[0][8:], installed)
+        report["apk_read_method"] = "exec-out-cat"
         if hashlib.sha256(installed.read_bytes()).hexdigest() != report["apk_sha256"]:
             raise AssertionError("设备实际安装的 APK 与待验证产物不同")
         package = command(["shell", "dumpsys", "package", PACKAGE])

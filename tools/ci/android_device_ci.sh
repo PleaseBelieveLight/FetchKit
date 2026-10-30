@@ -32,4 +32,11 @@ fi
 
 adb -s "$task_serial" uninstall com.luofelix.fetchkit
 python tools/ci/run_m4_android.py --serial "$task_serial" --skip-build --output build/ci/android-protocol
+adb -s "$task_serial" shell am instrument -w -e class com.luofelix.fetchkit.sample.SampleDashboardTest \
+    com.luofelix.fetchkit.test/androidx.test.runner.AndroidJUnitRunner > build/ci/sample-dashboard.log
+grep -Fq 'OK (2 tests)' build/ci/sample-dashboard.log
+if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' build/ci/sample-dashboard.log; then
+    echo 'SampleDashboardTest 设备回归失败' >&2
+    exit 1
+fi
 python tools/ci/run_m4_recovery.py --serial "$task_serial" --skip-build --output build/ci/android-recovery

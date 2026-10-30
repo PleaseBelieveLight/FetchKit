@@ -18,5 +18,11 @@ python3 "${task_root}/tools/ci/verify_native_package.py" --prefix "${task_prefix
 python3 "${task_root}/tools/ci/run_m5_stress.py" --cli "${task_build}/fetchkit_cli" \
     --rounds "${FETCHKIT_STRESS_ROUNDS:-100}" --seed "${FETCHKIT_STRESS_SEED:-20261027}" \
     --output "${task_root}/build/linux-m5-stress"
-python3 "${task_root}/tools/ci/run_m5_enospc.py" --cli "${task_build}/fetchkit_cli" \
+# 部分托管 Runner 禁止普通用户写 uid_map；仅显式选中的 ENOSPC 实验使用特权控制器，
+# 仍由驱动新建私有 user/mount namespace，不修改宿主 sysctl 或挂载布局。
+task_enospc_runner=(python3)
+if [[ "${FETCHKIT_ENOSPC_SUDO:-0}" == "1" ]]; then
+    task_enospc_runner=(sudo -- /usr/bin/python3)
+fi
+"${task_enospc_runner[@]}" "${task_root}/tools/ci/run_m5_enospc.py" --cli "${task_build}/fetchkit_cli" \
     --output "${task_root}/build/linux-m5-enospc"

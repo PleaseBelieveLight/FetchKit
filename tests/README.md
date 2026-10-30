@@ -46,6 +46,9 @@ python tests/packaging/sample_release_startup_test.py --serial <设备序列号>
 不启动下载，不卸载或清空应用数据；签名不匹配时失败。已有相同 APK 可加 `--skip-install`，仍核对实际安装内容。
 报告记录 API、ABI、设备型号、模拟器标志、检查项和 APK 哈希；失败时归档本应用的崩溃日志，不清空设备日志。
 每次运行使用新的 `--output` 路径，保留旧包失败与修复包通过的证据。
+设备 APK 通过 `adb exec-out cat` 以二进制流读取，兼容旧镜像的文件同步接口差异；不切换 adbd 权限。
+读取失败仍使测试失败，必须与候选 APK 做完整 SHA-256 比对。
+设备驱动统一使用 `adb install --no-streaming -r`，先传输完整文件再交由平台安装，保留签名和 APK 内容检查。
 
 ## M4 正式 Android SDK
 
@@ -62,10 +65,15 @@ python tools/ci/run_m4_recovery.py --serial <设备序列号> --large-file
 设备驱动使用唯一且 `--no-rebind` 的 reverse 规则，避免旧 ADB 多个 tcp:0 允许列表覆盖；只回收自己的映射和日志。
 `--device-host` 可显式选取模拟器主机地址作诊断，SDK 不硬编码模拟器地址；不同路由结果分别报告。
 每次校验 run_id、完整 JUnit 结果、服务器请求、凭证去向及真实内容，不能只凭 adb 退出码判定通过。
+驱动识别任意终结输出后严格检查预期的 4 个用例（SDK 接入 3 项、下载矩阵 1 项）；用例数不符直接失败，不继续空等。
+CI 同时传入根目录 `VERSION`，精确核对 JNI 完整版本，包括 Alpha/Beta/RC 后缀。
+超时或报告缺失也保留最近一次 instrumentation 日志。
 
 矩阵覆盖 M1/M3 共享场景、真实 TLS、隐藏重试、取消/回调/关闭、pin/过期/lease、部分恢复、UTF-8 身份和请求头。
 内存专项实际并发 3×256 KiB 与 3×32 MiB 文件，报告 Android PSS，不能与 Windows RSS 混用。
 恢复专项在 committed 屏障后由控制器触发 Process.killProcess 的真实 SIGKILL；另验 am force-stop 后显式重启。
+JobScheduler 停止测试按 `cmd jobscheduler help` 检测 timeout 命令；旧系统通过 JobScheduler.cancel 触发
+系统的 onStopJob，报告分别记录 `shell-timeout`/`scheduler-cancel`，两者都验证核心任务 Paused 与真实检查点。
 两者都重新创建 provider 并断言精确 Range/If-Range、SDK DigestVerified 和租约全量 SHA-256。
 可选大文件入口实际跨过 4 GiB 检查点，至少需要 4.8 GiB 可用空间；默认不运行，不用模拟偏移代替。
 API 24/中间/目标 API、arm64 真机、系统停止/网络切换、重启和掉电需要对应记录，见 [M4 报告](../docs/reports/m4-baseline.md)。

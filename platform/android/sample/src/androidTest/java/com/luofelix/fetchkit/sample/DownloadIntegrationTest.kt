@@ -475,8 +475,14 @@ class DownloadIntegrationTest {
                         SystemClock.sleep(10); stored = engine.listTasks().await().firstOrNull { it.identity.version == version }
                     }
                     assertNotNull(stored); assertTrue(requireNotNull(stored).snapshot.receivedBytes >= 1024)
+                    val timeoutSupported = shell("cmd jobscheduler help").lineSequence().any {
+                        it.trimStart().startsWith("timeout ")
+                    }
                     val started = SystemClock.elapsedRealtime()
-                    shell("cmd jobscheduler timeout ${context.packageName} ${DownloadJobService.JOB_ID}")
+                    // API 24 的 shell 仅提供 run；通过真实 JobScheduler 取消触发系统 onStopJob，
+                    // 不直接调用回调，也不跳过核心任务暂停与检查点恢复断言。
+                    if (timeoutSupported) shell("cmd jobscheduler timeout ${context.packageName} ${DownloadJobService.JOB_ID}")
+                    else context.getSystemService(android.app.job.JobScheduler::class.java).cancel(DownloadJobService.JOB_ID)
                     do {
                         instrumentation.runOnMainSync { running = SampleDownloads.jobRunning }
                         if (running) SystemClock.sleep(20)
@@ -494,6 +500,7 @@ class DownloadIntegrationTest {
                         val row = reopened.listTasks().await().single { it.identity.version == version }
                         assertEquals(TaskState.Paused, row.snapshot.state); assertTrue(row.snapshot.committedOffset >= 1024)
                         report.put("job_stop", JSONObject().put("api", Build.VERSION.SDK_INT)
+                            .put("trigger", if (timeoutSupported) "shell-timeout" else "scheduler-cancel")
                             .put("uidt", Build.VERSION.SDK_INT >= 34).put("checkpoint_bytes", row.snapshot.committedOffset)
                             .put("milliseconds", SystemClock.elapsedRealtime() - started))
                         reopened.remove(row.snapshot.persistentId).await()

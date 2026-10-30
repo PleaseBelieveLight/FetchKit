@@ -68,6 +68,8 @@ jobs:
             --console=plain > build/ci/sdk-dependencies.txt
       - name: 允许当前 Runner 使用 KVM
         run: |
+          ./gradlew --stop
+          free -m > build/ci/emulator-host-memory.txt
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-fetchkit-kvm.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
@@ -78,9 +80,12 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
+          cores: 2
+          ram-size: 3072M
+          heap-size: 512M
           avd-name: fetchkit-ci
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
           script: bash tools/ci/android_device_ci.sh
       - name: 整理校验值、符号和预发布说明
         run: python tools/release/prepare_alpha.py --stage
