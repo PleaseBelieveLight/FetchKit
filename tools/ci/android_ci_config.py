@@ -22,7 +22,8 @@ def configuration(root=ROOT):
         apis.append(match.group(1))
     if not java or len(set(apis)) != 1:
         raise ValueError("缺少 JDK 版本，或 SDK/sample 的 compileSdk 不一致")
-    return {"java": java.group(1), "api": apis[0], "ndk": versions["ndk"], "cmake": versions["cmake"]}
+    return {"java": java.group(1), "api": apis[0], "ndk": versions["ndk"], "cmake": versions["cmake"],
+            "cmdline-tools": versions["androidCommandLineTools"]}
 
 
 def available_packages(listing):

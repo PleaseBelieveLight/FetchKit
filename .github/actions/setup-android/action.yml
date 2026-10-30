@@ -31,8 +31,17 @@ runs:
         set +o pipefail
         yes | sdkmanager --licenses > /dev/null
         set -o pipefail
+        # 旧 avdmanager 将 android-37.0 写成 android-0；固定版本并保留 Runner 原工具目录。
+        task_cmdline_version="${{ steps.versions.outputs.cmdline-tools }}"
+        sdkmanager --install "cmdline-tools;$task_cmdline_version"
+        test -x "$task_sdk/cmdline-tools/$task_cmdline_version/bin/avdmanager"
+        test ! -e "$task_sdk/cmdline-tools/fetchkit-runner-original"
+        mv "$task_sdk/cmdline-tools/latest" "$task_sdk/cmdline-tools/fetchkit-runner-original"
+        ln -s "$task_sdk/cmdline-tools/$task_cmdline_version" "$task_sdk/cmdline-tools/latest"
         python tools/ci/android_ci_config.py --install
         test -x "$JAVA_HOME/bin/jlink"
         mkdir -p build/ci
+        sdkmanager --version > build/ci/cmdline-tools-version.txt
+        grep -Fx "$task_cmdline_version" build/ci/cmdline-tools-version.txt
         java -version 2> build/ci/java-version.txt
         ./gradlew --version > build/ci/gradle-version.txt

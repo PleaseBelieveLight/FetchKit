@@ -2,6 +2,7 @@
 agp = "9.4.1"
 ndk = "28.2.13676358"
 cmake = "3.22.1"
+androidCommandLineTools = "22.0"
 coreKtx = "1.19.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"

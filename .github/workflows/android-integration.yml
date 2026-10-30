@@ -64,11 +64,10 @@ jobs:
           profile: pixel_6
           cores: 2
           ram-size: ${{ inputs.api-level == 37 && '4096M' || '3072M' }}
-          # 当前 Action 的 heap-size 写入 hw.heapSize，实际 Dalvik 配置需使用 vm.heapSize。
-          pre-emulator-launch-script: echo 'vm.heapSize=512M' >> "${ANDROID_AVD_HOME:-$HOME/.android/avd}/fetchkit-ci.avd/config.ini"
+          pre-emulator-launch-script: python tools/ci/configure_ci_avd.py --api '${{ steps.emulator.outputs.emulator-platform }}'
           disk-size: 8G
           avd-name: fetchkit-ci
-          emulator-options: -no-window -gpu ${{ inputs.api-level == 37 && 'swiftshader' || 'software' }} -no-snapshot -noaudio -no-boot-anim -camera-back none ${{ inputs.api-level == 37 && '-show-kernel' || '' }}
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none ${{ inputs.api-level == 37 && '-show-kernel' || '' }}
           disable-animations: false
           script: bash tools/ci/android_device_ci.sh
       - name: 保存模拟器失败上下文

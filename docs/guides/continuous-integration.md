@@ -20,6 +20,10 @@ Android 环境读取 `gradle/gradle-daemon-jvm.properties`、`gradle/libs.versio
 `sdkmanager --list` 选择，兼容 `android-37.0` 等平台命名。不会自动升级仓库依赖。
 工作流显式将 SDK 的 `cmdline-tools/latest/bin` 和 `platform-tools` 加入当前及后续步骤的 PATH，
 不依赖 Runner 是否预先导出这些路径。
+Command-line Tools 从版本目录读取并固定安装，保留 Runner 原工具目录，将 `latest` 指向选定版本，
+以兼容模拟器 Action 的路径选择。旧版 avdmanager 会把 `android-37.0` 错写为 `android-0`，见
+[上游问题](https://github.com/ReactiveCircus/android-emulator-runner/issues/482)。创建后必须核对根 ini 的
+`target` 与实际所选平台完全一致，错误目标直接失败，不手工伪造目标值。
 Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 仅读缓存，发布禁用配置缓存。
 
 模拟器工作流使用明确的 Pixel 6 手机硬件配置，新建独占的 `fetchkit-ci` AVD，不使用快照。
@@ -32,8 +36,7 @@ userdata 显式分配 8 GiB，避免新镜像的预装数据挤占安装空间�
 不能覆盖硬件配置中的 `vm.heapSize`。系统崩溃只保留异常类型和固定标记，不输出原始平台异常消息或堆栈。
 安装前要求 `system_server` PID、开机标志及包管理服务连续稳定 30 秒，最多等待 180 秒；持续重启会失败。
 失败上下文只提取系统异常类型和框架方法名，不归档原始平台异常消息、完整堆栈或应用私有内容。
-API 24/31 图形使用 `software` 模式，API 37 显式选择支持 GLES/Vulkan 的 `swiftshader`，
-避免自动选择的 Lavapipe 后端在托管 Runner 上导致图形服务重启。旧 `swiftshader_indirect` 已被弃用，见
+图形使用受支持的 `software` 模式；旧 `swiftshader_indirect` 已被弃用，见
 [Android 模拟器加速说明](https://developer.android.com/studio/run/emulator-acceleration#accel-graphics)。
 失败时归档内存、AVD 配置及 OOM/崩溃上下文；API 37 额外输出 guest 内核启动日志。
 先验证公开演示签名的真实 Release APK，再验证
