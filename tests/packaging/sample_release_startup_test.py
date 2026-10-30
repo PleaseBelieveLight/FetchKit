@@ -37,7 +37,7 @@ def adb_failure_diagnostic(result):
     markers = ("Can't find service", "Failed transaction", "Permission denied", "Security exception",
                "No space left", "device offline", "device not found", "protocol fault",
                "Broken pipe", "Unknown command", "Error accessing file", "Error: Can't open file",
-               "Performing Push Install", "Failure", "Success")
+               "Performing Push Install", "Failure", "Success", "Watchdog", "Failed to allocate", "Fatal signal")
     return {"returncode": result.returncode, "platform_code": adb_failure_code(output),
             "exception_types": sorted(set(re.findall(r"\b(?:[a-z]\w*\.)+[A-Z]\w*(?:Exception|Error)\b", output))),
             "markers": [marker for marker in markers if marker.lower() in output.lower()],
@@ -164,6 +164,8 @@ def main():
         # 不清空设备日志；仅归档属于本应用进程的 crash buffer 行。
         try:
             crash = command(["logcat", "-b", "crash", "-d", "-v", "threadtime"])
+            report["platform_crash_diagnostic"] = adb_failure_diagnostic(
+                subprocess.CompletedProcess([], 0, crash, ""))
             pids = set(re.findall(r"Process: " + re.escape(PACKAGE) + r", PID: (\d+)", crash))
             lines = [line for line in crash.splitlines()
                      if (match := re.match(r"\S+\s+\S+\s+(\d+)\s+", line)) and match.group(1) in pids]

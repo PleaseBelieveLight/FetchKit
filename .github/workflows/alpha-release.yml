@@ -82,7 +82,8 @@ jobs:
           profile: pixel_6
           cores: 2
           ram-size: 3072M
-          heap-size: 512M
+          # 当前 Action 的 heap-size 写入 hw.heapSize，实际 Dalvik 配置需使用 vm.heapSize。
+          pre-emulator-launch-script: echo 'vm.heapSize=512M' >> "${ANDROID_AVD_HOME:-$HOME/.android/avd}/fetchkit-ci.avd/config.ini"
           disk-size: 8G
           avd-name: fetchkit-ci
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none
