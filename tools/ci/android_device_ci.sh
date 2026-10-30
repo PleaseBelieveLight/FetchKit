@@ -9,6 +9,7 @@ if [[ "${GITHUB_ACTIONS:-}" != "true" ]] || [[ "${FETCHKIT_CI_AVD:-}" != "fetchk
 fi
 task_serial=emulator-5554
 test "$(adb -s "$task_serial" emu avd name | head -n 1 | tr -d '\r')" = fetchkit-ci
+python tools/ci/wait_android_ready.py --serial "$task_serial" --output build/ci/android-readiness.json
 # 新镜像的预装数据也占用 userdata；保留实际空间，避免将安装 ENOSPC 误判为 SDK 失败。
 adb -s "$task_serial" shell df -k /data /data/local/tmp > build/ci/emulator-storage.txt
 df -k . "$ANDROID_HOME" > build/ci/emulator-host-storage.txt

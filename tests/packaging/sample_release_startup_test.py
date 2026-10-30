@@ -40,6 +40,8 @@ def adb_failure_diagnostic(result):
                "Performing Push Install", "Failure", "Success", "Watchdog", "Failed to allocate", "Fatal signal")
     return {"returncode": result.returncode, "platform_code": adb_failure_code(output),
             "exception_types": sorted(set(re.findall(r"\b(?:[a-z]\w*\.)+[A-Z]\w*(?:Exception|Error)\b", output))),
+            "framework_methods": sorted(set(re.findall(
+                r"\bat ((?:com\.android|android|java|dalvik)\.[\w.$]+)\(", output)))[:30],
             "markers": [marker for marker in markers if marker.lower() in output.lower()],
             "stdout_bytes": len(result.stdout.encode("utf-8")),
             "stderr_bytes": len(result.stderr.encode("utf-8"))}
