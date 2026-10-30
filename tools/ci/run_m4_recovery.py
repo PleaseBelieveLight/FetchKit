@@ -45,7 +45,7 @@ def main():
     apk_fingerprints = {}
     for path in [ROOT / "platform/android/sample/build/outputs/apk/debug/sample-debug.apk",
                  ROOT / "platform/android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk"]:
-        result = subprocess.run(adb + ["install", "-r", str(path)], timeout=120, capture_output=True, text=True)
+        result = subprocess.run(adb + ["install", "--no-streaming", "-r", str(path)], timeout=120, capture_output=True, text=True)
         if result.returncode:
             raise RuntimeError(result.stdout + result.stderr)
         apk_fingerprints[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()

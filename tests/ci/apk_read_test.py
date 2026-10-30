@@ -12,6 +12,11 @@ import sample_release_startup_test as startup
 
 
 class ApkReadTest(unittest.TestCase):
+    def test_install_diagnostics_keep_only_the_platform_code(self):
+        self.assertEqual(startup.adb_failure_code("Failure [INSTALL_FAILED_INVALID_APK: private detail]"), "INSTALL_FAILED_INVALID_APK")
+        self.assertEqual(startup.adb_failure_code("Failure [INSTALL_PARSE_FAILED_NO_CERTIFICATES]"), "INSTALL_PARSE_FAILED_NO_CERTIFICATES")
+        self.assertEqual(startup.adb_failure_code("private detail"), "Unknown")
+
     def test_binary_bytes_are_not_decoded_or_translated(self):
         payload = b"PK\x03\x04\xff\x00\r\n\n"
         with tempfile.TemporaryDirectory() as temporary:

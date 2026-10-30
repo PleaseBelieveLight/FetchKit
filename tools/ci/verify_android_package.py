@@ -75,7 +75,7 @@ def main():
                     raise RuntimeError("External APK did not consume the current publication's native library")
             report["api"] = subprocess.check_output(adb + ["shell", "getprop", "ro.build.version.sdk"], text=True).strip()
             report["device_abis"] = subprocess.check_output(adb + ["shell", "getprop", "ro.product.cpu.abilist"], text=True).strip()
-            result = subprocess.run(adb + ["install", "-r", str(apk)], capture_output=True, text=True, timeout=120)
+            result = subprocess.run(adb + ["install", "--no-streaming", "-r", str(apk)], capture_output=True, text=True, timeout=120)
             if result.returncode:
                 raise RuntimeError("Consumer install failed: " + result.stdout + result.stderr)
             with RunningFixture() as fixture:

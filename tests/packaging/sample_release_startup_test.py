@@ -23,6 +23,14 @@ def visible_labels(tree):
             for field in ("text", "content-desc")}
 
 
+def adb_failure_code(output):
+    # 仅保留平台机器码，不将 ADB 原始错误文本或路径带入通用诊断。
+    match = re.search(r"\b(?:INSTALL_[A-Z_]+|DELETE_FAILED_[A-Z_]+)\b", output)
+    if match:
+        return match.group(0)
+    return "Unknown"
+
+
 def read_installed_apk(adb, remote, local):
     # exec-out 保留二进制字节，不依赖旧镜像的 adb 文件同步接口，也不经过文本解码或 PTY。
     # 读取错误仍然失败，成功后仍由调用方与候选 APK 做完整 SHA-256 比对。
@@ -50,7 +58,8 @@ def main():
         result = subprocess.run(adb + arguments, capture_output=True, encoding="utf-8",
                                 errors="replace", timeout=timeout)
         if result.returncode:
-            raise RuntimeError(f"ADB 操作失败：{arguments[0]}，退出码 {result.returncode}")
+            code = adb_failure_code(result.stdout + result.stderr)
+            raise RuntimeError(f"ADB 操作失败：{arguments[0]}，退出码 {result.returncode}，平台码 {code}")
         return result.stdout
 
     def pid():
@@ -95,7 +104,7 @@ def main():
                        "emulator": command(["shell", "getprop", "ro.kernel.qemu"]).strip() == "1"})
         if not args.skip_install:
             # 同签名覆盖安装保留数据；签名不匹配时失败，绝不卸载或清空用户数据。
-            install = command(["install", "-r", str(apk)], timeout=120)
+            install = command(["install", "--no-streaming", "-r", str(apk)], timeout=120)
             (args.output / "install.txt").write_text(install, encoding="utf-8")
             if "Success" not in install:
                 raise AssertionError("Release APK 覆盖安装失败")

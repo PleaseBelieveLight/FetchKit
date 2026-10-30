@@ -23,10 +23,16 @@ from android_reverse import allocate_reverse
 
 
 def instrumentation_finished(output):
-    # 任意用例数的终结输出都应结束等待；随后仍严格校验预期 3 个用例与本次 run_id。
+    # 任意用例数的终结输出都应结束等待；随后仍严格校验预期 4 个用例与本次 run_id。
     # 否则缺失用例或 Runner 提前退出会被误当成仍在执行，直至耗尽整个设备超时。
     return bool(re.search(r"\bOK \(\d+ tests?\)", output)) or any(marker in output for marker in
         ("INSTRUMENTATION_CODE:", "FAILURES!!!", "INSTRUMENTATION_FAILED", "Process crashed"))
+
+
+def instrumentation_passed(output):
+    # SdkIntegrationTest 3 项 + DownloadIntegrationTest 1 项；缺失/跳过用例不可充当通过。
+    match = re.search(r"^OK \((\d+) tests?\)\s*$", output, re.M)
+    return bool(match and int(match.group(1)) == 4 and "FAILURES" not in output)
 
 
 def main():
@@ -68,7 +74,7 @@ def main():
     apk_fingerprints = {}
     for path in [ROOT / "platform/android/sample/build/outputs/apk/debug/sample-debug.apk",
                  ROOT / "platform/android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk"]:
-        installed = subprocess.run(adb + ["install", "-r", str(path)], timeout=120, capture_output=True, text=True)
+        installed = subprocess.run(adb + ["install", "--no-streaming", "-r", str(path)], timeout=120, capture_output=True, text=True)
         if installed.returncode:
             raise RuntimeError("APK install failed: " + installed.stdout + installed.stderr)
         apk_fingerprints[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -105,6 +111,7 @@ def main():
                 fixture.server.peer = urls[1]
             instrument = ["am", "instrument", "-w",
                     "-e", "class", "com.luofelix.fetchkit.sample.SdkIntegrationTest,com.luofelix.fetchkit.sample.DownloadIntegrationTest",
+                    "-e", "fetchkitExpectedVersion", (ROOT / "VERSION").read_text(encoding="utf-8").strip(),
                     "-e", "fetchkitM4RunId", run_id, "-e", "fetchkitM4Url", urls[0],
                     "-e", "fetchkitM4Tls", urls[2], "-e", "fetchkitM4UntrustedTls", urls[3],
                     "com.luofelix.fetchkit.test/androidx.test.runner.AndroidJUnitRunner"]
@@ -139,7 +146,7 @@ def main():
             report["instrumentation_output_on_device"] = True
             report["apk_sha256"] = apk_fingerprints
             report["network_route"] = "explicit-device-host" if args.device_host else "owned-adb-reverse"
-            report["junit_passed"] = "OK (3 tests)" in log_text and "FAILURES" not in log_text
+            report["junit_passed"] = instrumentation_passed(log_text)
             requests = [request for fixture in fixtures for request in fixture.server.requests]
             report["fixture_requests"] = len(requests)
             report["requests"] = requests
