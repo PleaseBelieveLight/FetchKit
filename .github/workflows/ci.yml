@@ -7,6 +7,9 @@ on:
 
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -34,7 +37,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y ninja-build zlib1g-dev libssl-dev ca-certificates
       - name: 验证 CI 工具
-        run: python -m unittest discover -s tests/ci -p '*_test.py' -v
+        run: |
+          source tests/ci/pipeline_test.sh
+          python -m unittest discover -s tests/ci -p '*_test.py' -v
       - name: 构建并运行主机测试
         env:
           CURL_ENABLED: ${{ matrix.curl }}

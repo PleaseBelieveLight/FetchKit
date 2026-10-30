@@ -32,6 +32,8 @@ Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 
 普通结果保留 14 天，扩展验证与 Alpha 候选保留 30 天；大文件内容、下载缓存和用户凭证不归档。
 CTest 启用 `--no-tests=error` 并生成 JUnit；Android 检查两个模块 Debug 单测的实际类/用例数，
 缺失、全部跳过或失败均不能通过。设备测试继续检查现有驱动的 run_id、JUnit 输出和内容断言。
+所有工作流显式选择 Bash，使 `run` 步骤启用 `-e -o pipefail`；经 `tee` 保存日志的构建或测试失败
+必须保留非零状态，不能只根据日志上传成功判断验收通过。
 
 `collect_ci_evidence.py` 为当前 CI 单独归档，保留历史 `collect_m5_evidence.py` 和 `docs/reports/` 原样。
 `run.json` 的 `job_status` 仅表示本 Job 结果，`release_acceptance` 固定为 false。

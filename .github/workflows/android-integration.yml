@@ -15,6 +15,9 @@ on:
 
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 
 jobs:
   android:
@@ -29,6 +32,7 @@ jobs:
       - uses: ./.github/actions/setup-android
       - name: 构建双 ABI 产物并执行单元测试
         run: |
+          source tests/ci/pipeline_test.sh
           ./gradlew :sdk:assembleDebug :sdk:testDebugUnitTest \
             :sample:assembleDebug :sample:assembleDebugAndroidTest :sample:testDebugUnitTest \
             :sample:assembleRelease \

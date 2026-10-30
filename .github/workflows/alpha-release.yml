@@ -9,6 +9,9 @@ on:
 
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 concurrency:
   group: alpha-${{ github.ref }}
   cancel-in-progress: false
@@ -39,6 +42,7 @@ jobs:
           sudo apt-get install --no-install-recommends -y ninja-build zlib1g-dev libssl-dev ca-certificates
       - name: 执行 CI 工具与主机回归
         run: |
+          source tests/ci/pipeline_test.sh
           python -m unittest discover -s tests/ci -p '*_test.py' -v
           bash tools/ci/linux_m3.sh 2>&1 | tee build/ci/native-tests.log
       - name: 构建独立的 Native Release 并验证外部接入
