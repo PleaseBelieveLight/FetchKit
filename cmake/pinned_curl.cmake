@@ -11,6 +11,8 @@ function(fetchkit_configure_pinned_curl)
     set(BUILD_CURL_EXE OFF)
     set(BUILD_SHARED_LIBS OFF)
     set(BUILD_STATIC_LIBS ON)
+    # 静态 curl 也会随 FetchKit 链入宿主共享库；全部对象都需 PIC，避免 Linux 重定位链接失败。
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     set(BUILD_TESTING OFF)
     set(BUILD_EXAMPLES OFF)
     set(BUILD_LIBCURL_DOCS OFF)

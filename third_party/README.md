@@ -11,6 +11,8 @@ The acceptance profile enables HTTP/HTTPS, OpenSSL and threaded DNS, and disable
 compression, IDN, PSL, SSH, HTTP/2 and tool/test/doc dependencies. This profile still depends on the
 host's compiler, OpenSSL, libc and CA store. Their versions must be recorded with acceptance results;
 pinning curl alone does not promise bit-for-bit binaries or a complete dependency lock.
+The pinned static curl objects are built with PIC so the installed FetchKit libraries can also be
+linked into a host shared library; the external consumer check builds that shared target on Linux.
 
 `FETCHKIT_USE_PINNED_CURL=OFF` permits a system libcurl >=7.85 for development. Record its actual
 version/features and do not describe that mode as the source-pinned reference profile. Android's
