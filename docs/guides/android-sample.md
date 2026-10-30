@@ -83,6 +83,8 @@ foreach ($sampleTestClass in $sampleTestClasses) {
 
 `SampleModelsTest` 检查预设身份、查询参数、版本、可选摘要及 64 位格式化。
 `SampleDashboardTest` 在不启动下载的情况下验证默认预设、多选、空选择和页面导航。
+「新建下载」按钮显式提供可访问名称，设备回归同时检查标签和实际打开面板的行为；Release 启动驱动
+通过当前应用节点的文字或可访问描述识别入口。
 `SampleControlsTest` 使用设备内受控 HTTP 服务器，验证并发资源的逐行控制、确认检查点后的真实 Range 请求、
 独立订阅取消、可信摘要、读取租约删除保护、pin 与过期，不依赖公共大文件服务。
 `SampleDownloadTest` 保留带 query URL 的提交与本地下载/读取回归。 逐类运行并关闭配置缓存，核对 XML

@@ -28,7 +28,7 @@ class SampleDashboardTest {
 
     @Test fun presetsAreReadyWithoutTypingAndBatchSelectionChangesAction() {
         capture("home")
-        compose.onNodeWithTag("new-download").performClick()
+        compose.onNodeWithTag("new-download").assertIsDisplayed().assertContentDescriptionEquals("新建下载").performClick()
         compose.onNodeWithText("清华镜像 · Netboot").assertIsDisplayed()
         compose.onNodeWithText("阿里云镜像 · Netboot").assertIsDisplayed()
         compose.onNodeWithTag("preset-tuna-ubuntu-24-04-5-netboot").assertIsOn()

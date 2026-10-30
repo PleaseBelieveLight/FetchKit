@@ -25,6 +25,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +40,7 @@ import java.util.Locale
 
 @Composable
 internal fun DownloadApp() {
+    val newDownloadLabel = "新建下载"
     var page by rememberSaveable { mutableIntStateOf(0) }
     var adding by rememberSaveable { mutableStateOf(false) }
     var restoring by remember { mutableStateOf<StoredTask?>(null) }
@@ -61,8 +64,10 @@ internal fun DownloadApp() {
             }
         },
         floatingActionButton = {
-            if (page == 0) ExtendedFloatingActionButton(onClick = { adding = true }, modifier = Modifier.testTag("new-download"),
-                icon = { SampleIcon("add") }, text = { Text("新建下载") })
+            // 显式设置名称，保证合并语义后辅助功能和外部 UI 回归仍能识别此入口。
+            if (page == 0) ExtendedFloatingActionButton(onClick = { adding = true },
+                modifier = Modifier.testTag("new-download").semantics { contentDescription = newDownloadLabel },
+                icon = { SampleIcon("add") }, text = { Text(newDownloadLabel) })
         },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->

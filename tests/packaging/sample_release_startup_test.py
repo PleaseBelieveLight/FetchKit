@@ -13,6 +13,16 @@ PACKAGE = "com.luofelix.fetchkit"
 COMPONENT = PACKAGE + "/com.luofelix.fetchkit.sample.MainActivity"
 
 
+def node_has_label(node, label):
+    return node.get("package") == PACKAGE and label in (node.get("text", ""), node.get("content-desc", ""))
+
+
+def visible_labels(tree):
+    # Compose 合并语义后，按钮名称可能通过 content-desc 暴露；仍限定为当前应用的实际节点。
+    return {node.get(field, "") for node in tree.iter("node") if node.get("package") == PACKAGE
+            for field in ("text", "content-desc")}
+
+
 def read_installed_apk(adb, remote, local):
     # exec-out 保留二进制字节，不依赖旧镜像的 adb 文件同步接口，也不经过文本解码或 PTY。
     # 读取错误仍然失败，成功后仍由调用方与候选 APK 做完整 SHA-256 比对。
@@ -60,8 +70,7 @@ def main():
                 xml = raw[start:end + len("</hierarchy>")]
                 (args.output / f"{name}-{attempt}.xml").write_text(xml, encoding="utf-8")
                 tree = ET.fromstring(xml)
-                texts = {node.get("text", "") for node in tree.iter("node") if node.get("package") == PACKAGE}
-                if required <= texts:
+                if required <= visible_labels(tree):
                     return tree
             attempt += 1
             time.sleep(0.5)
@@ -70,7 +79,7 @@ def main():
     def tap(tree, text):
         # 只点击本应用中明确匹配的文字；同名文字优先选择底部导航项。
         bounds = [tuple(map(int, re.findall(r"\d+", node.get("bounds", ""))))
-                  for node in tree.iter("node") if node.get("package") == PACKAGE and node.get("text") == text]
+                  for node in tree.iter("node") if node_has_label(node, text)]
         bounds = [value for value in bounds if len(value) == 4 and value[2] > value[0] and value[3] > value[1]]
         if not bounds:
             raise AssertionError("未找到页面入口：" + text)
