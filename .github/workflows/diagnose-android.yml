@@ -1,0 +1,47 @@
+name: Android diagnostics
+on:
+  workflow_dispatch:
+    inputs:
+      api:
+        type: choice
+        options: ['24', '31']
+        default: '31'
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: 下载已有 Release 候选
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 40991625218 --name android-api-31-1 --dir build/diagnostic-input
+      - name: 配置 KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-fetchkit-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: ${{ inputs.api }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          avd-name: fetchkit-diagnostics
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tools/ci/diagnose_android.sh
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: diagnostic-api-${{ inputs.api }}
+          path: build/android-diagnostics
+          retention-days: 7
