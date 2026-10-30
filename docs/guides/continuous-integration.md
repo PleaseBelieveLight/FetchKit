@@ -18,6 +18,8 @@ Alpha 发布 Job 单独拥有 `contents: write`、`packages: write`，令牌只�
 Android 环境读取 `gradle/gradle-daemon-jvm.properties`、`gradle/libs.versions.toml` 和两个模块的
 `compileSdk`；安装完整 Temurin JDK、对应正式 SDK/build-tools、NDK 和 CMake。SDK 包名依据
 `sdkmanager --list` 选择，兼容 `android-37.0` 等平台命名。不会自动升级仓库依赖。
+工作流显式将 SDK 的 `cmdline-tools/latest/bin` 和 `platform-tools` 加入当前及后续步骤的 PATH，
+不依赖 Runner 是否预先导出这些路径。
 Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 仅读缓存，发布禁用配置缓存。
 
 模拟器工作流新建独占的 `fetchkit-ci` AVD，不使用快照。先验证公开演示签名的真实 Release APK，再验证

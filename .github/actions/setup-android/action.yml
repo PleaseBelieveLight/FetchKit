@@ -20,6 +20,14 @@ runs:
     - name: 安装仓库指定的 Android 工具
       shell: bash
       run: |
+        task_sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+        test -n "$task_sdk"
+        task_tools="$task_sdk/cmdline-tools/latest/bin"
+        test -x "$task_tools/sdkmanager"
+        # Runner 预装 SDK 不保证命令行工具位于 PATH；同时配置当前步骤和后续步骤。
+        echo "$task_tools" >> "$GITHUB_PATH"
+        echo "$task_sdk/platform-tools" >> "$GITHUB_PATH"
+        export PATH="$task_tools:$task_sdk/platform-tools:$PATH"
         set +o pipefail
         yes | sdkmanager --licenses > /dev/null
         set -o pipefail
