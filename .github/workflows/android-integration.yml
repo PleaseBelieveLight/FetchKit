@@ -59,6 +59,7 @@ jobs:
           system-image-api-level: ${{ steps.emulator.outputs.emulator-image }}
           arch: x86_64
           target: google_apis
+          profile: pixel_6
           avd-name: fetchkit-ci
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           disable-animations: true
