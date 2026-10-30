@@ -25,6 +25,10 @@ Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 
 模拟器工作流使用明确的 Pixel 6 手机硬件配置，新建独占的 `fetchkit-ci` AVD，不使用快照。
 避免依赖 AVD 默认的低分辨率通用设备配置；Release 页面检查仍要求实际按钮文字与页面入口完整可用。
 保留正常系统动画，真实 Release 的 Compose 动画和页面可访问性节点也属于启动回归范围。
+模拟器固定 2 核、3 GiB RAM、512 MiB heap，启动前停止本次构建的 Gradle daemon。
+图形使用受支持的 `software` 模式；旧 `swiftshader_indirect` 已被弃用，见
+[Android 模拟器加速说明](https://developer.android.com/studio/run/emulator-acceleration#accel-graphics)。
+失败时归档内存、AVD 配置及 OOM/崩溃上下文；API 37 额外输出 guest 内核启动日志。
 先验证公开演示签名的真实 Release APK，再验证
 外部 AAR；随后仅卸载该新建 guest 中的演示包以切换 Debug 签名，执行正式 SDK 协议与 SIGKILL/force-stop 恢复。
 `android_device_ci.sh` 同时检查 Actions 标识和 AVD 名，不允许直接用于本地已有设备。
