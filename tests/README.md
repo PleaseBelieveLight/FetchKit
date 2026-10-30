@@ -46,6 +46,9 @@ python tests/packaging/sample_release_startup_test.py --serial <设备序列号>
 不启动下载，不卸载或清空应用数据；签名不匹配时失败。已有相同 APK 可加 `--skip-install`，仍核对实际安装内容。
 报告记录 API、ABI、设备型号、模拟器标志、检查项和 APK 哈希；失败时归档本应用的崩溃日志，不清空设备日志。
 每次运行使用新的 `--output` 路径，保留旧包失败与修复包通过的证据。
+API 24 userdebug 测试模拟器若拒绝 shell 读取已安装 APK，可显式增加 `--emulator-root-pull`：
+只在读取权限不足时临时 root adbd，读取后立即 unroot，再执行真实 Release 启动验证。
+该选项默认关闭，拒绝物理设备；报告单独记录是否使用过临时读取权限。不得跳过设备 APK 的 SHA-256 比对。
 
 ## M4 正式 Android SDK
 
