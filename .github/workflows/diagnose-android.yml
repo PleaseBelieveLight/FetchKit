@@ -1,11 +1,7 @@
 name: Android diagnostics
 on:
-  workflow_dispatch:
-    inputs:
-      api:
-        type: choice
-        options: ['24', '31']
-        default: '31'
+  push:
+    branches: [codex/fix-api24-apk-verification]
 permissions:
   contents: read
   actions: read
@@ -16,6 +12,10 @@ jobs:
   diagnose:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [24, 31]
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
@@ -31,7 +31,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
-          api-level: ${{ inputs.api }}
+          api-level: ${{ matrix.api }}
           target: google_apis
           arch: x86_64
           profile: pixel_6
@@ -42,6 +42,6 @@ jobs:
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
-          name: diagnostic-api-${{ inputs.api }}
+          name: diagnostic-api-${{ matrix.api }}
           path: build/android-diagnostics
           retention-days: 7
