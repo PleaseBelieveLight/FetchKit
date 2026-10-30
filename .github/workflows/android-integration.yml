@@ -68,7 +68,7 @@ jobs:
           pre-emulator-launch-script: echo 'vm.heapSize=512M' >> "${ANDROID_AVD_HOME:-$HOME/.android/avd}/fetchkit-ci.avd/config.ini"
           disk-size: 8G
           avd-name: fetchkit-ci
-          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none ${{ inputs.api-level == 37 && '-show-kernel' || '' }}
+          emulator-options: -no-window -gpu ${{ inputs.api-level == 37 && 'swiftshader' || 'software' }} -no-snapshot -noaudio -no-boot-anim -camera-back none ${{ inputs.api-level == 37 && '-show-kernel' || '' }}
           disable-animations: false
           script: bash tools/ci/android_device_ci.sh
       - name: 保存模拟器失败上下文

@@ -32,7 +32,8 @@ userdata 显式分配 8 GiB，避免新镜像的预装数据挤占安装空间�
 不能覆盖硬件配置中的 `vm.heapSize`。系统崩溃只保留异常类型和固定标记，不输出原始平台异常消息或堆栈。
 安装前要求 `system_server` PID、开机标志及包管理服务连续稳定 30 秒，最多等待 180 秒；持续重启会失败。
 失败上下文只提取系统异常类型和框架方法名，不归档原始平台异常消息、完整堆栈或应用私有内容。
-图形使用受支持的 `software` 模式；旧 `swiftshader_indirect` 已被弃用，见
+API 24/31 图形使用 `software` 模式，API 37 显式选择支持 GLES/Vulkan 的 `swiftshader`，
+避免自动选择的 Lavapipe 后端在托管 Runner 上导致图形服务重启。旧 `swiftshader_indirect` 已被弃用，见
 [Android 模拟器加速说明](https://developer.android.com/studio/run/emulator-acceleration#accel-graphics)。
 失败时归档内存、AVD 配置及 OOM/崩溃上下文；API 37 额外输出 guest 内核启动日志。
 先验证公开演示签名的真实 Release APK，再验证
