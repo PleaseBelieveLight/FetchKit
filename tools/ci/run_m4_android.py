@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import shlex
 import ssl
@@ -19,6 +20,13 @@ sys.path.insert(0, str(ROOT / "tests/server"))
 from http_fixture import RunningFixture
 from m4_fixture import M4Handler
 from android_reverse import allocate_reverse
+
+
+def instrumentation_finished(output):
+    # 任意用例数的终结输出都应结束等待；随后仍严格校验预期 3 个用例与本次 run_id。
+    # 否则缺失用例或 Runner 提前退出会被误当成仍在执行，直至耗尽整个设备超时。
+    return bool(re.search(r"\bOK \(\d+ tests?\)", output)) or any(marker in output for marker in
+        ("INSTRUMENTATION_CODE:", "FAILURES!!!", "INSTRUMENTATION_FAILED", "Process crashed"))
 
 
 def main():
@@ -68,6 +76,7 @@ def main():
     temporary = tempfile.TemporaryDirectory(prefix="tls-", dir=args.output)
     workspace = Path(temporary.name).resolve()
     assert workspace.parent == args.output
+    log_text = ""
     try:
         untrusted_key, untrusted_cert = workspace / "key.pem", workspace / "cert.pem"
         subprocess.run([args.openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
@@ -110,11 +119,12 @@ def main():
                 read = subprocess.run(adb + ["exec-out", "cat", device_log], capture_output=True, text=True, timeout=20)
                 if read.returncode == 0:
                     log_text = read.stdout
-                    if any(marker in log_text for marker in ("OK (3 tests)", "FAILURES!!!", "INSTRUMENTATION_FAILED", "Process crashed")):
+                    if instrumentation_finished(log_text):
                         break
                 time.sleep(1)
             else:
-                launcher.terminate()
+                if launcher.poll() is None:
+                    launcher.terminate()
                 launcher.wait(timeout=15)
                 raise RuntimeError("Device JUnit deadline")
             try:
@@ -148,6 +158,8 @@ def main():
             print("Failed cases:", [case["id"] for case in report["cases"] if not case["passed"]])
             return 0 if report["passed"] else 1
     finally:
+        # 包括超时和报告缺失在内的失败都保留最近一次实际输出，避免只剩空 launcher 日志。
+        (args.output / "instrumentation.log").write_text(log_text, encoding="utf-8")
         try:
             subprocess.run(adb + ["shell", "rm", "-f", device_log], capture_output=True, timeout=15)
         except subprocess.TimeoutExpired:

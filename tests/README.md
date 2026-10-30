@@ -64,6 +64,8 @@ python tools/ci/run_m4_recovery.py --serial <设备序列号> --large-file
 设备驱动使用唯一且 `--no-rebind` 的 reverse 规则，避免旧 ADB 多个 tcp:0 允许列表覆盖；只回收自己的映射和日志。
 `--device-host` 可显式选取模拟器主机地址作诊断，SDK 不硬编码模拟器地址；不同路由结果分别报告。
 每次校验 run_id、完整 JUnit 结果、服务器请求、凭证去向及真实内容，不能只凭 adb 退出码判定通过。
+驱动识别任意终结输出后严格检查预期的 3 个用例；用例数不符直接失败，不继续空等。
+超时或报告缺失也保留最近一次 instrumentation 日志。
 
 矩阵覆盖 M1/M3 共享场景、真实 TLS、隐藏重试、取消/回调/关闭、pin/过期/lease、部分恢复、UTF-8 身份和请求头。
 内存专项实际并发 3×256 KiB 与 3×32 MiB 文件，报告 Android PSS，不能与 Windows RSS 混用。
