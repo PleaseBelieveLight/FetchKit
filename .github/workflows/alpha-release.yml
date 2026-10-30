@@ -80,7 +80,7 @@ jobs:
           profile: pixel_6
           avd-name: fetchkit-ci
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          disable-animations: false
           script: bash tools/ci/android_device_ci.sh
       - name: 整理校验值、符号和预发布说明
         run: python tools/release/prepare_alpha.py --stage

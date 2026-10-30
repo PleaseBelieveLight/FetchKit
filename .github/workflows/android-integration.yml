@@ -62,7 +62,7 @@ jobs:
           profile: pixel_6
           avd-name: fetchkit-ci
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          disable-animations: false
           script: bash tools/ci/android_device_ci.sh
       - name: 归档本次环境与证据
         if: always()
