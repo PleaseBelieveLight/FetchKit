@@ -83,6 +83,7 @@ jobs:
           cores: 2
           ram-size: 3072M
           heap-size: 512M
+          disk-size: 8G
           avd-name: fetchkit-ci
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none
           disable-animations: false

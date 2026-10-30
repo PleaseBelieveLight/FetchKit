@@ -65,6 +65,7 @@ jobs:
           cores: 2
           ram-size: ${{ inputs.api-level == 37 && '4096M' || '3072M' }}
           heap-size: 512M
+          disk-size: 8G
           avd-name: fetchkit-ci
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none ${{ inputs.api-level == 37 && '-show-kernel' || '' }}
           disable-animations: false

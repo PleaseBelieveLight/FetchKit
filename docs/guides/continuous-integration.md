@@ -27,6 +27,7 @@ Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 
 保留正常系统动画，真实 Release 的 Compose 动画和页面可访问性节点也属于启动回归范围。
 模拟器固定 2 核、512 MiB heap，API 24/31 使用 3 GiB RAM，API 37 使用其要求的至少 4 GiB，见
 [模拟器发布说明](https://developer.android.com/studio/releases/emulator#36.6.11)。启动前停止本次构建的 Gradle daemon。
+userdata 显式分配 8 GiB，避免新镜像的预装数据挤占安装空间；安装前归档 guest 与 Runner 的实际磁盘空间。
 图形使用受支持的 `software` 模式；旧 `swiftshader_indirect` 已被弃用，见
 [Android 模拟器加速说明](https://developer.android.com/studio/run/emulator-acceleration#accel-graphics)。
 失败时归档内存、AVD 配置及 OOM/崩溃上下文；API 37 额外输出 guest 内核启动日志。
