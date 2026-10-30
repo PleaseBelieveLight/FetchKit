@@ -29,10 +29,11 @@ Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 
 模拟器工作流使用明确的 Pixel 6 手机硬件配置，新建独占的 `fetchkit-ci` AVD，不使用快照。
 避免依赖 AVD 默认的低分辨率通用设备配置；Release 页面检查仍要求实际按钮文字与页面入口完整可用。
 保留正常系统动画，真实 Release 的 Compose 动画和页面可访问性节点也属于启动回归范围。
-模拟器固定 2 核、512 MiB heap，API 24/31 使用 3 GiB RAM，API 37 使用其要求的至少 4 GiB，见
+模拟器配置 2 核、`vm.heapSize=512`，API 24/31 使用 3 GiB RAM，API 37 使用其要求的至少 4 GiB，见
 [模拟器发布说明](https://developer.android.com/studio/releases/emulator#36.6.11)。启动前停止本次构建的 Gradle daemon。
 userdata 显式分配 8 GiB，避免新镜像的预装数据挤占安装空间；安装前归档 guest 与 Runner 的实际磁盘空间。
-启动前通过 `vm.heapSize` 设置实际 Dalvik heap；当前固定版本 Action 的 `heap-size` 写入 `hw.heapSize`，
+启动前通过 `vm.heapSize` 设置 heap 配置；镜像可能调整运行时上限，实际 `dalvik.vm.heapsize` 与
+`heapgrowthlimit` 记录在 `android-readiness.json`。当前固定版本 Action 的 `heap-size` 写入 `hw.heapSize`，
 不能覆盖硬件配置中的 `vm.heapSize`。系统崩溃只保留异常类型和固定标记，不输出原始平台异常消息或堆栈。
 安装前要求 `system_server` PID、开机标志及包管理服务连续稳定 30 秒，最多等待 180 秒；持续重启会失败。
 失败上下文只提取系统异常类型和框架方法名，不归档原始平台异常消息、完整堆栈或应用私有内容。
@@ -43,6 +44,9 @@ userdata 显式分配 8 GiB，避免新镜像的预装数据挤占安装空间�
 外部 AAR；随后仅卸载该新建 guest 中的演示包以切换 Debug 签名，执行正式 SDK 协议与 SIGKILL/force-stop 恢复。
 `android_device_ci.sh` 同时检查 Actions 标识和 AVD 名，不允许直接用于本地已有设备。
 已安装 APK 通过二进制 `exec-out` 读取，兼容旧镜像的文件同步接口差异；读取失败和 SHA-256 不匹配均会失败。
+Sample 的 `androidTestImplementation` 使用已修复 `InputManager.getInstance()` 反射访问的 Espresso，见
+[AndroidX Test 发布说明](https://developer.android.com/jetpack/androidx/releases/test#espresso_370)。
+这项测试依赖升级用于 API 37 UI 回归，不加入 SDK 或 Sample 的 Release 运行时依赖。
 
 ## 日志与门槛
 
