@@ -1,0 +1,70 @@
+name: CI
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Native / curl=${{ matrix.curl }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        curl: ['ON', 'OFF']
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: 安装主机依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ninja-build zlib1g-dev libssl-dev ca-certificates
+      - name: 验证 CI 工具
+        run: python -m unittest discover -s tests/ci -p '*_test.py' -v
+      - name: 构建并运行主机测试
+        env:
+          CURL_ENABLED: ${{ matrix.curl }}
+        run: |
+          mkdir -p build/ci build/ci-native/reports
+          cmake -S . -B build/ci-native -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DFETCHKIT_BUILD_TESTS=ON -DFETCHKIT_WITH_CURL="$CURL_ENABLED" \
+            -DFETCHKIT_USE_PINNED_CURL="$CURL_ENABLED" -DFETCHKIT_BUILD_PROBES="$CURL_ENABLED" \
+            -DFETCHKIT_ENABLE_FAULT_INJECTION=ON 2>&1 | tee build/ci/native-configure.log
+          cmake --build build/ci-native --parallel 2 2>&1 | tee build/ci/native-build.log
+          ctest --test-dir build/ci-native --output-on-failure --no-tests=error -LE large_file \
+            --output-junit "$PWD/build/ci-native/reports/ctest.xml" 2>&1 | tee build/ci/native-tests.log
+      - name: 归档本次环境与证据
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          python tools/ci/collect_ci_evidence.py --profile native-curl-${{ matrix.curl }} \
+            --status "$JOB_STATUS" --output build/ci-evidence \
+            --input build/ci --input build/ci-native/reports --input build/ci-native/Testing/Temporary
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: native-curl-${{ matrix.curl }}-${{ github.run_attempt }}
+          path: build/ci-evidence
+          retention-days: 14
+          if-no-files-found: error
+
+  android:
+    name: Android
+    uses: ./.github/workflows/android-integration.yml
+    with:
+      api-level: 31

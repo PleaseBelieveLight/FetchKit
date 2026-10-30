@@ -1,0 +1,78 @@
+name: Extended validation
+on:
+  schedule:
+    - cron: '17 19 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: extended-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  linux:
+    name: Linux / ${{ matrix.profile }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: acceptance
+            sanitizers: ''
+            large-file: '1'
+          - profile: asan-ubsan
+            sanitizers: address,undefined
+            large-file: '0'
+          - profile: tsan
+            sanitizers: thread
+            large-file: '0'
+    env:
+      FETCHKIT_SANITIZERS: ${{ matrix.sanitizers }}
+      FETCHKIT_RUN_LARGE_FILE: ${{ matrix.large-file }}
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      TSAN_OPTIONS: halt_on_error=1
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: 安装主机依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ninja-build zlib1g-dev libssl-dev ca-certificates
+      - name: 执行 Linux 验证
+        run: |
+          mkdir -p build/ci
+          bash tools/ci/linux_m5.sh 2>&1 | tee build/ci/linux-validation.log
+      - name: 归档本次环境与证据
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          python tools/ci/collect_ci_evidence.py --profile linux-${{ matrix.profile }} \
+            --status "$JOB_STATUS" --output build/ci-evidence --input build/ci \
+            --input build/linux-m3*/reports --input build/linux-m3*/Testing/Temporary \
+            --input build/linux-m5-consumer --input build/linux-m5-stress --input build/linux-m5-enospc
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: linux-${{ matrix.profile }}-${{ github.run_attempt }}
+          path: build/ci-evidence
+          retention-days: 30
+          if-no-files-found: error
+
+  android:
+    name: Android / API ${{ matrix.api }}
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [24, 31, 37]
+    uses: ./.github/workflows/android-integration.yml
+    with:
+      api-level: ${{ matrix.api }}

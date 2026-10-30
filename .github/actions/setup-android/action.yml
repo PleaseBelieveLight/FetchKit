@@ -1,0 +1,30 @@
+name: 配置 Android 构建环境
+description: 从仓库配置读取 JDK、SDK、NDK 和 CMake 版本
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      with:
+        python-version: '3.12'
+    - id: versions
+      shell: bash
+      run: python tools/ci/android_ci_config.py --output "$GITHUB_OUTPUT"
+    - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      with:
+        distribution: temurin
+        java-version: ${{ steps.versions.outputs.java }}
+    - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+      with:
+        cache-provider: basic
+        cache-read-only: ${{ github.event_name == 'pull_request' || github.ref_type == 'tag' }}
+    - name: 安装仓库指定的 Android 工具
+      shell: bash
+      run: |
+        set +o pipefail
+        yes | sdkmanager --licenses > /dev/null
+        set -o pipefail
+        python tools/ci/android_ci_config.py --install
+        test -x "$JAVA_HOME/bin/jlink"
+        mkdir -p build/ci
+        java -version 2> build/ci/java-version.txt
+        ./gradlew --version > build/ci/gradle-version.txt

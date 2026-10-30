@@ -106,6 +106,10 @@ SDK Future。
 
 ### GitHub Packages 发布与接入
 
+仓库提供手动 `Alpha release` 工作流：从与 `VERSION` 一致的 Alpha Tag 重新构建验证，默认仅生成
+Actions Artifact；显式选择上传后才发布 Packages 并创建草稿预发布。操作与自动验证范围见
+[持续集成与 Alpha 发布](../guides/continuous-integration.md#手动准备和分发-alpha)。正式发布门槛保持不变。
+
 默认发布仓库是 `https://maven.pkg.github.com/pleasebelievelight/fetchkit`，对应源码仓库
 `PleaseBelieveLight/FetchKit`。迁移或 fork 时可用 `-Pfetchkit.githubRepository=OWNER/REPOSITORY`
 覆盖，其次读取 `GITHUB_REPOSITORY`；owner/repository 在 Maven URL 中统一转为小写。

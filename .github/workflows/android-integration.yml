@@ -1,0 +1,80 @@
+name: Android integration
+on:
+  workflow_call:
+    inputs:
+      api-level:
+        type: number
+        default: 31
+  workflow_dispatch:
+    inputs:
+      api-level:
+        description: 模拟器 API（完整矩阵由 Extended validation 执行）
+        type: choice
+        options: ['24', '31', '37']
+        default: '31'
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      FETCHKIT_CI_AVD: fetchkit-ci
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-android
+      - name: 构建双 ABI 产物并执行单元测试
+        run: |
+          ./gradlew :sdk:assembleDebug :sdk:testDebugUnitTest \
+            :sample:assembleDebug :sample:assembleDebugAndroidTest :sample:testDebugUnitTest \
+            :sample:assembleRelease \
+            :sdk:publishReleasePublicationToPreviewRepository \
+            -Pfetchkit.probes=false --max-workers=2 --no-configuration-cache --console=plain \
+            2>&1 | tee build/ci/android-build.log
+          python tools/ci/check_junit_results.py platform/android/sdk/build/test-results \
+            platform/android/sample/build/test-results
+          python tests/packaging/publication_guards_test.py --output build/ci/publication-guards
+      - name: 允许当前 Runner 使用 KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-fetchkit-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: 选择实际存在的模拟器包
+        id: emulator
+        env:
+          EMULATOR_API: ${{ inputs.api-level }}
+        run: python tools/ci/android_ci_config.py --emulator-api "$EMULATOR_API" --output "$GITHUB_OUTPUT"
+      - name: 验证真实 Release 与 Kotlin/JNI/网络链路
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ steps.emulator.outputs.emulator-platform }}
+          system-image-api-level: ${{ steps.emulator.outputs.emulator-image }}
+          arch: x86_64
+          target: google_apis
+          avd-name: fetchkit-ci
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash tools/ci/android_device_ci.sh
+      - name: 归档本次环境与证据
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          python tools/ci/collect_ci_evidence.py --profile android-api-${{ inputs.api-level }} \
+            --status "$JOB_STATUS" --output build/ci-evidence --input build/ci \
+            --input platform/android/sdk/build/test-results --input platform/android/sample/build/test-results
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: android-api-${{ inputs.api-level }}-${{ github.run_attempt }}
+          path: |
+            build/ci-evidence
+            platform/android/sdk/build/outputs/aar/*release.aar
+            platform/android/sample/build/outputs/apk/release/*.apk
+            platform/android/sample/build/outputs/mapping/release/
+          retention-days: 14
+          if-no-files-found: error

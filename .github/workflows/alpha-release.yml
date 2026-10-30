@@ -1,0 +1,114 @@
+name: Alpha release
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 验证通过后上传 GitHub Packages 并创建草稿预发布（默认仅生成构建产物）
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+concurrency:
+  group: alpha-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  alpha:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    # 手动选择 Alpha Tag 才能通过首步校验；普通 push/PR 不进入发布流程。
+    permissions:
+      contents: write
+      packages: write
+    env:
+      FETCHKIT_CI_AVD: fetchkit-ci
+      FETCHKIT_CI_PACKAGE: '1'
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 核对 Alpha Tag 与源码
+        run: python3 tools/release/prepare_alpha.py --check-tag
+      - uses: ./.github/actions/setup-android
+      - name: 安装主机依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ninja-build zlib1g-dev libssl-dev ca-certificates
+      - name: 执行 CI 工具与主机回归
+        run: |
+          python -m unittest discover -s tests/ci -p '*_test.py' -v
+          bash tools/ci/linux_m3.sh 2>&1 | tee build/ci/native-tests.log
+      - name: 构建独立的 Native Release 并验证外部接入
+        run: |
+          cmake -S . -B build/alpha-native -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DFETCHKIT_WITH_CURL=ON -DFETCHKIT_USE_PINNED_CURL=ON -DFETCHKIT_INSTALL=ON \
+            -DFETCHKIT_ENABLE_FAULT_INJECTION=OFF 2>&1 | tee build/ci/native-configure.log
+          cmake --build build/alpha-native --parallel 2 2>&1 | tee build/ci/native-build.log
+          cmake --install build/alpha-native --prefix "$PWD/build/alpha-install"
+          python tools/ci/verify_native_package.py --prefix build/alpha-install --output build/ci/native-consumer
+      - name: 构建并验证双 ABI Android 发布候选
+        run: |
+          ./gradlew :sdk:assembleDebug :sdk:testDebugUnitTest \
+            :sample:assembleDebug :sample:assembleDebugAndroidTest :sample:testDebugUnitTest \
+            :sample:assembleRelease \
+            :sdk:publishReleasePublicationToPreviewRepository \
+            -Pfetchkit.probes=false --max-workers=2 --no-configuration-cache --console=plain \
+            2>&1 | tee build/ci/android-build.log
+          python tools/ci/check_junit_results.py platform/android/sdk/build/test-results \
+            platform/android/sample/build/test-results
+          python tests/packaging/publication_guards_test.py --output build/ci/publication-guards
+          ./gradlew :sdk:dependencies --configuration releaseRuntimeClasspath --no-configuration-cache \
+            --console=plain > build/ci/sdk-dependencies.txt
+      - name: 允许当前 Runner 使用 KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-fetchkit-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: 验证真实 Release、AAR 和 Android 恢复
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 31
+          arch: x86_64
+          target: google_apis
+          avd-name: fetchkit-ci
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash tools/ci/android_device_ci.sh
+      - name: 整理校验值、符号和预发布说明
+        run: python tools/release/prepare_alpha.py --stage
+      - name: 上传 Alpha 并创建草稿预发布
+        if: inputs.publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 先创建草稿占用版本；同一 Tag 不自动覆盖已有 Release 或重用另一批产物。
+          gh release create "$GITHUB_REF_NAME" --verify-tag --draft --prerelease \
+            --title "FetchKit $GITHUB_REF_NAME" --notes-file build/alpha-notes.md
+          ./gradlew :sdk:publishReleasePublicationToGitHubPackagesRepository \
+            -Pfetchkit.probes=false --max-workers=2 --no-configuration-cache --console=plain \
+            -x :sdk:bundleReleaseAar -x :sdk:sourceReleaseJar \
+            -x :sdk:generatePomFileForReleasePublication -x :sdk:generateMetadataFileForReleasePublication
+          gh release upload "$GITHUB_REF_NAME" build/alpha-assets/*
+      - name: 归档本次环境与证据
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          python tools/ci/collect_ci_evidence.py --profile alpha-candidate \
+            --status "$JOB_STATUS" --output build/ci-evidence --input build/ci \
+            --input build/linux-m3/reports --input build/linux-m3/Testing/Temporary \
+            --input platform/android/sdk/build/test-results --input platform/android/sample/build/test-results
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: alpha-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/alpha-assets
+            build/alpha-notes.md
+            build/ci-evidence
+          retention-days: 30
+          if-no-files-found: error

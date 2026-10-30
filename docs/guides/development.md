@@ -73,6 +73,7 @@ fetchkit/
 
 ## 验证入口
 
+- [持续集成](continuous-integration.md)：GitHub Actions 日常检查、扩展验证与手动 Alpha 分发。
 - [测试说明](../../tests/README.md)：CTest、Android 探针、协议与恢复脚本；普通 SDK 构建不含探针或故障注入。
 - [体积测量](../../tools/size/README.md)：按完整宿主依赖测量接入增量。
 - [验证报告](../reports/README.md)：已测环境、原始结果及缺测项。

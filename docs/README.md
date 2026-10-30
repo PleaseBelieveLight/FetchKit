@@ -8,6 +8,7 @@
 ## 接入与开发 · `guides/`
 
 - [构建与运行](guides/development.md)：环境、工程结构、构建命令和验证入口。
+- [持续集成与 Alpha 发布](guides/continuous-integration.md)：GitHub Actions、日志归档、模拟器矩阵和手动预发布。
 - [Android 示例](guides/android-sample.md)：拾流 App 的下载、存储和后台任务操作。
 
 ## 接口与契约 · `reference/`
