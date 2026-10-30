@@ -31,6 +31,20 @@ def adb_failure_code(output):
     return "Unknown"
 
 
+def adb_failure_diagnostic(result):
+    # 只提取预定义边界和异常类型；原始异常消息、堆栈、路径及请求内容不进入报告。
+    output = result.stdout + result.stderr
+    markers = ("Can't find service", "Failed transaction", "Permission denied", "Security exception",
+               "No space left", "device offline", "device not found", "protocol fault",
+               "Broken pipe", "Unknown command", "Error accessing file", "Error: Can't open file",
+               "Performing Push Install", "Failure", "Success")
+    return {"returncode": result.returncode, "platform_code": adb_failure_code(output),
+            "exception_types": sorted(set(re.findall(r"\b(?:[a-z]\w*\.)+[A-Z]\w*(?:Exception|Error)\b", output))),
+            "markers": [marker for marker in markers if marker.lower() in output.lower()],
+            "stdout_bytes": len(result.stdout.encode("utf-8")),
+            "stderr_bytes": len(result.stderr.encode("utf-8"))}
+
+
 def read_installed_apk(adb, remote, local):
     # exec-out 保留二进制字节，不依赖旧镜像的 adb 文件同步接口，也不经过文本解码或 PTY。
     # 读取错误仍然失败，成功后仍由调用方与候选 APK 做完整 SHA-256 比对。
@@ -58,6 +72,7 @@ def main():
         result = subprocess.run(adb + arguments, capture_output=True, encoding="utf-8",
                                 errors="replace", timeout=timeout)
         if result.returncode:
+            report["adb_failure"] = {"operation": arguments[0], **adb_failure_diagnostic(result)}
             code = adb_failure_code(result.stdout + result.stderr)
             raise RuntimeError(f"ADB 操作失败：{arguments[0]}，退出码 {result.returncode}，平台码 {code}")
         return result.stdout

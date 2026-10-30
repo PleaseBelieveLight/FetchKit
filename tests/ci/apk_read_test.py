@@ -29,6 +29,14 @@ class ApkReadTest(unittest.TestCase):
                 startup.read_installed_apk(["adb", "-s", "emulator-5554"], "/data/app/base.apk", local)
             self.assertEqual(local.read_bytes(), payload)
 
+    def test_diagnostics_identify_service_failure_without_private_details(self):
+        result = subprocess.CompletedProcess([], 255, "Performing Push Install\n",
+                                             "java.lang.SecurityException: private token\nPermission denied /private/path")
+        diagnostic = startup.adb_failure_diagnostic(result)
+        self.assertEqual(diagnostic["exception_types"], ["java.lang.SecurityException"])
+        self.assertEqual(diagnostic["markers"], ["Permission denied", "Performing Push Install"])
+        self.assertNotIn("private", str(diagnostic))
+
     def test_nonzero_read_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             with patch.object(startup.subprocess, "run", return_value=subprocess.CompletedProcess([], 1)):

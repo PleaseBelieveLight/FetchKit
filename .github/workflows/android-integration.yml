@@ -63,7 +63,7 @@ jobs:
           target: google_apis
           profile: pixel_6
           cores: 2
-          ram-size: 3072M
+          ram-size: ${{ inputs.api-level == 37 && '4096M' || '3072M' }}
           heap-size: 512M
           avd-name: fetchkit-ci
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back none ${{ inputs.api-level == 37 && '-show-kernel' || '' }}
