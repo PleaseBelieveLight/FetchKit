@@ -28,8 +28,7 @@ Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 
 先验证公开演示签名的真实 Release APK，再验证
 外部 AAR；随后仅卸载该新建 guest 中的演示包以切换 Debug 签名，执行正式 SDK 协议与 SIGKILL/force-stop 恢复。
 `android_device_ci.sh` 同时检查 Actions 标识和 AVD 名，不允许直接用于本地已有设备。
-API 24 的 userdebug guest 若禁止读取已安装 APK，仅在读取时临时 root adbd，立即恢复后再启动应用；
-保留与候选 APK 的完整 SHA-256 比对，报告标记该读取方式，不对真机启用此选项。
+已安装 APK 通过二进制 `exec-out` 读取，兼容旧镜像的文件同步接口差异；读取失败和 SHA-256 不匹配均会失败。
 
 ## 日志与门槛
 

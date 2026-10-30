@@ -13,30 +13,14 @@ PACKAGE = "com.luofelix.fetchkit"
 COMPONENT = PACKAGE + "/com.luofelix.fetchkit.sample.MainActivity"
 
 
-class AdbCommandError(RuntimeError):
-    def __init__(self, operation, return_code, permission_denied=False):
-        self.permission_denied = permission_denied
-        reason = "，读取权限不足" if permission_denied else ""
-        super().__init__(f"ADB 操作失败：{operation}，退出码 {return_code}{reason}")
-
-
-def pull_installed_apk(command, remote, local, allow_emulator_root=False):
-    try:
-        command(["pull", remote, str(local)], timeout=60)
-        return False
-    except AdbCommandError as error:
-        if not allow_emulator_root or not error.permission_denied:
-            raise
-    # 旧 userdebug 镜像可能禁止 shell 读取已安装 APK。只对明确授权的模拟器临时提权读取，
-    # 无论读取结果如何均恢复 adbd；实际 Release 启动与页面验证仍在恢复后的环境进行。
-    try:
-        command(["root"])
-        command(["wait-for-device"], timeout=120)
-        command(["pull", remote, str(local)], timeout=60)
-    finally:
-        command(["unroot"])
-        command(["wait-for-device"], timeout=120)
-    return True
+def read_installed_apk(adb, remote, local):
+    # exec-out 保留二进制字节，不依赖旧镜像的 adb 文件同步接口，也不经过文本解码或 PTY。
+    # 读取错误仍然失败，成功后仍由调用方与候选 APK 做完整 SHA-256 比对。
+    with local.open("wb") as output:
+        result = subprocess.run(adb + ["exec-out", "cat", remote], stdout=output,
+                                stderr=subprocess.PIPE, timeout=60)
+    if result.returncode:
+        raise RuntimeError(f"读取设备 APK 失败，退出码 {result.returncode}")
 
 
 def main():
@@ -46,7 +30,6 @@ def main():
     parser.add_argument("--apk", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--skip-install", action="store_true", help="验证设备上已安装的相同 APK")
-    parser.add_argument("--emulator-root-pull", action="store_true", help="仅在测试模拟器读取 APK 权限不足时临时 root，读取后恢复")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     apk = args.apk.resolve()
@@ -57,7 +40,7 @@ def main():
         result = subprocess.run(adb + arguments, capture_output=True, encoding="utf-8",
                                 errors="replace", timeout=timeout)
         if result.returncode:
-            raise AdbCommandError(arguments[0], result.returncode, "permission denied" in result.stderr.lower())
+            raise RuntimeError(f"ADB 操作失败：{arguments[0]}，退出码 {result.returncode}")
         return result.stdout
 
     def pid():
@@ -101,8 +84,6 @@ def main():
                        "abis": command(["shell", "getprop", "ro.product.cpu.abilist"]).strip(),
                        "model": command(["shell", "getprop", "ro.product.model"]).strip(),
                        "emulator": command(["shell", "getprop", "ro.kernel.qemu"]).strip() == "1"})
-        if args.emulator_root_pull and not (args.serial.startswith("emulator-") and report["emulator"]):
-            raise ValueError("临时 root 读取仅允许明确选中的测试模拟器")
         if not args.skip_install:
             # 同签名覆盖安装保留数据；签名不匹配时失败，绝不卸载或清空用户数据。
             install = command(["install", "-r", str(apk)], timeout=120)
@@ -113,8 +94,8 @@ def main():
         if len(paths) != 1 or not paths[0].startswith("package:"):
             raise AssertionError("预期安装单个独立 Release APK")
         installed = args.output / "installed.apk"
-        report["apk_read_with_emulator_root"] = pull_installed_apk(
-            command, paths[0][8:], installed, args.emulator_root_pull)
+        read_installed_apk(adb, paths[0][8:], installed)
+        report["apk_read_method"] = "exec-out-cat"
         if hashlib.sha256(installed.read_bytes()).hexdigest() != report["apk_sha256"]:
             raise AssertionError("设备实际安装的 APK 与待验证产物不同")
         package = command(["shell", "dumpsys", "package", PACKAGE])

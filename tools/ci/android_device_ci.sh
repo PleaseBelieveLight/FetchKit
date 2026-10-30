@@ -17,11 +17,7 @@ task_build_tools="$(sed -n 's/^build-tools;//p' build/ci/android-toolchain.txt)"
 "$ANDROID_HOME/build-tools/$task_build_tools/apksigner" verify --verbose --print-certs \
     platform/android/sample/build/outputs/apk/release/sample-release.apk > build/ci/apk-signature.txt
 
-task_startup_flags=()
-if [[ "$(adb -s "$task_serial" shell getprop ro.build.version.sdk | tr -d '\r')" == "24" ]]; then
-    task_startup_flags+=(--emulator-root-pull)
-fi
-python tests/packaging/sample_release_startup_test.py --serial "$task_serial" "${task_startup_flags[@]}" \
+python tests/packaging/sample_release_startup_test.py --serial "$task_serial" \
     --apk platform/android/sample/build/outputs/apk/release/sample-release.apk --output build/ci/release-startup
 python tools/ci/verify_android_package.py --repository build/m5-maven --sdk "$ANDROID_HOME" \
     --adb "$(command -v adb)" --serial "$task_serial" --abi x86_64 --java-home "$JAVA_HOME" \
