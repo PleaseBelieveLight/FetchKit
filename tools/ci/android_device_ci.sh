@@ -28,7 +28,7 @@ python tools/ci/verify_android_package.py --repository build/m5-maven --sdk "$AN
     --adb "$(command -v adb)" --serial "$task_serial" --abi x86_64 --java-home "$JAVA_HOME" \
     --output build/ci/aar-consumer
 
-# Alpha 打包先匹配符号并核对许可/ABI，随后调试构建即使更新中间产物也不影响待分发包。
+# 预发布打包先匹配符号并核对许可/ABI，随后调试构建即使更新中间产物也不影响待分发包。
 if [[ "${FETCHKIT_CI_PACKAGE:-0}" == "1" ]]; then
     python tools/release/package_preview.py --native-prefix build/alpha-install --native-build build/alpha-native \
         --repository build/m5-maven --dependencies build/ci/sdk-dependencies.txt \

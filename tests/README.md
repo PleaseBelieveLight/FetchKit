@@ -4,7 +4,7 @@
 
 ## GitHub Actions
 
-日常主机/Android 检查、扩展验证、环境与日志归档以及手动 Alpha 发布见
+日常主机/Android 检查、扩展验证、环境与日志归档以及手动 Alpha/Beta/RC 预发布见
 [持续集成指南](../docs/guides/continuous-integration.md)。CI 工具本身的失败路径检查使用
 `python -m unittest discover -s tests/ci -p '*_test.py' -v`；不替代以下运行时验收。
 工作流还通过 `source tests/ci/pipeline_test.sh` 在实际 shell 中复现失败命令经过 `tee` 的路径，

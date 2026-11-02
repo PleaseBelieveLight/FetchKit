@@ -2,13 +2,13 @@
 
 首次接入可按「[构建与运行](guides/development.md) → [Android API](reference/android-api.md) 或
 [主机 API](reference/host-api.md)」阅读；已有产物的集成方直接查看 [接入与打包](release/packaging.md)。
-当前为 `0.1.0-alpha.1`，支持本地预览和 GitHub Packages 发布配置，验收结果与限制以 [发布检查表](release/checklist.md) 和
+源码版本以根目录 `VERSION` 为准，支持本地预览和 Alpha/Beta/RC 的 GitHub Packages 预发布配置，验收结果与限制以 [发布检查表](release/checklist.md) 和
 [验证报告](reports/README.md) 为准。
 
 ## 接入与开发 · `guides/`
 
 - [构建与运行](guides/development.md)：环境、工程结构、构建命令和验证入口。
-- [持续集成与 Alpha 发布](guides/continuous-integration.md)：GitHub Actions、日志归档、模拟器矩阵和手动预发布。
+- [持续集成与预发布](guides/continuous-integration.md)：GitHub Actions、日志归档、模拟器矩阵和手动预发布。
 - [Android 示例](guides/android-sample.md)：拾流 App 的下载、存储和后台任务操作。
 
 ## 接口与契约 · `reference/`

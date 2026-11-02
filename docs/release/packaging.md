@@ -1,4 +1,4 @@
-# 接入、打包与 Alpha 发布
+# 接入、打包与预发布
 
 [文档中心](../README.md) · [发布检查表](checklist.md)
 
@@ -107,9 +107,9 @@ SDK Future。
 
 ### GitHub Packages 发布与接入
 
-仓库提供手动 `Alpha release` 工作流：从与 `VERSION` 一致的 Alpha Tag 重新构建验证，默认仅生成
+仓库提供手动 `Prerelease` 工作流：从与 `VERSION` 一致的 Alpha/Beta/RC Tag 重新构建验证，默认仅生成
 Actions Artifact；显式选择上传后才发布 Packages 并创建草稿预发布。操作与自动验证范围见
-[持续集成与 Alpha 发布](../guides/continuous-integration.md#手动准备和分发-alpha)。正式发布门槛保持不变。
+[持续集成与预发布](../guides/continuous-integration.md#手动准备和分发预发布版本)。正式发布门槛保持不变。
 
 默认发布仓库是 `https://maven.pkg.github.com/pleasebelievelight/fetchkit`，对应源码仓库
 `PleaseBelieveLight/FetchKit`。迁移或 fork 时可用 `-Pfetchkit.githubRepository=OWNER/REPOSITORY`
@@ -129,7 +129,7 @@ gpr.key=YOUR_PERSONAL_ACCESS_TOKEN_CLASSIC
 Maven 预览发布无需这些凭证，远程发布缺少凭证时会在上传前失败。 GitHub
 的认证和权限要求见 [Gradle registry 官方文档](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)。
 
-确认本地双 ABI 产物、外部接入和 Alpha 说明后，显式执行远程发布任务。发布时关闭配置缓存，避免将认证信息保存到配置缓存：
+确认本地双 ABI 产物、外部接入和对应阶段的预发布说明后，显式执行远程发布任务。发布时关闭配置缓存，避免将认证信息保存到配置缓存：
 
 ```powershell
 .\gradlew.bat :sdk:publishReleasePublicationToGitHubPackagesRepository '-Pfetchkit.probes=false' --max-workers=2 --no-configuration-cache
@@ -137,7 +137,7 @@ Maven 预览发布无需这些凭证，远程发布缺少凭证时会在上传�
 
 不要用聚合任务 `:sdk:publish` 代替本地预览命令，它会包含所有已配置仓库的发布任务。 发布后在 GitHub 仓库的
 Packages 区域查看包；同一版本不要重复用于不同源码。 已有 Tag 不会自动包含后续构建配置的修改：先提交并确定实际发布提交，保留已公开
-Tag， 需要包含这些修改的新源码快照时递增 Alpha 序号并创建新 Tag，避免让产物与所标记源码不一致。
+Tag， 需要包含这些修改的新源码快照时递增预发布序号并创建新 Tag，避免让产物与所标记源码不一致。
 
 使用方在 `settings.gradle.kts` 的 `dependencyResolutionManagement.repositories` 中添加：
 
@@ -161,14 +161,14 @@ implementation("com.luofelix.fetchkit:fetchkit:0.1.0-alpha.1")
 ```
 
 公开的 Maven/Gradle 包下载也需要认证，使用方 token 至少需要 `read:packages`。 也可在对应的 GitHub
-Release 附上 AAR、校验值和 Alpha 限制说明，供直接下载；直接使用 AAR 仍须自行声明运行依赖。Alpha
+Release 附上 AAR、校验值和对应阶段的预发布限制说明，供直接下载；直接使用 AAR 仍须自行声明运行依赖。预发布
 分发不表示已通过首版正式发布验收，不改变现有发布门槛。
 
 ## 演示 APK 的公开签名
 
 sample 的 Release 变体使用所有者授权公开的演示密钥，保留既有 R8 代码/资源优化，不包含 Debug 专用的
 Compose 调试工具、测试 CA 或明文网络放行。最低 API 24，包含 arm64-v8a 和 x86_64。 这是 Release 构建的
-Alpha 演示 App，不代表 SDK 已通过首版正式发布验收。
+预发布演示 App，不代表 SDK 已通过首版正式发布验收。
 
 ```powershell
 .\gradlew.bat :sample:assembleRelease '-Pfetchkit.probes=false' --max-workers=2 --no-configuration-cache
@@ -184,7 +184,7 @@ Release。SDK、示例 App 的 `versionName` 和文件名统一读取根目录 `
 | Sample APK | `fetchkit-sample-<VERSION>-debug.apk` / `fetchkit-sample-<VERSION>-release.apk` |
 
 AAR 仍在 `platform/android/sdk/build/outputs/aar/`，APK 仍在 sample 的 `build/outputs/apk/<buildType>/`。
-测试 APK 使用 AGP 默认名称；Maven 发布使用标准 `fetchkit-<VERSION>.aar`，Alpha 附件沿用
+测试 APK 使用 AGP 默认名称；Maven 发布使用标准 `fetchkit-<VERSION>.aar`，预发布附件沿用
 `fetchkit-sample-<VERSION>.apk`。CI、测试和测量工具通过 `tools/ci/android_artifacts.py` 精确读取当前版本与变体，
 缺少产物时失败，不使用旧文件或通配匹配。命令行可定位已构建文件：
 

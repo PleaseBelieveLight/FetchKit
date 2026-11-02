@@ -3,14 +3,14 @@
 FetchKit 是面向 Android 与 Linux 的 C++ 文件下载 SDK，提供断点续传、多任务调度、持久化重试、 SHA-256
 校验和带配额的资源存储。Android 通过 Kotlin/JNI 接入，主机提供 C ABI、C++ 包装与 CLI。
 
-当前为 `0.1.0-alpha.1` Alpha 预览版，接口尚未冻结，完整发布验收尚未通过。项目采用
+当前处于预发布阶段，源码版本以根目录 `VERSION` 为准。接口尚未冻结，完整发布验收尚未通过。项目采用
 [Apache-2.0](LICENSE)。
 
 ## Android SDK 接入
 
 最低支持 Android API 24，AAR 包含 `arm64-v8a` 和 `x86_64`。以下方式二选一，宿主 `minSdk` 不低于 24；
 `settings.gradle.kts` 的 `dependencyResolutionManagement.repositories` 中需保留 `google()` 和
-`mavenCentral()` 以解析运行依赖。以下示例使用 Kotlin DSL。
+`mavenCentral()` 以解析运行依赖。以下示例使用 Kotlin DSL，以 `0.1.0-alpha.1` 为例；接入时统一替换为实际已发布的目标版本。
 
 ### 方式一：本地 AAR
 

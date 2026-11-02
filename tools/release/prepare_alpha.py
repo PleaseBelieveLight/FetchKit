@@ -1,10 +1,9 @@
-"""校验手动 Alpha Tag 并整理已验证的产物；本工具不上传。"""
+"""校验手动 Alpha/Beta/RC Tag 并整理已验证的产物；本工具不上传。"""
 import argparse
 import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import sys
@@ -12,12 +11,17 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/ci"))
-from android_artifacts import android_artifact
+from android_artifacts import VERSION_PATTERN, android_artifact
+
+
+def prerelease_channel(version):
+    if not VERSION_PATTERN.fullmatch(version) or "-" not in version:
+        raise ValueError("该工作流只支持 -alpha.N、-beta.N 或 -rc.N 预发布，VERSION 不带 v 前缀；正式版继续使用严格发布验收")
+    return version.split("-", 1)[1].split(".", 1)[0]
 
 
 def validate_tag(version, ref, commit, tagged_commit):
-    if not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-alpha\.(0|[1-9][0-9]*)", version):
-        raise ValueError("该工作流只支持 Alpha；正式版继续使用严格发布验收")
+    prerelease_channel(version)
     if ref != "refs/tags/v" + version or commit != tagged_commit:
         raise ValueError("必须从与 VERSION、当前提交一致的 v<VERSION> Tag 手动运行")
 
@@ -57,6 +61,7 @@ def main():
     parser.add_argument("--stage", action="store_true")
     args = parser.parse_args()
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    channel_label = {"alpha": "Alpha", "beta": "Beta", "rc": "RC"}[prerelease_channel(version)]
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     tagged = subprocess.check_output(["git", "rev-parse", "refs/tags/v" + version + "^{commit}"], cwd=ROOT, text=True).strip()
     validate_tag(version, os.environ.get("GITHUB_REF", ""), commit, tagged)
@@ -100,7 +105,7 @@ def main():
         for path in sorted(output.iterdir()) if path.is_file()), encoding="utf-8")
     (build / "alpha-notes.md").write_text(
         f"FetchKit {version}\n\n源码提交：{commit}\n\n"
-        "Alpha 预发布，C ABI 尚未冻结，升级后请重新编译宿主。\n\n"
+        f"{channel_label} 预发布，C ABI 尚未冻结，升级后请重新编译宿主。\n\n"
         "包含双 ABI AAR、sources、POM、Linux Native 预览、公开演示签名的 Release APK、符号和 SHA-256。"
         "直接使用 AAR 仍需自行声明 OkHttp 等运行依赖。Linux Native 包依赖目标系统的 OpenSSL、zlib 和运行库。\n\n"
         "本次自动验证覆盖 Linux 常规协议/恢复、外部 C/C++ 接入、API 31 x86_64 模拟器的 Android 协议/恢复、"
