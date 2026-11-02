@@ -158,10 +158,13 @@ def main():
                 for request in fixtures[1].server.requests)
             report["m3_request_counts"] = getattr(fixtures[0].server, "m3_counts", {})
             report["no_hidden_503_retry"] = report["m3_request_counts"].get("android-no-hidden") == 1
+            recovery_cases = {"known-limit-auth-rebind", "known-limit-request-source"}
+            executed_cases = {case["id"] for case in report["cases"] if case.get("passed")}
+            report["request_recovery_cases_present"] = recovery_cases.issubset(executed_cases)
             report["fixture_certificate_sha256"] = hashlib.sha256(cert.read_bytes()).hexdigest()
             report["passed"] = (report["passed"] and report["junit_passed"] and
                 not report["identity_request_failures"] and not report["ambient_cookie_sent"] and
-                not report["peer_credentials_sent"] and report["no_hidden_503_retry"])
+                not report["peer_credentials_sent"] and report["no_hidden_503_retry"] and report["request_recovery_cases_present"])
             (args.output / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
             print(json.dumps({key: report[key] for key in ("api", "abi", "failure_count", "fixture_requests", "passed")}, ensure_ascii=False))
             print("Failed cases:", [case["id"] for case in report["cases"] if not case["passed"]])

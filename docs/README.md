@@ -24,6 +24,7 @@
 - [首版设计基线](design/v1-design.md)：产品边界、核心架构、协议与验收场景。
 - [首版落地计划](design/v1-implementation-plan.md)：工作包、依赖和阶段目标。
 - [Android SDK 功能补齐计划](design/android-sdk-completeness-plan.md)：换链恢复、单任务查询、后台网络协调、导出与 Kotlin 接入。
+- [新请求重试契约](design/request-retry-contract.md)：A0 固定的准入、请求来源、预算和生命周期要求，A1 实现与验收依据。
 
 设计目标与历史阶段进展不代表当前能力已全部验收。
 

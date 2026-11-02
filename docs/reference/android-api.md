@@ -56,6 +56,9 @@ FetchKit.setLogLevel(LogLevel.Off)   // 排障结束后关闭
 
 ## 订阅、事件与恢复
 
+失败后更新请求并保留检查点的新增接口，见 [A0 契约](../design/request-retry-contract.md)；
+该接口待 A1 实现，下面的示例仍使用现有 API。
+
 `DownloadSubscription` 是独立订阅；相同身份共享一个 writer。`pause` / `resume` 影响共享任务，
 `cancel` 仅撤销当前订阅，`releaseAsync` 静默释放；最后订阅释放保留暂停记录，最后显式取消清理未完成任务。
 

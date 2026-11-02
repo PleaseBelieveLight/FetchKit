@@ -46,6 +46,8 @@ provider 应在每轮 Initial 阶段按业务引用取得当前有效请求，SD
 
 ## 3. A0：先固定新增契约和回归场景
 
+A0 的具体接口/状态表和回归要求固定在 [新请求重试契约](request-retry-contract.md)，后续实现以该契约为准。
+
 实施落点：`include/fetchkit/fetchkit.h`、`src/core/engine.*`、`src/core/download_session.cpp`、
 Android `Models.kt` / `DownloadEngine.kt` / JNI，以及现有测试服务器与单元测试。
 
@@ -235,7 +237,7 @@ arm64。
 
 ## 9. 阶段完成清单
 
-- [ ] A0：状态转换、请求来源、预算和生命周期契约固定，失败复现可稳定运行。
+- [x] A0：状态转换、请求来源、预算和生命周期契约固定，主机失败复现通过；[结果与 Android 未执行项](../reports/android-request-recovery-a0.md)。
 - [ ] A1：旧链接失效后可用新请求重试，检查点、共享订阅、凭证与取消屏障符合契约。
 - [ ] A2：无订阅可直接查询持久化任务，不启动下载、不改变资源生命周期。
 - [ ] 第一批交付：A1/A2 对应主机、Android、外部接入及文档检查有当前候选证据，缺测项明确。

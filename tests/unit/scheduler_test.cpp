@@ -182,6 +182,52 @@ void retryBudget(const std::string& root) {
     engine->close();engine=std::make_shared<Engine>(cfg,transport);sub=engine->enqueue(r,2);
     require(done(sub).retry_count==3 && transport->count(r.request.url)==5,"restart reset spent budget");engine->close();
 }
+void authRecoveryBaseline(const std::string& root) {
+    // A0 特征测试：明确记录当前缺口；A1 用新请求重试成功的断言替换此基线。
+    for(const auto status:{401,403}) {
+        auto transport=std::make_shared<FakeTransport>();auto old=request("expired");
+        std::atomic<int> refreshes{0};
+        old.provider=[&](const ProviderContext& context,RequestData&,transport::Cancellation&) {
+            if(context.reason==FETCHKIT_REQUEST_AUTH_REFRESH) ++refreshes;
+        };
+        transport->set(old.request.url,{65536,true});
+        auto engine=std::make_shared<Engine>(configFor(root+'/'+std::to_string(status)),transport);
+        auto first=engine->enqueue(old,1);
+        eventually([&]{return read(first).received_bytes==1024;},"auth baseline prefix");
+        require(engine->control(first->task,StopReason::Pause)==FETCHKIT_OK,"auth baseline pause");
+        require(done(first).committed_offset==1024,"auth baseline checkpoint");
+        transport->set(old.request.url,{65536,false,false,100,status});
+        require(engine->control(first->task,StopReason::None,true)==FETCHKIT_OK,"auth baseline resume");
+        const auto failed=done(first);
+        require(failed.error==FETCHKIT_AUTH_REQUIRED && failed.committed_offset==1024 && refreshes==1,"auth refresh boundary");
+        auto fresh=old;fresh.request.url="https://fixture/refreshed";fresh.provider={};
+        transport->set(fresh.request.url,{65536});
+        auto second=engine->enqueue(fresh,2);
+        const auto rebound=done(second);
+        require(rebound.error==FETCHKIT_AUTH_REQUIRED && rebound.generation==failed.generation,"A0 changed: rebind now recovers");
+        require(engine->control(second->task,StopReason::None,true)==FETCHKIT_BUSY,"A0 changed: auth failure now resumes");
+        require(transport->count(fresh.request.url)==0 && transport->count(old.request.url)==3,"baseline unexpected HTTP request");
+        require(engine->storage()->find(failed.persistent_id)->committed==1024,"baseline lost saved prefix");
+        engine->close();
+    }
+}
+void requestSourceBaseline(const std::string& root) {
+    auto transport=std::make_shared<FakeTransport>();auto old=request("old-source");
+    std::atomic<int> old_calls{0},fresh_calls{0};
+    old.provider=[&](const ProviderContext&,RequestData&,transport::Cancellation&) {++old_calls;};
+    transport->set(old.request.url,{65536,true});
+    auto engine=std::make_shared<Engine>(configFor(root),transport);auto first=engine->enqueue(old,1);
+    eventually([&]{return read(first).received_bytes==1024;},"source baseline prefix");
+    require(engine->control(first->task,StopReason::Pause)==FETCHKIT_OK,"source baseline pause");
+    require(done(first).state==FETCHKIT_PAUSED,"source baseline checkpoint");
+    auto fresh=old;fresh.request.url="https://fixture/new-source";
+    fresh.provider=[&](const ProviderContext&,RequestData&,transport::Cancellation&) {++fresh_calls;};
+    transport->set(fresh.request.url,{65536});transport->gate=true;
+    auto second=engine->enqueue(fresh,2);completed(second);
+    require(old_calls==2 && fresh_calls==0,"A0 changed: new subscription takes request ownership");
+    require(transport->count(old.request.url)==2 && transport->count(fresh.request.url)==0,"baseline source selection changed");
+    engine->close();
+}
 void quota(const std::string& root) {
     auto cfg=configFor(root);cfg.capacity_bytes=storage::ResourceStore::metadataBudget()*3+131072;
     auto transport=std::make_shared<FakeTransport>();auto engine=std::make_shared<Engine>(cfg,transport);
@@ -358,6 +404,7 @@ int main(int argc,char** argv) {
         {"parallelism-and-control",concurrency},{"shared-subscriptions",sharing},{"provider-lifetime",providerLifetime},
         {"event-backpressure",events},{"slow-callback-close",slowCallback},{"persistent-retry",retryPersistence},
         {"retry-budget",retryBudget},{"quota-reservations",quota},{"unknown-length-quota",unknownQuota},
+        {"known-limit-auth-rebind",authRecoveryBaseline},{"known-limit-request-source",requestSourceBaseline},
         {"lru-pin-expiry-lease",cache},{"staging-recount-retention",retention},{"retry-date-policy",dates},
         {"expired-pinned-refresh",expiredRefresh},{"retained-subscription-bound",subscriberLimit},
         {"callback-reentrancy",reentrancy},{"64-bit-ledger",largeLedger},{"cancel-pause-release-close-races",closeRaces},
@@ -367,5 +414,5 @@ int main(int argc,char** argv) {
         try {item.second(std::string(argv[1])+"/"+run+"/"+item.first);std::cout<<item.first<<": passed\n";}
         catch(const std::exception& error){std::cerr<<item.first<<": "<<error.what()<<'\n';return 1;}
     }
-    std::cout<<"21 scheduler/storage suites passed\n";return 0;
+    std::cout<<"23 scheduler/storage suites passed (including 2 A0 known-limit baselines)\n";return 0;
 }

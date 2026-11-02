@@ -90,6 +90,11 @@ API 24/中间/目标 API、arm64 真机、系统停止/网络切换、重启和�
 
 ## M3 调度、重试、配额与竞态
 
+2026-11-02 A0 在 `scheduler_storage` 和正式 Android 下载矩阵中增加两个 `known-limit-` 特征场景，
+分别记录鉴权失败重绑不执行、旧订阅优先提供请求的已知缺口；通过仅表示缺口已稳定复现。
+状态表和 A1 成功恢复验收见 [新请求重试契约](../docs/design/request-retry-contract.md)。
+Android 驱动同时检查这两项实际执行，不能用主机结果替代 JNI 运行时验证。
+
 参考构建开启 `FETCHKIT_BUILD_TESTS`、`FETCHKIT_BUILD_PROBES`、`FETCHKIT_WITH_CURL`、
 `FETCHKIT_USE_PINNED_CURL`、`FETCHKIT_ENABLE_FAULT_INJECTION`，执行常规 CTest（排除 `large_file`）。
 `scheduler_storage` 含 21 组确定性会话，覆盖 3 活动任务/保留控制通道、共享订阅、provider 生命周期、事件背压与重入、
