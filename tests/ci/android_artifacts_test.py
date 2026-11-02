@@ -44,7 +44,8 @@ class AndroidArtifactsTest(unittest.TestCase):
     def test_invalid_versions_and_variants_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            for version in ("", "01.2.3", "1.2", "1.2.3-alpha.01", "1.2.3-preview.1", "../../other"):
+            for version in ("", "01.2.3", "1.2", "v1.2.3", "v0.2.0-beta.3",
+                            "1.2.3-alpha.01", "1.2.3-preview.1", "../../other"):
                 (root / "VERSION").write_text(version)
                 with self.subTest(version=version), self.assertRaises(ValueError):
                     android_artifact(root, "apk", require_exists=False)

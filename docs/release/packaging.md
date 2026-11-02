@@ -2,7 +2,8 @@
 
 [文档中心](../README.md) · [发布检查表](checklist.md)
 
-版本源是根目录 `VERSION`，当前 `0.1.0-alpha.1`，Tag 命名使用 `v<VERSION>`。支持
+版本源是根目录 `VERSION`，内容不带 `v` 前缀；Git Tag 命名使用 `v<VERSION>`。例如 `VERSION` 为
+`0.2.0-beta.3` 时，Tag 为 `v0.2.0-beta.3`。支持
 `major.minor.patch`，以及附加 `-alpha.N`、`-beta.N` 或 `-rc.N` 的预发布版本；数字不使用前导零。 完整版本用于
 Maven 坐标、`fetchkit_version()`、`FetchKit.version()` 和安装包中的 `VERSION`。 尚未冻结 C
 ABI；升级库后重新编译宿主。当前结果与未通过的正式发布门槛见
