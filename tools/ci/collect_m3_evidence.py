@@ -9,6 +9,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
+from android_artifacts import android_artifact
 
 
 def sha256(path):
@@ -77,7 +78,7 @@ def main():
     zlib_version = re.search(r'#define\s+ZLIB_VERSION\s+"([^"]+)"', header).group(1)
     artifacts = [args.host_build / "fetchkit_cli.exe", args.host_build / "libfetchkit.a",
                  args.host_build / "fetchkit_scheduler_test.exe",
-                 ROOT / "platform/android/sdk/build/outputs/aar/sdk-release.aar"]
+                 android_artifact(ROOT, "aar")]
     artifacts += [args.size_build / ("stripped/libfetchkit_" + mode + "_measure.so")
                   for mode in ("baseline", "digest", "engine")]
     names = subprocess.check_output(

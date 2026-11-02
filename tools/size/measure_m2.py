@@ -7,9 +7,12 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 from zipfile import ZipFile
 
 ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/ci"))
+from android_artifacts import android_artifact
 
 
 def main():
@@ -17,7 +20,7 @@ def main():
     parser.add_argument("--ndk",type=Path,required=True)
     parser.add_argument("--cmake",type=Path,required=True)
     parser.add_argument("--output",type=Path,default=ROOT/"build/m2-size-arm64")
-    parser.add_argument("--aar",type=Path,default=ROOT/"platform/android/sdk/build/outputs/aar/sdk-release.aar")
+    parser.add_argument("--aar",type=Path,default=android_artifact(ROOT, "aar", require_exists=False))
     parser.add_argument("--include-engine",action="store_true",help="Also retain M3 scheduler/storage/C ABI with a fake transport")
     args=parser.parse_args();args.output=args.output.resolve();args.output.mkdir(parents=True,exist_ok=True)
     extension=".exe" if platform.system()=="Windows" else ""

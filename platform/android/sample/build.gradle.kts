@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val sdkVersion = rootProject.version.toString()
+
 android {
     namespace = "com.luofelix.fetchkit.sample"
     compileSdk {
@@ -14,7 +16,7 @@ android {
         minSdk = 24
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
+        versionName = sdkVersion
 
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
@@ -53,6 +55,11 @@ android {
 }
 
 androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("fetchkit-sample-$sdkVersion-${variant.name}.apk")
+        }
+    }
     onVariants(selector().withBuildType("debug")) { variant ->
         if (providers.gradleProperty("fetchkit.probes").orNull == "true") {
             variant.androidTest?.sources?.kotlin?.addStaticSourceDirectory("src/probeTest/java")

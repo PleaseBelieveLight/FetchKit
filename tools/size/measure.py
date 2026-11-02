@@ -12,6 +12,8 @@ import sys
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/ci"))
+from android_artifacts import android_artifact
 
 
 def gradle(arguments, log):
@@ -96,7 +98,7 @@ def main():
         result = {"apk": describe(apk), "command": tasks + properties}
         if mode != "bare":
             aar = output / "sdk.aar"
-            shutil.copy2(ROOT / "platform/android/sdk/build/outputs/aar/sdk-release.aar", aar)
+            shutil.copy2(android_artifact(ROOT, "aar"), aar)
             result["aar"] = describe(aar)
             result["native_profile"] = native_profile(args.abi, mode in ("probe", "okhttp"), output)
         report["modes"][mode] = result
@@ -107,7 +109,7 @@ def main():
     full_abi.mkdir(exist_ok=True)
     gradle([":sdk:assembleRelease", "-Pfetchkit.probes=false", "-Pfetchkit.abis=arm64-v8a,x86_64"], full_abi / "build.log")
     full_aar = full_abi / "sdk.aar"
-    shutil.copy2(ROOT / "platform/android/sdk/build/outputs/aar/sdk-release.aar", full_aar)
+    shutil.copy2(android_artifact(ROOT, "aar"), full_aar)
     report["full_abi_scaffold_aar"] = describe(full_aar)
     (destination / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(f"Report: {destination / 'report.json'}")

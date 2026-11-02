@@ -9,6 +9,7 @@ import shutil
 import subprocess
 
 ROOT=Path(__file__).resolve().parents[2]
+from android_artifacts import android_artifact
 
 
 def main():
@@ -64,7 +65,7 @@ def main():
                 values[key]=value
         return values
     artifacts=[args.host_build/("fetchkit_cli"+extension),args.host_build/"libfetchkit.a",args.large_build/("fetchkit_recovery_driver"+extension),
-        ROOT/"platform/android/sdk/build/outputs/aar/sdk-release.aar",args.size_build/"stripped/libfetchkit_baseline_measure.so",
+        android_artifact(ROOT, "aar"),args.size_build/"stripped/libfetchkit_baseline_measure.so",
         args.size_build/"stripped/libfetchkit_digest_measure.so"]
     host_profile=cmake_profile(args.host_build)
     zlib_header=(Path(host_profile["ZLIB_INCLUDE_DIR"])/"zlib.h").read_text(encoding="utf-8")

@@ -173,8 +173,24 @@ Alpha 演示 App，不代表 SDK 已通过首版正式发布验收。
 .\gradlew.bat :sample:assembleRelease '-Pfetchkit.probes=false' --max-workers=2 --no-configuration-cache
 ```
 
-签名产物为 `platform/android/sample/build/outputs/apk/release/sample-release.apk`，可附到 GitHub
-Release。 SDK 版本仍由根目录 `VERSION` 决定；示例 App 的 `versionName`/`versionCode` 沿用 sample 配置。
+签名产物为 `platform/android/sample/build/outputs/apk/release/fetchkit-sample-<VERSION>-release.apk`，可附到 GitHub
+Release。SDK、示例 App 的 `versionName` 和文件名统一读取根目录 `VERSION`；`versionCode` 在 sample 配置中独立维护，
+用于 Android 安装升级排序。完整版本包括预发布后缀，普通构建使用以下名称：
+
+| 产物 | 文件名 |
+|------|--------|
+| SDK AAR | `fetchkit-<VERSION>-debug.aar` / `fetchkit-<VERSION>-release.aar` |
+| Sample APK | `fetchkit-sample-<VERSION>-debug.apk` / `fetchkit-sample-<VERSION>-release.apk` |
+
+AAR 仍在 `platform/android/sdk/build/outputs/aar/`，APK 仍在 sample 的 `build/outputs/apk/<buildType>/`。
+测试 APK 使用 AGP 默认名称；Maven 发布使用标准 `fetchkit-<VERSION>.aar`，Alpha 附件沿用
+`fetchkit-sample-<VERSION>.apk`。CI、测试和测量工具通过 `tools/ci/android_artifacts.py` 精确读取当前版本与变体，
+缺少产物时失败，不使用旧文件或通配匹配。命令行可定位已构建文件：
+
+```powershell
+python tools/ci/android_artifacts.py --kind apk --build-type release
+python tools/ci/android_artifacts.py --kind aar --build-type release
+```
 
 公开签名材料位于 [sample/signing](../../platform/android/sample/signing/README.md)：
 

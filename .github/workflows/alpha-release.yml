@@ -63,6 +63,7 @@ jobs:
             2>&1 | tee build/ci/android-build.log
           python tools/ci/check_junit_results.py platform/android/sdk/build/test-results \
             platform/android/sample/build/test-results
+          python tests/packaging/android_artifact_contents_test.py --output build/ci/android-artifacts.json
           python tests/packaging/publication_guards_test.py --output build/ci/publication-guards
           ./gradlew :sdk:dependencies --configuration releaseRuntimeClasspath --no-configuration-cache \
             --console=plain > build/ci/sdk-dependencies.txt

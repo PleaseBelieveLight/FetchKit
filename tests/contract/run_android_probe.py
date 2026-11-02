@@ -8,6 +8,8 @@ import sys
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/ci"))
+from android_artifacts import android_artifact
 sys.path.insert(0, str(ROOT / "tests/server"))
 from http_fixture import RunningFixture
 
@@ -36,7 +38,7 @@ def main():
             if completed.returncode:
                 raise RuntimeError(f"Probe build failed; see {args.output / 'gradle.log'}")
             subprocess.run(adb + ["wait-for-device"], check=True, timeout=120)
-            subprocess.run(adb + ["install", "-r", str(ROOT / "platform/android/sample/build/outputs/apk/debug/sample-debug.apk")], check=True)
+            subprocess.run(adb + ["install", "-r", str(android_artifact(ROOT, "apk", "debug"))], check=True)
             subprocess.run(adb + ["install", "-r", str(ROOT / "platform/android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk")], check=True)
             # Allocate on the device after building/installing: adb may restart during
             # a long build, and an existing user's reverse rule must never be replaced.

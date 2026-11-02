@@ -18,11 +18,12 @@ adb -s "$task_serial" shell input keyevent KEYCODE_MENU
 python tools/ci/android_ci_config.py --output build/ci/android-config.env
 task_ndk="$(sed -n 's/^ndk=//p' build/ci/android-config.env)"
 task_build_tools="$(sed -n 's/^build-tools;//p' build/ci/android-toolchain.txt)"
+task_release_apk="$(python tools/ci/android_artifacts.py --kind apk)"
 "$ANDROID_HOME/build-tools/$task_build_tools/apksigner" verify --verbose --print-certs \
-    platform/android/sample/build/outputs/apk/release/sample-release.apk > build/ci/apk-signature.txt
+    "$task_release_apk" > build/ci/apk-signature.txt
 
 python tests/packaging/sample_release_startup_test.py --serial "$task_serial" \
-    --apk platform/android/sample/build/outputs/apk/release/sample-release.apk --output build/ci/release-startup
+    --apk "$task_release_apk" --output build/ci/release-startup
 python tools/ci/verify_android_package.py --repository build/m5-maven --sdk "$ANDROID_HOME" \
     --adb "$(command -v adb)" --serial "$task_serial" --abi x86_64 --java-home "$JAVA_HOME" \
     --output build/ci/aar-consumer

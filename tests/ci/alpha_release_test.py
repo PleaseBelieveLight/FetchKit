@@ -26,7 +26,7 @@ class AlphaReleaseTest(unittest.TestCase):
             coordinates = preview / f"maven/com/luofelix/fetchkit/fetchkit/{version}"
             coordinates.mkdir(parents=True)
             aar = coordinates / f"fetchkit-{version}.aar"
-            apk = root / "platform/android/sample/build/outputs/apk/release/sample-release.apk"
+            apk = root / f"platform/android/sample/build/outputs/apk/release/fetchkit-sample-{version}-release.apk"
             apk.parent.mkdir(parents=True)
             for target, prefix in ((aar, "jni"), (apk, "lib")):
                 with ZipFile(target, "w") as archive:

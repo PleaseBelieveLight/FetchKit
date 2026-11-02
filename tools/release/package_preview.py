@@ -159,7 +159,7 @@ def main():
     source_hashes = {name: fingerprint(ROOT / name)["sha256"] for name in source_names if name and (ROOT / name).is_file()
                      and name.startswith(("src/", "include/", "platform/android/sdk/", "cmake/", "third_party/", "gradle/",
                                           "examples/cli/", "examples/consumer/", "examples/android-consumer/"))}
-    source_hashes.update({name: fingerprint(ROOT / name)["sha256"] for name in ("LICENSE", "VERSION", "CMakeLists.txt", "settings.gradle.kts")})
+    source_hashes.update({name: fingerprint(ROOT / name)["sha256"] for name in ("LICENSE", "VERSION", "CMakeLists.txt", "build.gradle.kts", "settings.gradle.kts")})
     manifest = {"version": version, "preview_only": True, "uploaded": False,
                 "base_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
                 "working_tree_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),

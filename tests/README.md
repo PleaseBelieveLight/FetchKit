@@ -31,6 +31,16 @@ python tests/packaging/publication_guards_test.py --output build/publication-gua
 覆盖实验探针、缺少 ABI 和缺少认证三种情况；检查跳过产物生成并清空发布凭证，不上传产物。
 正常双 ABI 本地发布及外部 Release/R8 接入仍按打包指南单独验证。
 
+同时构建 SDK/sample 的 Debug、Release、测试 APK 并完成本地 Maven 预览后，检查实际产物：
+
+```powershell
+python tests/packaging/android_artifact_contents_test.py --output build/android-artifacts.json
+```
+
+检查完整版本文件名、APK 的 `versionName`/输出元数据、双 ABI、测试 APK 默认路径，
+以及标准无 classifier 的 Maven AAR 与普通 Release AAR 内容一致、POM/module 文件名和哈希一致。
+版本解析、切换版本后旧产物残留和缺失当前变体的失败路径由上述 CI 工具单测覆盖。
+
 ## Release 演示 APK 启动回归
 
 构建并验证实际分发的 Release APK，而非 Debug 或测试专用变体：
@@ -38,10 +48,10 @@ python tests/packaging/publication_guards_test.py --output build/publication-gua
 ```powershell
 .\gradlew.bat :sample:assembleRelease '-Pfetchkit.probes=false' --max-workers=2 --no-configuration-cache
 python tests/packaging/sample_release_startup_test.py --serial <设备序列号> `
-  --apk platform/android/sample/build/outputs/apk/release/sample-release.apk --output build/sample-release-startup
+  --apk (python tools/ci/android_artifacts.py --kind apk) --output build/sample-release-startup
 ```
 
-驱动在明确选中的、已解锁设备上同签名覆盖安装，核对设备 APK 的 SHA-256 和非 debuggable 标志，
+驱动在明确选中的、已解锁设备上同签名覆盖安装，核对设备 APK 的 SHA-256、非 debuggable 标志和完整 `versionName`，
 执行三次冷启动，检查包含图标与 JNI 版本号的首帧，以及存储、能力指南和新建下载面板。
 不启动下载，不卸载或清空应用数据；签名不匹配时失败。已有相同 APK 可加 `--skip-install`，仍核对实际安装内容。
 报告记录 API、ABI、设备型号、模拟器标志、检查项和 APK 哈希；失败时归档本应用的崩溃日志，不清空设备日志。

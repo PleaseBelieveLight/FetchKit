@@ -19,7 +19,9 @@ CMake 为 `3.22.1`；最低 API 24，默认 ABI 为 `arm64-v8a` 和 `x86_64`。
 ```
 
 AAR 位于 `platform/android/sdk/build/outputs/aar/`，APK 位于
-`platform/android/sample/build/outputs/apk/`。设备或模拟器连接后，可验证应用标识与 JNI 加载：
+`platform/android/sample/build/outputs/apk/`。文件名包含根目录 `VERSION` 的完整版本和 Debug/Release 类型，
+例如 `fetchkit-0.1.0-alpha.1-debug.aar`、`fetchkit-sample-0.1.0-alpha.1-debug.apk`。
+命名与版本维护规则见[打包指南](../release/packaging.md#演示-apk-的公开签名)。设备或模拟器连接后，可验证应用标识与 JNI 加载：
 
 ```powershell
 .\gradlew.bat :sample:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.luofelix.fetchkit.sample.SdkIntegrationTest'

@@ -11,6 +11,8 @@ import sys
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/ci"))
+from android_artifacts import android_artifact
 
 
 def main():
@@ -39,7 +41,7 @@ def main():
 
     gradle([":sdk:assembleRelease", "-Pfetchkit.probes=false"], output / "sdk-build.log")
     aar = output / "fetchkit-production.aar"
-    shutil.copyfile(ROOT / "platform/android/sdk/build/outputs/aar/sdk-release.aar", aar)
+    shutil.copyfile(android_artifact(ROOT, "aar"), aar)
     gradle([":sdk:dependencies", "--configuration", "releaseRuntimeClasspath", "-Pfetchkit.probes=false"],
            output / "sdk-dependencies.txt")
     report = {"platform": platform.platform(), "abi": "arm64-v8a", "api": 24, "build_type": "Release",
@@ -123,7 +125,7 @@ def main():
     sources = subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=ROOT).decode().split("\0")
     report["source_sha256"] = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sources
         if name and (name.startswith(("src/", "include/", "platform/android/", "third_party/", "tools/size/")) or
-                     name in ("CMakeLists.txt", "LICENSE", "VERSION", "settings.gradle.kts", "gradle/libs.versions.toml")) and (ROOT / name).is_file()}
+                     name in ("CMakeLists.txt", "LICENSE", "VERSION", "build.gradle.kts", "settings.gradle.kts", "gradle/libs.versions.toml")) and (ROOT / name).is_file()}
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: report[key] for key in ("unshrunk_apk_delta_bytes", "r8_apk_delta_bytes", "jni")}, indent=2))
 

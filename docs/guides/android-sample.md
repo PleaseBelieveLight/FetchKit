@@ -9,7 +9,8 @@ C++。
 ## 直接开始
 
 在 Android Studio 运行 `sample`，或安装
-`platform/android/sample/build/outputs/apk/debug/sample-debug.apk`。 点击「新建下载」，默认选中清华镜像的
+`platform/android/sample/build/outputs/apk/debug/fetchkit-sample-<VERSION>-debug.apk`，其中 `<VERSION>` 读取根目录
+`VERSION`，包含完整预发布后缀。点击「新建下载」，默认选中清华镜像的
 Ubuntu 24.04.5 Netboot；可多选以下预设，无需输入地址：
 
 | 预设                 | URL                                                                                                                       |

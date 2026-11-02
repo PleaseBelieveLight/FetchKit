@@ -1,3 +1,5 @@
+import org.gradle.api.artifacts.ConfigurablePublishArtifact
+
 plugins {
     alias(libs.plugins.android.library)
     `maven-publish`
@@ -21,9 +23,15 @@ abstract class GenerateProjectLicense : DefaultTask() {
 
 val projectLicense = rootProject.layout.projectDirectory.file("LICENSE")
 
-val sdkVersion = providers.fileContents(rootProject.layout.projectDirectory.file("VERSION")).asText.get().trim()
-require(sdkVersion.matches(Regex("(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)(-(alpha|beta|rc)[.](0|[1-9][0-9]*))?"))) {
-    "VERSION 必须为 major.minor.patch，可附加 -alpha.N、-beta.N 或 -rc.N"
+val sdkVersion = rootProject.version.toString()
+base {
+    archivesName.set("fetchkit-$sdkVersion")
+}
+configurations.configureEach {
+    outgoing.artifacts.withType<ConfigurablePublishArtifact>().configureEach {
+        // 文件名中的构建类型不作为 Maven classifier；同时修正组件，保持 POM 与 module metadata 一致。
+        if (extension == "aar") classifier = null
+    }
 }
 
 val githubRepository = providers.gradleProperty("fetchkit.githubRepository")

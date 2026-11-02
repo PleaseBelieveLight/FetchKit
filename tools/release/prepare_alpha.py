@@ -7,9 +7,12 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/ci"))
+from android_artifacts import android_artifact
 
 
 def validate_tag(version, ref, commit, tagged_commit):
@@ -65,7 +68,7 @@ def main():
     preview = build / "alpha-preview"
     coordinates = preview / f"maven/com/luofelix/fetchkit/fetchkit/{version}"
     aar = coordinates / f"fetchkit-{version}.aar"
-    apk = ROOT / "platform/android/sample/build/outputs/apk/release/sample-release.apk"
+    apk = android_artifact(ROOT, "apk")
     manifest = json.loads((preview / "manifest.json").read_text(encoding="utf-8"))
     startup = json.loads((build / "ci/release-startup/report.json").read_text(encoding="utf-8"))
     consumer = json.loads((build / "ci/aar-consumer/report.json").read_text(encoding="utf-8"))

@@ -136,6 +136,9 @@ def main():
         package = command(["shell", "dumpsys", "package", PACKAGE])
         if re.search(r"\bDEBUGGABLE\b", package):
             raise AssertionError("必须验证非 debuggable 的 Release APK")
+        if not re.search(r"^\s*versionName=" + re.escape(version) + r"\s*$", package, re.M):
+            raise AssertionError("实际安装 APK 的 versionName 必须与 VERSION 完整一致")
+        report["package_version_name"] = version
         home = {"拾流", "v" + version, "新建下载"}
         for index in range(3):
             command(["shell", "am", "force-stop", PACKAGE])

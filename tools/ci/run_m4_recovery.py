@@ -11,6 +11,8 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
+from android_artifacts import android_artifact
+
 sys.path.insert(0, str(ROOT / "tests/server"))
 from http_fixture import RunningFixture
 from m4_fixture import M4Handler
@@ -43,7 +45,7 @@ def main():
                 cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=900)
     subprocess.run(adb + ["wait-for-device"], check=True, timeout=120, capture_output=True)
     apk_fingerprints = {}
-    for path in [ROOT / "platform/android/sample/build/outputs/apk/debug/sample-debug.apk",
+    for path in [android_artifact(ROOT, "apk", "debug"),
                  ROOT / "platform/android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk"]:
         result = subprocess.run(adb + ["install", "--no-streaming", "-r", str(path)], timeout=120, capture_output=True, text=True)
         if result.returncode:
