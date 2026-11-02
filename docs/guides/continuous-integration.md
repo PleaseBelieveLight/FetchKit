@@ -4,14 +4,14 @@
 
 ## 工作流
 
-| 工作流 | 触发方式 | 验证范围 |
-|--------|----------|----------|
-| `CI` | `master`/`main` push、全部 PR、手动 | Linux curl 开/关两种主机配置；Android API 31 集成 |
+| 工作流                | 触发方式                                 | 验证范围                                                                                                                     |
+|-----------------------|------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| `CI`                  | `master`/`main` push、全部 PR、手动      | Linux curl 开/关两种主机配置；Android API 31 集成                                                                            |
 | `Android integration` | CI/扩展验证复用，或手动选择 API 24/31/37 | 双 ABI Debug/Release 构建、Debug 单测、发布拒绝路径、实际 Release APK 冷启动、外部 Maven/R8/JNI 下载、Android 协议与进程恢复 |
-| `Extended validation` | 每周一北京时间 03:17、手动 | Linux 实际 >4 GiB、生产安装/外部接入、固定 seed 压力、真实 ENOSPC；独立 ASan/UBSan 和 TSan；API 24/31/37 x86_64 模拟器矩阵 |
-| `Prerelease` | 从 Alpha/Beta/RC Tag 手动运行 | 固定提交重新执行主机/Android 回归、检查包内容/许可/双 ABI/匹配符号，生成校验值；可选上传 Packages 并创建草稿预发布 |
+| `Extended validation` | 每周一北京时间 03:17、手动               | Linux 实际 >4 GiB、生产安装/外部接入、固定 seed 压力、真实 ENOSPC；独立 ASan/UBSan 和 TSan；API 24/31/37 x86_64 模拟器矩阵   |
+| `Prerelease`          | 从 Alpha/Beta/RC Tag 手动运行            | 固定提交重新执行主机/Android 回归、检查包内容/许可/双 ABI/匹配符号，生成校验值；可选上传 Packages 并创建草稿预发布           |
 
-定义位于 [`.github/workflows/`](../../.github/workflows/)。第三方 Action 固定到提交 SHA，更新时一并核对上游说明。
+定义位于 [`.github/workflows/`](../../.github/workflows)。第三方 Action 固定到提交 SHA，更新时一并核对上游说明。
 CI 只有 `contents: read`，不使用仓库发布凭证，不自动评论 PR；新提交取消同一 PR/分支的旧 CI。
 预发布 Job 单独拥有 `contents: write`、`packages: write`，令牌只在远程发布步骤传给 Gradle/gh。
 
@@ -22,7 +22,8 @@ Android 环境读取 `gradle/gradle-daemon-jvm.properties`、`gradle/libs.versio
 不依赖 Runner 是否预先导出这些路径。
 Command-line Tools 从版本目录读取并固定安装，保留 Runner 原工具目录，将 `latest` 指向选定版本，
 以兼容模拟器 Action 的路径选择。旧版 avdmanager 会把 `android-37.0` 错写为 `android-0`，见
-[上游问题](https://github.com/ReactiveCircus/android-emulator-runner/issues/482)。创建后必须核对根 ini 的
+[上游问题](https://github.com/ReactiveCircus/android-emulator-runner/issues/482)。创建后必须核对根
+ini 的
 `target` 与实际所选平台完全一致，错误目标直接失败，不手工伪造目标值。
 Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 仅读缓存，发布禁用配置缓存。
 
@@ -30,10 +31,12 @@ Gradle 使用仓库 Wrapper，缓存采用 GitHub Actions 基础缓存；PR/Tag 
 避免依赖 AVD 默认的低分辨率通用设备配置；Release 页面检查仍要求实际按钮文字与页面入口完整可用。
 保留正常系统动画，真实 Release 的 Compose 动画和页面可访问性节点也属于启动回归范围。
 模拟器配置 2 核、`vm.heapSize=512`，API 24/31 使用 3 GiB RAM，API 37 使用其要求的至少 4 GiB，见
-[模拟器发布说明](https://developer.android.com/studio/releases/emulator#36.6.11)。启动前停止本次构建的 Gradle daemon。
+[模拟器发布说明](https://developer.android.com/studio/releases/emulator#36.6.11)。启动前停止本次构建的
+Gradle daemon。
 userdata 显式分配 8 GiB，避免新镜像的预装数据挤占安装空间；安装前归档 guest 与 Runner 的实际磁盘空间。
 启动前通过 `vm.heapSize` 设置 heap 配置；镜像可能调整运行时上限，实际 `dalvik.vm.heapsize` 与
-`heapgrowthlimit` 记录在 `android-readiness.json`。当前固定版本 Action 的 `heap-size` 写入 `hw.heapSize`，
+`heapgrowthlimit` 记录在 `android-readiness.json`。当前固定版本 Action 的 `heap-size` 写入
+`hw.heapSize`，
 不能覆盖硬件配置中的 `vm.heapSize`。系统崩溃只保留异常类型和固定标记，不输出原始平台异常消息或堆栈。
 安装前要求 `system_server` PID、开机标志及包管理服务连续稳定 30 秒，最多等待 180 秒；持续重启会失败。
 失败上下文只提取系统异常类型和框架方法名，不归档原始平台异常消息、完整堆栈或应用私有内容。
@@ -41,7 +44,8 @@ userdata 显式分配 8 GiB，避免新镜像的预装数据挤占安装空间�
 [Android 模拟器加速说明](https://developer.android.com/studio/run/emulator-acceleration#accel-graphics)。
 失败时归档内存、AVD 配置及 OOM/崩溃上下文；API 37 额外输出 guest 内核启动日志。
 先验证公开演示签名的真实 Release APK，再验证
-外部 AAR；随后仅卸载该新建 guest 中的演示包以切换 Debug 签名，执行正式 SDK 协议与 SIGKILL/force-stop 恢复。
+外部 AAR；随后仅卸载该新建 guest 中的演示包以切换 Debug 签名，执行正式 SDK 协议与 SIGKILL/force-stop
+恢复。
 `android_device_ci.sh` 同时检查 Actions 标识和 AVD 名，不允许直接用于本地已有设备。
 已安装 APK 通过二进制 `exec-out` 读取，兼容旧镜像的文件同步接口差异；读取失败和 SHA-256 不匹配均会失败。
 Sample 的 `androidTestImplementation` 使用已修复 `InputManager.getInstance()` 反射访问的 Espresso，见

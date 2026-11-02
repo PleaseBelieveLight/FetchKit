@@ -6,6 +6,9 @@
 当前用法见 [主机 API](../reference/host-api.md) 和 [Android API](../reference/android-api.md)，
 实际验收范围见 [验证报告](../reports/README.md)。
 
+2026-11-02 后续规划：[Android SDK 功能补齐计划](android-sdk-completeness-plan.md) 在现有核心职责与
+共享订阅约束下，规划换链失败恢复、单任务查询及 Android 接入改进；其中新增接口尚未实现，不改变本页既有契约。
+
 2026-10-27 M4 进展：异步 Kotlin/JNI、隔离 OkHttp 5.5.1 后端、任务/资源示例与 JobScheduler 适配已加入。
 见 [Android API](../reference/android-api.md) 和 [M4 报告](../reports/m4-baseline.md)。核心策略仍由 C++ 决定；
 后台示例在 API 34+ 使用 UIDT，低版本使用有限的普通任务，显式绑定获准 Network，不强制依赖 WorkManager。
