@@ -23,9 +23,10 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "FetchKit"
-include(":sdk", ":sample")
+include(":sdk", ":sample", ":coroutines")
 project(":sdk").projectDir = file("platform/android/sdk")
 project(":sample").projectDir = file("platform/android/sample")
+project(":coroutines").projectDir = file("platform/android/coroutines")
 
 // Measurement-only host; absent from normal builds and SDK dependency graphs.
 if (providers.gradleProperty("fetchkit.sizeMode").isPresent) {

@@ -1,5 +1,7 @@
 package com.luofelix.fetchkit.sample
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.toggleable
@@ -45,6 +47,12 @@ internal fun DownloadApp() {
     var page by rememberSaveable { mutableIntStateOf(0) }
     var adding by rememberSaveable { mutableStateOf(false) }
     var restoring by remember { mutableStateOf<StoredTask?>(null) }
+    var exportId by rememberSaveable { mutableStateOf<String?>(null) }
+    val exportDestination = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        val id = exportId
+        exportId = null
+        if (id != null && uri != null) SampleDownloads.export(context, id, uri)
+    }
     val snackbar = remember { SnackbarHostState() }
     val message = SampleDownloads.message
     LaunchedEffect(message) {
@@ -77,6 +85,9 @@ internal fun DownloadApp() {
                 SampleDownloads.queryTask(context, row).whenCompleteAsync({ latest, error ->
                     if (error != null) SampleDownloads.showError(error) else restoring = latest
                 }, SampleDownloads.main)
+            }, { row ->
+                exportId = row.snapshot.persistentId
+                exportDestination.launch("fetchkit-${row.snapshot.persistentId.take(12)}.bin")
             })
             1 -> StoragePage(Modifier.padding(padding))
             else -> GuidePage(Modifier.padding(padding))
@@ -105,7 +116,9 @@ private fun AppHeader() {
 }
 
 @Composable
-private fun DownloadsPage(modifier: Modifier, onAdd: () -> Unit, onRestore: (StoredTask) -> Unit) {
+private fun DownloadsPage(
+    modifier: Modifier, onAdd: () -> Unit, onRestore: (StoredTask) -> Unit, onExport: (StoredTask) -> Unit,
+) {
     val context = LocalContext.current
     var filter by rememberSaveable { mutableIntStateOf(0) }
     val rows = SampleDownloads.rows
@@ -160,7 +173,7 @@ private fun DownloadsPage(modifier: Modifier, onAdd: () -> Unit, onRestore: (Sto
                 if (rows.isEmpty()) Button(onClick = onAdd) { Text("选择示例资源") }
             }
         }
-        items(filtered, key = { it.snapshot.persistentId }) { row -> TaskCard(row, onRestore) }
+        items(filtered, key = { it.snapshot.persistentId }) { row -> TaskCard(row, onRestore, onExport) }
         if (rows.size >= SampleDownloads.displayLimit) item {
             TextButton(onClick = { SampleDownloads.loadMore(context) }) { Text("加载更多任务") }
         }
@@ -177,7 +190,7 @@ private fun HeroMetric(label: String, value: String) {
 }
 
 @Composable
-private fun TaskCard(row: StoredTask, onRestore: (StoredTask) -> Unit) {
+private fun TaskCard(row: StoredTask, onRestore: (StoredTask) -> Unit, onExport: (StoredTask) -> Unit) {
     val context = LocalContext.current
     val s = row.snapshot
     val total = s.totalBytes
@@ -217,6 +230,10 @@ private fun TaskCard(row: StoredTask, onRestore: (StoredTask) -> Unit) {
                 }) { SampleIcon("play", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(if (s.state == TaskState.Failed) "更新地址并重试" else if (known) "恢复下载" else "重新绑定") }
             }
             if (s.available) OutlinedButton(enabled = enabled, onClick = { SampleDownloads.read(context, row) }) { Text("租约读取") }
+            if (s.available) OutlinedButton(enabled = enabled, onClick = { onExport(row) }) { Text("导出文件") }
+            if (SampleDownloads.exportingId == s.persistentId) {
+                OutlinedButton(onClick = SampleDownloads::cancelExport) { Text("取消导出") }
+            }
             TextButton(onClick = { details = !details; if (details) SampleDownloads.refreshTask(context, row) }) { Text(if (details) "收起详情" else "任务详情") }
         }
         if (details) {

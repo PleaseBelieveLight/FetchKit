@@ -36,13 +36,14 @@ jobs:
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
           source tests/ci/pipeline_test.sh
           ./gradlew :sdk:assembleDebug :sdk:testDebugUnitTest \
+            :coroutines:assembleRelease :coroutines:testDebugUnitTest \
             :sample:assembleDebug :sample:assembleDebugAndroidTest :sample:testDebugUnitTest \
             :sample:assembleRelease \
             :sdk:publishReleasePublicationToPreviewRepository \
             -Pfetchkit.probes=false --max-workers=2 --no-configuration-cache --console=plain \
             2>&1 | tee build/ci/android-build.log
           python tools/ci/check_junit_results.py platform/android/sdk/build/test-results \
-            platform/android/sample/build/test-results
+            platform/android/sample/build/test-results platform/android/coroutines/build/test-results
           python tests/packaging/android_artifact_contents_test.py --output build/ci/android-artifacts.json
           python tests/packaging/publication_guards_test.py --output build/ci/publication-guards
       - name: 允许当前 Runner 使用 KVM

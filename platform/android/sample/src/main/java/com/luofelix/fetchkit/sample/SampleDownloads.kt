@@ -1,6 +1,7 @@
 package com.luofelix.fetchkit.sample
 
 import android.content.Context
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -40,6 +41,9 @@ internal object SampleDownloads {
     var busy by mutableStateOf(false); private set
     var leasedId by mutableStateOf<String?>(null); private set
     var readPreview by mutableStateOf(""); private set
+    var exportingId by mutableStateOf<String?>(null); private set
+    private var exportOperation: ResourceExport? = null
+    private var exportCancelled = false
     var visible = false
     var jobRunning = false
     var displayLimit by mutableStateOf(100); private set
@@ -278,6 +282,32 @@ internal object SampleDownloads {
             }, main).thenApply { Unit }
     }
     fun releaseRead(context: Context) = perform(context, "已释放读取租约") { releaseLease() }
+
+    fun export(context: Context, persistentId: String, uri: Uri) {
+        if (exportingId != null) return
+        val app = context.applicationContext
+        exportingId = persistentId
+        exportCancelled = false
+        engine(app).thenComposeAsync({ engine ->
+            if (exportCancelled) failed(FetchKitException(Status.Cancelled))
+            else engine.copyTo(persistentId, app.contentResolver, uri).also { exportOperation = it }.completion
+        }, main).whenCompleteAsync({ bytes, error ->
+            exportOperation = null
+            exportingId = null
+            val cause = (error as? java.util.concurrent.CompletionException)?.cause ?: error
+            message = when (cause) {
+                null -> "已导出 $bytes 字节"
+                is FetchKitException -> "导出结束：${cause.status}。目标可能保留部分内容，请检查后处理。"
+                else -> "导出失败。目标可能保留部分内容，请检查后处理。"
+            }
+        }, main)
+    }
+
+    fun cancelExport() {
+        exportCancelled = true
+        exportOperation?.cancel()
+    }
+
     private fun releaseLease(): CompletableFuture<Unit> {
         val held = lease
         lease = null

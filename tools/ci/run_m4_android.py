@@ -62,7 +62,7 @@ def main():
                    else ["sh", str(ROOT / "gradlew")])
         with (args.output / "build.log").open("w", encoding="utf-8") as log:
             subprocess.run(command + [":sdk:testDebugUnitTest", ":sample:assembleDebug", ":sample:assembleDebugAndroidTest",
-                ":sample:testDebugUnitTest", "-Pfetchkit.probes=false", "--max-workers=2"],
+                ":sample:testDebugUnitTest", ":coroutines:testDebugUnitTest", "-Pfetchkit.probes=false", "--max-workers=2"],
                 cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=900)
     subprocess.run(adb + ["wait-for-device"], check=True, timeout=120, capture_output=True)
     boot_deadline = time.monotonic() + 120
@@ -162,6 +162,9 @@ def main():
                               "refresh-404-false", "refresh-404-true", "refresh-410-false", "refresh-410-true", "expired-page-digest-rejected"}
             executed_cases = {case["id"] for case in report["cases"] if case.get("passed")}
             report["request_recovery_cases_present"] = recovery_cases.issubset(executed_cases)
+            report["export_and_observation_cases_present"] = {
+                "export-resource", "coroutine-snapshot-observation"
+            }.issubset(executed_cases)
             fresh_requests = [r for r in requests if r["path"].startswith(("/m4/a1-auth-fresh-", "/m4/a1-source-fresh-"))]
             report["request_recovery_exact_range"] = len(fresh_requests) == 2 and all(
                 r.get("range") == "bytes=1024-" and r.get("if_range") == '"m1-v1"' for r in fresh_requests)
@@ -178,7 +181,7 @@ def main():
                 not report["identity_request_failures"] and not report["ambient_cookie_sent"] and
                 not report["peer_credentials_sent"] and report["no_hidden_503_retry"] and report["request_recovery_cases_present"] and
                 report["request_recovery_exact_range"] and report["job_pause_single_request"] and
-                report["job_stop_exact_range"])
+                report["job_stop_exact_range"] and report["export_and_observation_cases_present"])
             (args.output / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
             print(json.dumps({key: report[key] for key in ("api", "abi", "failure_count", "fixture_requests", "passed")}, ensure_ascii=False))
             print("Failed cases:", [case["id"] for case in report["cases"] if not case["passed"]])

@@ -198,6 +198,7 @@ C++ 核心决定下载与存储策略；Android 层负责 JNI、网络适配，�
 | `engine.listTasks()`                                         | 分页列出持久化任务，由宿主重新提供请求并决定是否恢复                       |
 | `engine.query(persistentId)` / `query(identity)`              | 异步查询单条资源快照，不绑定订阅或启动下载                                 |
 | `engine.acquire(id)`                                         | 获取有效 Completed 对象的只读租约，读取后调用 `lease.releaseAsync()`       |
+| `engine.copyTo(id, outputStream)`                            | 异步导出已完成资源，等待 `completion` 获取字节数，可单独取消导出              |
 | `engine.pin(...)` / `setExpiry(...)` / `remove(...)`         | 管理资源保留、过期与删除，遵守活动任务和租约保护                           |
 | `engine.storageStats()` / `trimTo(...)` / `collectStaging()` | 查询配额账本、按 LRU 回收与清理过期暂存                                    |
 | `engine.closeAsync()`                                        | 停止 I/O 并释放引擎；已持有的租约须另行释放                                |

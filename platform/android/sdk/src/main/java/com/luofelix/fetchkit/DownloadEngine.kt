@@ -1,5 +1,8 @@
 package com.luofelix.fetchkit
 
+import android.content.ContentResolver
+import android.net.Uri
+import java.io.OutputStream
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
@@ -85,9 +88,28 @@ class DownloadEngine internal constructor(private val handle: Long, private val 
             v[5].toLong(), v[6].toLong(), v[7].toLong(), v[8].toLong())
     }
     /** 仅获取未过期且通过一致性校验的 Completed 对象；成功返回的 lease 须显式释放。 */
-    fun acquire(persistentId: String): CompletableFuture<ResourceLease> = operation {
+    fun acquire(persistentId: String): CompletableFuture<ResourceLease> = EngineIo.submit { acquireNative(persistentId) }
+
+    private fun acquireNative(persistentId: String): ResourceLease = nativeRead {
         ResourceLease(NativeBridge.call(11, handle, texts = arrayOf(persistentId))[0].toLong())
     }
+
+    /**
+     * 将已完成且可用的资源复制到调用方持有的流，返回写入字节数。SDK 不关闭或 flush 流。
+     * 等待 [ResourceExport.completion] 后再操作流。队列满返回 Busy；失败或取消可能留下部分内容。
+     */
+    fun copyTo(persistentId: String, output: OutputStream): ResourceExport =
+        ResourceExport.start({ acquireNative(persistentId) }) { write -> write(output) }
+
+    /**
+     * 在导出线程上以 wt 打开 content Uri，并在完成前关闭。调用方负责 Uri 写权限与部分文件处理。
+     * 只有取得独立租约后才打开目标；此后引擎关闭不影响复制。
+     */
+    fun copyTo(persistentId: String, resolver: ContentResolver, destination: Uri): ResourceExport =
+        ResourceExport.start({ acquireNative(persistentId) }) { write ->
+            require(destination.scheme == ContentResolver.SCHEME_CONTENT)
+            (resolver.openOutputStream(destination, "wt") ?: throw FetchKitException(Status.IoError)).use(write)
+        }
     /** 持久化 SDK 淘汰保护；pin 不绕过过期/校验，也不能阻止系统清理缓存目录。 */
     fun pin(persistentId: String, pinned: Boolean): CompletableFuture<Unit> = operation {
         NativeBridge.call(12, handle, longArrayOf(if (pinned) 1 else 0), arrayOf(persistentId)); Unit
@@ -258,17 +280,21 @@ class ResourceLease internal constructor(private val handle: Long) {
     /** offset 为非负字节偏移，capacity 为 1～65536；EOF 返回空数组，engine 关闭后仍可读。 */
     fun read(offset: Long, capacity: Int = 65536): CompletableFuture<ByteArray> {
         require(offset >= 0 && capacity in 1..65536)
-        return EngineIo.submit { synchronized(lock) {
-            if (released.get()) throw FetchKitException(Status.Closed)
+        return EngineIo.submit {
             val buffer = ByteArray(capacity)
-            val count = NativeBridge.read(handle, offset, buffer)
-            if (count < 0) throw FetchKitException(Status.entries[-count])
-            buffer.copyOf(count)
-        } }
+            buffer.copyOf(readNative(offset, buffer))
+        }
+    }
+    internal fun readNative(offset: Long, buffer: ByteArray): Int = synchronized(lock) {
+        if (released.get()) throw FetchKitException(Status.Closed)
+        val count = NativeBridge.read(handle, offset, buffer)
+        if (count < 0) throw FetchKitException(Status.entries[-count])
+        count
     }
     /** 显式释放租约；最后一个 lease 释放后才可能解除已关闭 engine 的目录锁。重复释放安全。 */
-    fun releaseAsync(): CompletableFuture<Unit> = EngineIo.submit { synchronized(lock) {
+    fun releaseAsync(): CompletableFuture<Unit> = EngineIo.submit { releaseNative() }
+
+    internal fun releaseNative() = synchronized(lock) {
         if (!released.get()) { NativeBridge.call(18, handle); released.set(true) }
-        Unit
-    } }
+    }
 }

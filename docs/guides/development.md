@@ -7,7 +7,8 @@
 ## Android
 
 Android Studio 直接打开仓库根目录，选择 `sample` 运行拾流演示 App。 Gradle 将 `:sdk`、`:sample` 分别映射到
-`platform/android/sdk/`、`platform/android/sample/`，不另建嵌套工程。
+`platform/android/sdk/`、`platform/android/sample/`。可选的 `:coroutines` 位于
+`platform/android/coroutines/`。
 
 版本统一在 `gradle/libs.versions.toml`：沿用项目的 AGP、Gradle、Kotlin 配置，NDK 为 `28.2.13676358`，
 CMake 为 `3.22.1`；最低 API 24，默认 ABI 为 `arm64-v8a` 和 `x86_64`。
@@ -15,7 +16,7 @@ CMake 为 `3.22.1`；最低 API 24，默认 ABI 为 `arm64-v8a` 和 `x86_64`。
 在 PowerShell 中构建并运行单元测试：
 
 ```powershell
-.\gradlew.bat :sdk:assembleDebug :sdk:testDebugUnitTest :sample:assembleDebug :sample:testDebugUnitTest
+.\gradlew.bat :sdk:assembleDebug :sdk:testDebugUnitTest :sample:assembleDebug :sample:testDebugUnitTest :coroutines:testDebugUnitTest
 ```
 
 AAR 位于 `platform/android/sdk/build/outputs/aar/`，APK 位于

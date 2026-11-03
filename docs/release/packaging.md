@@ -82,6 +82,10 @@ AAR、sources、POM、Gradle module metadata 和校验文件。坐标是
 的配置；普通构建仍可选择单 ABI 做诊断。 POM 声明 Kotlin 标准库和 OkHttp 5.5.1，最终版本以依赖解析结果为准。直接复制
 AAR 文件仍须自行声明运行依赖。
 
+可选协程适配位于 `:coroutines`，依赖基础 SDK 和版本目录中固定的 `kotlinx-coroutines-core`。
+源码工程可用 `implementation(project(":coroutines"))`；`:coroutines:assembleRelease` 可构建独立 AAR，
+复制该 AAR 时需要同时声明基础 SDK 和协程运行依赖。基础 SDK 的 Maven 发布仍只包含基础 SDK。
+
 可将 [Android 独立示例](../../examples/android-consumer) 复制到仓库外，配置 Android SDK 并使用完整的
 Adoptium JDK 25：
 

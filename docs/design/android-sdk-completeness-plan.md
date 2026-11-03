@@ -183,7 +183,7 @@ arm64。
 
 ### 7.1 导出已完成资源
 
-- 草案提供 engine 按 persistentId 复制到宿主 OutputStream 的异步接口；内部 acquire 独立
+- engine 提供按 persistentId 复制到宿主 OutputStream 或 content Uri 的异步接口；内部 acquire 独立
   lease，复制结束或失败均释放。
   使用固定大小缓冲和有界执行资源，不缓存整文件，不从 API 暴露内部 object/part 路径。
 - 复制任务不得在公共两线程工作池内同步等待同池的逐块 Future；采用独立有界执行通道或非阻塞异步组合。
@@ -197,8 +197,7 @@ arm64。
 
 ### 7.2 可选协程与快照观察
 
-- 增加 suspend await 与快照 StateFlow 适配；只有实施该功能时才增加可选模块和锁定依赖，基础 SDK 保留
-  Future API。
+- `:coroutines` 提供 suspend 等待、句柄作用域和快照 StateFlow 适配；基础 SDK 保留 Future API。
 - 协程取消不隐式调用共享任务 cancel。open/enqueue/acquire 等创建资源的操作在取消与完成竞争中，
   必须交付所有权或显式释放成功创建的 engine/订阅/lease，不能丢失 native 句柄。
 - 适配现有每订阅仅注册一次 observer 的限制：由一个有界观察桥接多个 collector，避免重复 collect 触发第二次
@@ -210,6 +209,13 @@ arm64。
 
 验收覆盖：零字节与大文件复制、取消/关闭/删除竞争、慢输出和异常输出、多个 collector、重复进入页面、
 创建 Future 的完成/取消竞争和慢消费者有界性；示例显示的速度/ETA 继续由宿主按进度采样计算。
+
+2026-11-03 在 Windows 上完成 Debug 构建、可选协程 Release AAR 构建和 22 项 JVM 单测。
+API 31 x86_64 模拟器矩阵通过 87/87 项，服务端记录 193 次请求。新增用例覆盖零字节与多块导出、
+写入失败、慢输出持有租约时的删除保护、引擎关闭后取消导出，以及暂停恢复时多个 collector 接收相同快照。
+原始设备结果在 `build/a4-20261103/rerun/device/report.json`。可选 AAR 为 23,209 字节，
+已核对项目许可证和包内无 native 库或协程运行库。真实 SAF 交互与授权故障、超过 4 GiB 的导出、
+独立 Release/R8 宿主和完整依赖体积仍待专项验收。
 
 ## 8. A5：验证、文档和交付
 

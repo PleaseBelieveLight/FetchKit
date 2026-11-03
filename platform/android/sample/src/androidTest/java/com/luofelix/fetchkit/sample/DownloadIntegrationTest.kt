@@ -6,12 +6,21 @@ import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luofelix.fetchkit.*
+import com.luofelix.fetchkit.coroutines.observeSnapshots
+import com.luofelix.fetchkit.coroutines.withSubscription
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.OutputStream
 import java.net.Authenticator
 import java.net.CookieHandler
 import java.net.PasswordAuthentication
@@ -19,6 +28,7 @@ import java.net.URI
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -420,6 +430,64 @@ class DownloadIntegrationTest {
                     assertTrue(SystemClock.elapsedRealtime() - started < 2000)
                 } finally { engine.closeAsync().await() }
             }
+            test("export-resource") { withEngine("export-resource") { engine ->
+                val empty = engine.enqueue(request("export-empty", "$base/m1/empty", byteArrayOf())).await().awaitStopped().await()
+                val done = engine.enqueue(request("export-data")).await().awaitStopped().await()
+                val output = ByteArrayOutputStream()
+                assertEquals(0L, engine.copyTo(empty.persistentId, output).completion.await())
+                assertEquals(content().size.toLong(), engine.copyTo(done.persistentId, output).completion.await())
+                assertArrayEquals(content(), output.toByteArray())
+                assertError(Status.IoError) {
+                    engine.copyTo(done.persistentId, object : OutputStream() {
+                        override fun write(value: Int) = throw IOException("fixture")
+                    }).completion.await()
+                }
+                val entered = CountDownLatch(1)
+                val proceed = CountDownLatch(1)
+                val blocked = object : OutputStream() {
+                    override fun write(value: Int) = error("Expected bulk writes")
+                    override fun write(bytes: ByteArray, offset: Int, count: Int) {
+                        entered.countDown()
+                        check(proceed.await(10, TimeUnit.SECONDS))
+                    }
+                }
+                val export = engine.copyTo(done.persistentId, blocked)
+                try {
+                    assertTrue(entered.await(10, TimeUnit.SECONDS))
+                    assertError(Status.Busy) { engine.remove(done.persistentId).await() }
+                    engine.closeAsync().await()
+                    export.cancel()
+                } finally {
+                    proceed.countDown()
+                }
+                assertError(Status.Cancelled) { export.completion.await() }
+                val reopened = FetchKit.open(config("export-resource")).await()
+                try { reopened.remove(done.persistentId).await() } finally { reopened.closeAsync().await() }
+            } }
+            test("coroutine-snapshot-observation") { withEngine("coroutine-observation") { engine ->
+                runBlocking {
+                    withTimeout(15000) {
+                        engine.withSubscription(request("flow-resource", "$base/m1/resume-flow-observation")) { sub ->
+                            val observation = sub.observeSnapshots(this)
+                            try {
+                                val initial = observation.snapshots.first { (it?.receivedBytes ?: 0L) >= 1024 }
+                                sub.pause().await()
+                                observation.snapshots.first { it?.state == TaskState.Paused }
+                                val first = async { observation.snapshots.first { it?.state == TaskState.Completed } }
+                                val second = async { observation.snapshots.first { it?.state == TaskState.Completed } }
+                                sub.resume().await()
+                                val completed = requireNotNull(first.await())
+                                assertEquals(completed, second.await())
+                                assertEquals(initial?.persistentId, completed.persistentId)
+                                assertTrue(completed.generation >= requireNotNull(initial).generation)
+                                assertEquals(completed, observation.snapshots.first())
+                            } finally {
+                                observation.close()
+                            }
+                        }
+                    }
+                }
+            } }
             test("pin-expiry-remove-lease-bindings") { withEngine("cache-policy") { engine ->
                 val sub = engine.enqueue(request("cache", "$base/m1/normal").copy(pinOnCreate = true)).await()
                 val done = sub.awaitStopped().await(); assertEquals(TaskState.Completed, done.state)

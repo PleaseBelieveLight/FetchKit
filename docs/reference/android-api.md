@@ -166,6 +166,44 @@ Completed/TransportComplete 与 DigestVerified 分别呈现；不要把前者说
 示例使用 filesDir/fetchkit，并在旧备份规则、云备份和设备迁移中显式排除整个目录。
 部分恢复的记录或对象必须经过核心扫描修复，不能仅凭路径恢复认定资源有效。
 
+## 文件导出
+
+`engine.copyTo(persistentId, outputStream)` 和 `engine.copyTo(persistentId, contentResolver, uri)`
+返回 `ResourceExport`。`completion` 成功时给出写入字节数，失败时给出 SDK 状态。
+导出串行执行，最多等待 8 项，队列满返回 `Busy`。执行时先获取独立租约，复用 64 KiB 缓冲；
+取得租约后，引擎关闭不影响复制，删除与回收仍受租约保护。
+
+`cancel()` 在下一次读写边界停止复制，正在阻塞的目标 I/O 需要先返回。
+取消 `completion` 的副本只停止等待。调用方传入的流由调用方负责 flush 和 close；
+请等待操作完成再关闭。Uri 版本自行打开并关闭输出流，需要调用方持有写权限。
+失败或取消可能留下部分内容，调用方按目标的归属决定如何处理。
+
+## 可选协程模块
+
+源码工程可按需依赖 `implementation(project(":coroutines"))`。基础 SDK 继续提供 Future API。
+`awaitValue()` 用于不转移 native 句柄的结果，取消等待不取消底层操作。
+用 `withDownloadEngine`、`withSubscription` 和 `withResourceLease` 在 block 内借用资源；
+作用域结束时会关闭或静默释放，包括创建成功与协程取消竞争时。
+
+```kotlin
+withDownloadEngine(config) { engine ->
+    engine.withSubscription(request) { sub ->
+        coroutineScope {
+            val observation = sub.observeSnapshots(this)
+            try {
+                observation.snapshots.first { it?.state?.stopped == true }
+            } finally {
+                observation.close()
+            }
+        }
+    }
+}
+```
+
+每个订阅只创建一次快照桥接，页面反复进入时重用同一 `StateFlow`。初始值为 `null`，
+初始查询与事件触发的查询串行执行。零 collector 时仍排空事件，只保留最新快照；
+需要完整事件的宿主继续直接使用 `observe`。关闭观察只停止查询，资源由 owner 释放。
+
 ## 示例的后台执行许可
 
 示例分为下载、存储和能力指南三个页面，操作与验证方式见 [Android 示例指南](../guides/android-sample.md)。
