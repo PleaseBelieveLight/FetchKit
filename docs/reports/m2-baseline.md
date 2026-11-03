@@ -19,8 +19,7 @@ ENOSPC 证据；注入和进程终止结果不替代这些环境。
 | M2-04  | Verifying → Publishing → Completed、启动补全、只读 lease          | 暂存/最终文件损坏、缺失、rename/完成提交故障窗口；关闭后 lease 可读并保持目录锁        |
 | M2-05  | 确定性子进程屏障、逐点强制终止、扫描隔离、格式文档                | 坏/未来记录逐条隔离，未知可选字段可跳过，隔离身份不被重建；不是 reboot/power-loss 测试 |
 
-实际 API/CLI 用法见 [M2 文档](../archive/m2-storage.md)
-，字节格式与兼容策略见 [记录 v1](../reference/storage-record-v1.md)。 旧 task token、provider、URL 和
+当前用法见 [主机 API](../reference/C与C++接口与行为.md)，字节格式与兼容策略见 [记录 v1](../reference/存储记录v1与迁移.md)。 旧 task token、provider、URL 和
 headers 不持久化；宿主必须重新提供凭证并明确允许执行。 M1 数字文件名的孤立 `.part`
 不被采用。未知文件仅保留/统计，配额与保留期回收留在 M3。
 

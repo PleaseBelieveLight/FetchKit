@@ -3,7 +3,7 @@
 [文档中心](../README.md) · [验证报告索引](README.md)
 
 2026-10-27。实现基准提交 `0f49424`；本页收录在 M5 交付验证期间完成的 Android 复测。
-SDK 仍为 alpha，具体调用与生命周期规则见 [M4 API](../reference/android-api.md)。
+SDK 仍为 alpha，具体调用与生命周期规则见 [M4 API](../reference/AndroidSDK接口与行为.md)。
 
 API 31 x86_64 模拟器的正式 Kotlin/JNI/C++/OkHttp 5.5.1 链路通过 74 项协议与生命周期检查，
 包括 UTF-8 请求头、隐藏 503 重试防护、JobScheduler 系统停止、备份部分恢复、关闭竞争与租约保护。

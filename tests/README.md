@@ -1,18 +1,18 @@
 # FetchKit 主机与平台验证
 
-[文档中心](../docs/README.md) · [构建与运行](../docs/guides/development.md)
+[文档中心](../docs/README.md) · [构建与运行](../docs/guides/本地构建与测试.md)
 
 ## GitHub Actions
 
 日常主机/Android 检查、扩展验证、环境与日志归档以及手动 Alpha/Beta/RC 预发布见
-[持续集成指南](../docs/guides/continuous-integration.md)。CI 工具本身的失败路径检查使用
+[持续集成指南](../docs/guides/持续集成与预发布.md)。CI 工具本身的失败路径检查使用
 `python -m unittest discover -s tests/ci -p '*_test.py' -v`；不替代以下运行时验收。
 工作流还通过 `source tests/ci/pipeline_test.sh` 在实际 shell 中复现失败命令经过 `tee` 的路径，
 确认启用 `pipefail`，防止构建/测试失败被日志管道误报为通过。
 
 ## M5 交付验证
 
-完整步骤和发布门槛见 [M5 指南](../docs/release/packaging.md)。`bash tools/ci/linux_m5.sh` 运行主机协议/恢复、
+完整步骤和发布门槛见 [M5 指南](../docs/release/SDK打包与发布.md)。`bash tools/ci/linux_m5.sh` 运行主机协议/恢复、
 安装导出、源码树外 C/C++、固定 seed 压力和 Linux 隔离 tmpfs 真实 ENOSPC。
 Linux sanitizer 分别使用 `FETCHKIT_SANITIZERS=address,undefined` 与 `FETCHKIT_SANITIZERS=thread`；
 `FETCHKIT_RUN_LARGE_FILE=1` 执行真实 >4 GiB。缺少 Linux 不能用 Windows 结果替代。
@@ -92,7 +92,7 @@ API 24/中间/目标 API、arm64 真机、系统停止/网络切换、重启和�
 
 2026-11-02 A0 在 `scheduler_storage` 和正式 Android 下载矩阵中增加两个 `known-limit-` 特征场景，
 分别记录鉴权失败重绑不执行、旧订阅优先提供请求的已知缺口；通过仅表示缺口已稳定复现。
-状态表和 A1 成功恢复验收见 [新请求重试契约](../docs/design/request-retry-contract.md)。
+状态表和 A1 成功恢复验收见 [新请求重试契约](../docs/design/新请求重试设计与验收.md)。
 A1 将这两项转换为 `auth-request-recovery` / `explicit-request-source` 成功恢复用例，另增 typed provider、
 404/410 默认/显式刷新和 200 错误页摘要拒绝。驱动检查新用例实际执行及两次新链接请求的精确 Range/If-Range；
 主机 scheduler_storage 扩展为 28 组。不能用主机结果替代 JNI 运行时验证。
@@ -132,11 +132,11 @@ Linux 入口为 `tools/ci/linux_m3.sh`，ASan/UBSan 与 TSan 分开配置；缺�
 
 Linux 入口为 `bash tools/ci/linux_m2.sh`，可分别设置 `FETCHKIT_SANITIZERS=address,undefined` 或
 `FETCHKIT_SANITIZERS=thread`；大文件另加 `FETCHKIT_RUN_LARGE_FILE=1`。
-实测环境与缺测项见 [M2 报告](../docs/reports/m2-baseline.md)，历史用法见 [M2 文档](../docs/archive/m2-storage.md)，
-当前接口见 [主机 API](../docs/reference/host-api.md)。
+实测环境与缺测项见 [M2 报告](../docs/reports/m2-baseline.md)，
+当前接口见 [主机 API](../docs/reference/C与C++接口与行为.md)。
 
 M1 主机验证还包括纯 C ABI、假传输状态机、真实下载协议/HTTPS/CLI 和独立大文件集合。
-接口与限制见 [M1 API](../docs/archive/m1-host-api.md)，固定依赖与 Linux
+当前接口见 [主机 API](../docs/reference/C与C++接口与行为.md)，固定依赖与 Linux
 入口见 [依赖说明](../third_party/README.md)。
 `ctest --test-dir build/m1-host --output-on-failure -LE large_file` 运行常规集合； 要注册实际 >4 GiB
 测试，配置时显式增加 `-DFETCHKIT_BUILD_LARGE_FILE_TESTS=ON`，再执行

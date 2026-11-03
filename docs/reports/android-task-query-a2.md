@@ -1,6 +1,6 @@
 # Android 单任务查询 A2 验证
 
-[文档中心](../README.md) · [报告索引](README.md) · [实施计划](../design/android-sdk-completeness-plan.md)
+[文档中心](../README.md) · [报告索引](README.md) · [实施计划](../design/AndroidSDK功能补齐与验收.md)
 
 2026-11-03，基于 A1 提交 `dd2dfea`。C、C++ 和 Kotlin 均支持按持久 ID 或资源身份查询。
 按身份查询复用资源 ID 计算，两个入口直接查资源索引并合并运行快照。列表与单条查询共用快照装配。

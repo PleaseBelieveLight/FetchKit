@@ -22,7 +22,7 @@ M4。
 ## 2. 可运行链路
 
 `C/CLI → engine/task → DownloadSession → HttpTransport/CurlTransport → staging file`。 API
-说明与示例见 [M1 主机 API](../archive/m1-host-api.md)，测试入口见 [测试说明](../../tests/README.md)。
+当前用法见 [主机 API](../reference/C与C++接口与行为.md)，测试入口见 [测试说明](../../tests/README.md)。
 
 - 每 engine 一个 worker、一个活动任务，忙时返回 Busy；同身份只有一个存活 task handle，未实现订阅共享。
 - API 输入复制，句柄通过 registry 校验并且不复用；控制和最终状态串行化，I/O 完全停止后才允许释放。

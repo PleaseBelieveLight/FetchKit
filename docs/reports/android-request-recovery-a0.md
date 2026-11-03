@@ -1,6 +1,6 @@
 # Android 请求恢复 A0 基线
 
-[文档中心](../README.md) · [报告索引](README.md) · [A0 契约](../design/request-retry-contract.md)
+[文档中心](../README.md) · [报告索引](README.md) · [A0 契约](../design/新请求重试设计与验收.md)
 
 日期：2026-11-02。基于提交 `97df1eb` 加本次 A0 改动，版本 `0.2.0-beta.3`。
 本阶段固定契约和复现，未修复下载行为；A1 将基线断言转换为新请求成功恢复断言。

@@ -30,7 +30,7 @@ dependencies {
 ### 方式二：GitHub Packages
 
 1. 配置下载凭证。公开包也需要认证，创建具有 `read:packages` 权限的 GitHub personal access token
-   (classic)，在**用户级** `~/.gradle/gradle.properties` 中添加（Windows 为
+   (classic)，在 **用户级** `~/.gradle/gradle.properties` 中添加（Windows 为
    `C:\Users\<用户名>\.gradle\gradle.properties`），不要将 token 写入项目或提交到 Git：
 
    ```properties
@@ -157,10 +157,18 @@ fun downloadFiles(
 调用示例（将地址替换为实际 HTTPS 文件地址）：
 
 ```kotlin
-val batch = downloadFiles(context, listOf(
-    DownloadRequest(ResourceIdentity("demo", "photo", "1"), RequestInfo("https://example.com/photo.jpg")),
-    DownloadRequest(ResourceIdentity("demo", "video", "1"), RequestInfo("https://example.com/video.mp4")),
-)) { identity, event ->
+val batch = downloadFiles(
+    context, listOf(
+        DownloadRequest(
+            ResourceIdentity("demo", "photo", "1"),
+            RequestInfo("https://example.com/photo.jpg")
+        ),
+        DownloadRequest(
+            ResourceIdentity("demo", "video", "1"),
+            RequestInfo("https://example.com/video.mp4")
+        ),
+    )
+) { identity, event ->
     // 主线程：按完整 identity 定位列表项，更新 receivedBytes、totalBytes、state 和 error。
     // RecyclerView 按需 notifyItemChanged(position, "progress")；Compose 更新对应条目的状态。
 }
@@ -193,12 +201,12 @@ C++ 核心决定下载与存储策略；Android 层负责 JNI、网络适配，�
 | `engine.enqueue(request)` / `attach(request)`                | 创建独立订阅；前者给予执行许可，后者只绑定，恢复记录保持暂停               |
 | `subscription.observe(...)` / `query()`                      | 观察事件或查询状态、进度、检查点与错误                                     |
 | `subscription.pause()` / `resume()`                          | 控制共享任务；仅 `Paused` 确认检查点成功                                   |
-| `subscription.retry(request)`                               | 暂停或鉴权/网络/超时/HTTP 失败后换请求，保留检查点和普通重试预算             |
+| `subscription.retry(request)`                                | 暂停或鉴权/网络/超时/HTTP 失败后换请求，保留检查点和普通重试预算           |
 | `subscription.cancel()` / `releaseAsync()`                   | 取消或静默释放当前订阅；最后显式取消清理未完成任务，最后释放尽力保留检查点 |
 | `engine.listTasks()`                                         | 分页列出持久化任务，由宿主重新提供请求并决定是否恢复                       |
-| `engine.query(persistentId)` / `query(identity)`              | 异步查询单条资源快照，不绑定订阅或启动下载                                 |
+| `engine.query(persistentId)` / `query(identity)`             | 异步查询单条资源快照，不绑定订阅或启动下载                                 |
 | `engine.acquire(id)`                                         | 获取有效 Completed 对象的只读租约，读取后调用 `lease.releaseAsync()`       |
-| `engine.copyTo(id, outputStream)`                            | 异步导出已完成资源，等待 `completion` 获取字节数，可单独取消导出              |
+| `engine.copyTo(id, outputStream)`                            | 异步导出已完成资源，等待 `completion` 获取字节数，可单独取消导出           |
 | `engine.pin(...)` / `setExpiry(...)` / `remove(...)`         | 管理资源保留、过期与删除，遵守活动任务和租约保护                           |
 | `engine.storageStats()` / `trimTo(...)` / `collectStaging()` | 查询配额账本、按 LRU 回收与清理过期暂存                                    |
 | `engine.closeAsync()`                                        | 停止 I/O 并释放引擎；已持有的租约须另行释放                                |

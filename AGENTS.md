@@ -16,13 +16,13 @@ or the relevant tool README, and link to them here.
 - Start with [the documentation index](docs/README.md), then read the material relevant to the
   change:
 
-| Change                                    | Required reading                                                                                                                                                                 |
-|-------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Scope or architecture                     | [Design baseline](docs/design/v1-design.md) and affected API contracts; [implementation plan](docs/design/v1-implementation-plan.md) for scope/milestone changes                 |
-| C/C++ API, scheduling or storage          | [Host API](docs/reference/host-api.md); [record v2](docs/reference/storage-record-v2.md) for persistence changes, [record v1](docs/reference/storage-record-v1.md) for migration |
-| Kotlin/JNI, Android networking or sample  | [Android API](docs/reference/android-api.md), [sample guide](docs/guides/android-sample.md) as applicable                                                                        |
-| Transport or HTTP behavior                | [Transport contract](docs/reference/transport-contract.md) and the affected host/Android API                                                                                     |
-| Packaging, dependencies or release claims | [Packaging](docs/release/packaging.md), [release checklist](docs/release/checklist.md), [dependency notes](third_party/README.md)                                                |
+| Change                                    | Required reading                                                                                                                                                                     |
+|-------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Scope or architecture                     | [Design baseline](docs/design/核心设计与约束.md) and affected API contracts                                                                                                          |
+| C/C++ API, scheduling or storage          | [Host API](docs/reference/C与C++接口与行为.md); [record v2](docs/reference/存储记录v2格式.md) for persistence changes, [record v1](docs/reference/存储记录v1与迁移.md) for migration |
+| Kotlin/JNI, Android networking or sample  | [Android API](docs/reference/AndroidSDK接口与行为.md), [sample guide](docs/guides/Android示例操作指南.md) as applicable                                                              |
+| Transport or HTTP behavior                | [Transport contract](docs/reference/传输后端契约.md) and the affected host/Android API                                                                                               |
+| Packaging, dependencies or release claims | [Packaging](docs/release/SDK打包与发布.md), [release checklist](docs/release/发布验收清单.md), [dependency notes](third_party/README.md)                                             |
 
 - Distinguish current contracts, design goals and historical evidence. If declarations,
   implementation, tests and documentation disagree, identify the mismatch and resolve it within the
@@ -42,25 +42,28 @@ or the relevant tool README, and link to them here.
 
 ## Documentation Structure
 
-- Keep root `README.md` lightweight and self-contained for basic SDK integration and usage. Include
-  the project introduction, minimal integration steps and code examples, an architecture overview
-  and core SDK interfaces. Do not direct readers to other documents unless necessary; basic
-  integration and minimal examples must be usable from the README alone. 
-- Use `docs/README.md` as the entry point: `guides/` for development/usage, `reference/` for APIs
-  and contracts, `design/` for architecture/plans, `release/` for packaging/gates, `reports/` for
-  validation evidence and `archive/` for superseded guides. Do not add loose topic pages under
-  `docs/`.
-- Use stable topic filenames for current guides/APIs, such as `reference/android-api.md`. Mark
-  historical material and link to current APIs; retain milestone names for archives/reports.
-- Keep each document focused, with short explanations and minimal useful examples. Maintain one
-  authoritative location for each procedure or contract; link to it instead of copying it. Update
-  affected API, design and usage documents when behavior or architecture changes.
-- When adding, moving or renaming a document, update the index, affected links, anchors and textual
-  paths, including sample hints and AGENTS references where applicable. Topic pages must offer a
-  route back to the index. Verify local links/anchors and examples affected by the change.
-- Preserve existing raw evidence paths and contents during reorganization. Give new evidence runs
-  distinct output paths rather than overwriting history. Tool-local READMEs may remain beside tests,
-  size tools, dependencies or assets; expose them through the index instead of duplicating them.
+- Keep root `README.md` self-contained for basic SDK integration. Include the project overview,
+  minimal setup and runnable examples, architecture, and core interfaces.
+- Use `docs/README.md` as the index. Put usage and development guides in `guides/`, API and format
+  contracts in `reference/`, architectural decisions and active plans in `design/`, packaging and
+  release gates in `release/`, and measured results in `reports/`. Keep topic pages out of the
+  `docs/` root. Keep tool-specific instructions beside their tools and link from the index.
+- Use stable, descriptive Chinese filenames for new current topic pages, with established technical
+  terms where appropriate. Keep conventional names such as `README.md` and `AGENTS.md`, and preserve
+  historical report and evidence paths. Rename or move existing pages only as part of scoped
+  documentation work.
+- State the audience and purpose at the start. Use searchable headings and put the common workflow
+  first. Give prerequisites and success criteria next to commands. Keep one authoritative section
+  per procedure or contract. Other pages may include the minimum summary or example needed to
+  complete their own task and should link directly to the authoritative section.
+- Update the authoritative sections and affected examples when public behavior, user steps,
+  architecture, or release requirements change. Internal changes with no effect on those areas
+  need no docs update. Read historical reports only when the task needs their evidence.
+- For additions, removals, or moves, update the index and affected links, anchors, and textual paths
+  in both AGENTS files, scripts, workflows, tests, and sample hints as applicable. Give each topic
+  page a route back to the index. Verify affected links, anchors, and examples. Before deleting an
+  obsolete page, migrate any still-valid unique requirements and fix its references.
+- Preserve raw evidence paths and contents. Use a distinct output path for each new evidence run.
 
 ## Coding Style & Naming
 
@@ -123,7 +126,8 @@ or the relevant tool README, and link to them here.
 
 ## Validation
 
-Use commands from [development](docs/guides/development.md) and [tests](tests/README.md), executed
+Use commands from [development](docs/guides/本地构建与测试.md) and [tests](tests/README.md),
+executed
 from the repository root. Select checks by affected behavior rather than running every historical
 milestone entry for every edit:
 
@@ -137,7 +141,8 @@ milestone entry for every edit:
 
 - Add or update regression coverage for logic changes and bug fixes; reuse the controllable local
   HTTP server and existing JUnit4/CTest infrastructure. Cover affected failure/race cases from the
-  [design acceptance list](docs/design/v1-design.md), not only the successful path. For low-impact
+  [design acceptance list](docs/design/核心设计与约束.md), not only the successful path. For
+  low-impact
   wording/style changes, use relevant existing checks; avoid tests that merely repeat
   implementation.
 - Check that expected tests actually ran; use `ctest --no-tests=error` for filtered runs and inspect
@@ -167,7 +172,7 @@ milestone entry for every edit:
 - `FETCHKIT_INSTALL=ON` is opt-in for production-profile builds, including local previews; never
   install fault-injection or sanitizer builds. Local Maven publication uses
   `:sdk:publishReleasePublicationToPreviewRepository` with both supported ABIs and probes off.
-- Follow [packaging](docs/release/packaging.md) for external consumers, matched ELF Build ID
+- Follow [packaging](docs/release/SDK打包与发布.md) for external consumers, matched ELF Build ID
   symbols, dependency trees and SHA manifests. Measure the full host increment, including runtime
   and transitive dependencies; distinguish it from core-only size. Real ENOSPC evidence requires
   Linux user/mount namespaces and cannot be replaced by fault injection.

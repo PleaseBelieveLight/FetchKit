@@ -1,8 +1,9 @@
-# Android API：Kotlin/JNI 接入
+# Android SDK 接口与行为
 
-[文档中心](../README.md) · [接入与打包](../release/packaging.md#maven-aar-与外部-android-宿主)
+[文档中心](../README.md) · [打包与外部宿主验证](../release/SDK打包与发布.md#maven-aar-与外部-android-宿主)
 
-状态：alpha。Kotlin/JNI 复用 C++ 核心调度、协议、存储、重试与租约；保留 `FetchKit.version()`。
+本页供 Android 宿主查阅请求、订阅、读取租约及生命周期约定。
+Kotlin/JNI 复用 C++ 核心调度、协议、存储、重试与租约；保留 `FetchKit.version()`。
 运行矩阵、产物和未验证的环境见 [M4 报告](../reports/m4-baseline.md)。
 
 ## 打开与请求
@@ -31,7 +32,7 @@ UI 使用 `thenAcceptAsync(..., mainExecutor)`，组合操作使用 `thenCompose
 取消 Future 不等同于取消订阅；有资源返回值的提交 Future 拒绝取消，避免成功创建后丢失待释放对象。
 
 每进程最多打开 16 个 Kotlin engine；公共 API 工作池 2 个线程、256 个等待槽，关闭使用独立控制通道。
-每 engine 1 个事件泵与 1 个取消监视线程，核心线程限制和队列见 [M3 API](host-api.md)。
+每 engine 1 个事件泵与 1 个取消监视线程，核心线程限制和队列见 [M3 API](C与C++接口与行为.md)。
 同一订阅只有一个待完成的 `awaitStopped` 轮询，不因重复等待累积无界任务。
 SDK 不引入 Compose、WorkManager 或通知依赖。
 宿主可通过 `EngineConfig.network` 显式绑定 Android Network；socket 与 DNS 使用同一网络，不自动切换到其他网络。
@@ -52,7 +53,7 @@ FetchKit.setLogLevel(LogLevel.Off)   // 排障结束后关闭
 日志仅覆盖打开/关闭、扫描修复汇总、重要续传回退、重试和最终结果，以及 provider/listener/executor
 异常；不逐数据块、轮询或进度输出。异常只记录类型和安全状态，不记录异常消息/堆栈、URL、headers 或响应体。
 `RequestInfo` 和 `DownloadRequest` 的 `toString()` 隐藏外部字符串，实际请求字段保持原值；直接读取字段后打印仍须由宿主脱敏。
-关闭日志不影响 Future 错误、快照和事件；host/native 的过滤与上下文见 [主机诊断说明](host-api.md#可选诊断日志)。
+关闭日志不影响 Future 错误、快照和事件；host/native 的过滤与上下文见 [主机诊断说明](C与C++接口与行为.md#可选诊断日志)。
 
 ## 订阅、事件与恢复
 
@@ -77,7 +78,7 @@ subscription.retry(refreshed).thenCompose { subscription.awaitStopped() }
 `DownloadRequest.refreshHttpStatuses` 可显式增加 404/410 刷新；默认只处理 401/403。
 `expiresAtMs` 始终是资源可用期限，不是 URL 有效期，签名更新仍由 provider 按业务引用完成。
 HTTP 200 错误页面不能凭状态码识别，关键资源应配置可信 SHA-256。
-请求来源和回滚边界见 [新请求重试契约](../design/request-retry-contract.md)。
+请求来源和回滚边界见 [新请求重试契约](../design/新请求重试设计与验收.md)。
 
 `DownloadSubscription` 是独立订阅；相同身份共享一个 writer。`pause` / `resume` 影响共享任务，
 `cancel` 仅撤销当前订阅，`releaseAsync` 静默释放；最后订阅释放保留暂停记录，最后显式取消清理未完成任务。
@@ -204,32 +205,10 @@ withDownloadEngine(config) { engine ->
 初始查询与事件触发的查询串行执行。零 collector 时仍排空事件，只保留最新快照；
 需要完整事件的宿主继续直接使用 `observe`。关闭观察只停止查询，资源由 owner 释放。
 
-## 示例的后台执行许可
+## Android 后台执行
 
-示例分为下载、存储和能力指南三个页面，操作与验证方式见 [Android 示例指南](../guides/android-sample.md)。
-前台页面显示多文件进度、采样速度、核心快照、检查点、重试信息和有界状态事件，提供批量/逐任务暂停恢复、
-独立订阅取消/释放、可选长度/SHA-256、pin/过期、LRU 回收、暂存清理和可手动释放的读取租约。
-每个资源使用自己的请求与订阅，控制现有任务不会再从公共输入框构造其他资源的请求。
-页面离开且没有后台任务时释放租约并关闭 engine；重新打开只扫描记录，用户明确恢复后才运行。
+SDK 负责检查点、请求校验和重试预算。宿主负责取得系统执行许可、提供请求与可用网络，
+并在系统停止时关闭引擎以尽力提交检查点。再次获得许可后，重新绑定有效请求再恢复。
+签名 URL、凭证和回调由宿主即时提供。
 
-预设请求的资源 ID、版本、长度、可信摘要和创建时 pin 配置由宿主异步保存到 noBackupFilesDir，使用 AtomicFile；
-URL 从固定预设目录重建。SDK 记录格式不变，仍不保存 URL、凭证或回调。
-自定义请求仅存在内存中，重启后需要重新提供原约束并绑定对应身份。
-后台示例接受固定预设（包括带查询参数的 Ubuntu 镜像资源），Job extras 只保存预设 ID 与非敏感约束；
-自定义后台地址限没有 userinfo/query/fragment 的公开地址。地址只存于进程内，Job extras 携带随机许可令牌。
-进程退出后，自定义请求需要重新绑定。签名 URL 和凭证应由宿主 provider 重新获取。
-预设后台任务使用独立的 Job ID，最多 15 个槽位，自定义任务保留单独槽位。示例串行使用后台引擎，
-在引擎繁忙时交回额外任务的许可，由系统重新调度。API 28 及以上使用系统分配的网络，开始前校验网络约束。
-前台批量下载使用 SDK 调度。
-
-用户可见操作在 API 34+ 使用 JobScheduler UIDT，并声明 RUN_USER_INITIATED_JOBS、网络约束与通知；
-低版本使用有限、可中断的普通 JobScheduler 任务，不保证立即启动或长时间运行。
-该选择遵循 [Android 后台数据传输说明](https://developer.android.com/develop/background-work/background-tasks/data-transfer-options)
-和 [UIDT 文档](https://developer.android.com/develop/background-work/background-tasks/uidt)。
-本示例没有引入 WorkManager；需要旧版本长期前台传输的宿主应选择适合其产品的独立调度适配。
-
-示例用对应资源的系统 job 表示后台运行意图。暂停资源或取消最后一个订阅时，先禁止 job 续跑，待 SDK
-控制操作完成后撤销系统 job。系统停止或网络约束失效时异步关闭引擎并尽力提交检查点，待系统重新授权后恢复。
-API 34 及以上收到系统分配的新网络时，等待旧引擎关闭，再以该网络重开并绑定仍持有许可的请求。
-HTTP 重试和预算继续由 SDK 负责。普通进程终止、系统停止、用户强制停止、重启和掉电分别记录，
-强制停止后不承诺自动恢复；下一次用户/系统合法执行机会才可重新执行。
+示例的 UIDT、网络切换及停止行为见 [Android 示例指南](../guides/Android示例操作指南.md#后台下载)。

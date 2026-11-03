@@ -19,8 +19,8 @@ Android 下载桥接与设备生命周期仍属于 M4；本阶段未进行系统
 | M3-04  | 已知长度提前预留、未知长度 64 KiB 分块申请；暂存/对象/隔离文件/元数据统一逻辑账本、失败回滚与启动重算          |
 | M3-05  | 读取租约保护、pin_on_create、动态 pin/过期、持久访问序号 LRU、remove tombstone、trim 与暂存保留期回收          |
 
-接口与边界见 [M3 API](../reference/host-api.md)
-，持久格式见 [v2 记录](../reference/storage-record-v2.md)。 原始 v1 黄金样本不变，新增独立编码 v2
+接口与边界见 [M3 API](../reference/C与C++接口与行为.md)
+，持久格式见 [v2 记录](../reference/存储记录v2格式.md)。 原始 v1 黄金样本不变，新增独立编码 v2
 黄金样本；v1 可迁移，未来版本/未知必须字段继续隔离并保护身份。 C ABI 增加字段后须重新编译 alpha 客户端。
 
 两项实施细化已同步设计与计划：

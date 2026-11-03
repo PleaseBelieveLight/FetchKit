@@ -1,13 +1,15 @@
-# 接入、打包与预发布
+# SDK 打包与发布
 
-[文档中心](../README.md) · [发布检查表](checklist.md)
+[文档中心](../README.md) · [发布检查表](发布验收清单.md)
+
+本页供维护者构建、检查和分发 SDK 产物。应用接入从 [根 README](../../README.md) 开始。
 
 版本源是根目录 `VERSION`，内容不带 `v` 前缀；Git Tag 命名使用 `v<VERSION>`。例如 `VERSION` 为
 `0.2.0-beta.3` 时，Tag 为 `v0.2.0-beta.3`。支持
 `major.minor.patch`，以及附加 `-alpha.N`、`-beta.N` 或 `-rc.N` 的预发布版本；数字不使用前导零。 完整版本用于
 Maven 坐标、`fetchkit_version()`、`FetchKit.version()` 和安装包中的 `VERSION`。 尚未冻结 C
 ABI；升级库后重新编译宿主。当前结果与未通过的正式发布门槛见
-[M5 报告](../reports/m5-baseline.md) 和 [发布检查表](checklist.md)。已配置 GitHub Packages 发布入口，
+[M5 报告](../reports/m5-baseline.md) 和 [发布检查表](发布验收清单.md)。已配置 GitHub Packages 发布入口，
 配置和本地验证本身不代表已经上传。
 
 ## Native 安装与独立接入
@@ -105,15 +107,16 @@ python tools/ci/verify_android_package.py --repository build/m5-maven --sdk D:/A
 该示例使用 Debug key 签名本地 Release 验证 APK；只为 loopback 放行明文，没有测试 CA，不作为业务应用的发布签名或网络策略。
 构建需要完整 JDK（含 jlink），IDE 的裁剪运行时可能缺少该工具。显式 Java toolchain 的依据见
 [Android JDK 文档](https://developer.android.com/build/jdks)。 SDK 的线程、Future、provider、事件
-executor、Network、备份排除与 JobScheduler 接入规则见 [M4 API](../reference/android-api.md)；
-存储、鉴权、重试、错误恢复及读取保护见 [M3 API](../reference/host-api.md)。不要在 UI 或 provider 中阻塞等待
+executor、Network、备份排除与 JobScheduler 接入规则见 [M4 API](../reference/AndroidSDK接口与行为.md)；
+存储、鉴权、重试、错误恢复及读取保护见 [M3 API](../reference/C与C++接口与行为.md)。不要在 UI 或 provider
+中阻塞等待
 SDK Future。
 
 ### GitHub Packages 发布与接入
 
 仓库提供手动 `Prerelease` 工作流：从与 `VERSION` 一致的 Alpha/Beta/RC Tag 重新构建验证，默认仅生成
 Actions Artifact；显式选择上传后才发布 Packages 并创建草稿预发布。操作与自动验证范围见
-[持续集成与预发布](../guides/continuous-integration.md#手动准备和分发预发布版本)。正式发布门槛保持不变。
+[持续集成与预发布](../guides/持续集成与预发布.md#手动准备和分发预发布版本)。正式发布门槛保持不变。
 
 默认发布仓库是 `https://maven.pkg.github.com/pleasebelievelight/fetchkit`，对应源码仓库
 `PleaseBelieveLight/FetchKit`。迁移或 fork 时可用 `-Pfetchkit.githubRepository=OWNER/REPOSITORY`
@@ -143,30 +146,9 @@ Maven 预览发布无需这些凭证，远程发布缺少凭证时会在上传�
 Packages 区域查看包；同一版本不要重复用于不同源码。 已有 Tag 不会自动包含后续构建配置的修改：先提交并确定实际发布提交，保留已公开
 Tag， 需要包含这些修改的新源码快照时递增预发布序号并创建新 Tag，避免让产物与所标记源码不一致。
 
-使用方在 `settings.gradle.kts` 的 `dependencyResolutionManagement.repositories` 中添加：
-
-```kotlin
-maven {
-    url = uri("https://maven.pkg.github.com/pleasebelievelight/fetchkit")
-    credentials {
-        username = providers.gradleProperty("gpr.user")
-            .orElse(providers.environmentVariable("GITHUB_ACTOR")).orNull
-        password = providers.gradleProperty("gpr.key")
-            .orElse(providers.environmentVariable("GITHUB_TOKEN")).orNull
-    }
-    content { includeGroup("com.luofelix.fetchkit") }
-}
-```
-
-保留 `google()` 和 `mavenCentral()` 以解析依赖，然后在应用模块添加：
-
-```kotlin
-implementation("com.luofelix.fetchkit:fetchkit:0.1.0-alpha.1")
-```
-
-公开的 Maven/Gradle 包下载也需要认证，使用方 token 至少需要 `read:packages`。 也可在对应的 GitHub
-Release 附上 AAR、校验值和对应阶段的预发布限制说明，供直接下载；直接使用 AAR 仍须自行声明运行依赖。预发布
-分发不表示已通过首版正式发布验收，不改变现有发布门槛。
+消费端仓库与依赖配置见 [README 的 GitHub Packages 接入](../../README.md#方式二github-packages)。
+公开包下载仍需认证，使用方 token 至少需要 `read:packages`。直接分发 AAR 时同时提供校验值和预发布限制，
+消费端需自行声明运行依赖。
 
 ## 演示 APK 的公开签名
 
@@ -178,16 +160,19 @@ Compose 调试工具、测试 CA 或明文网络放行。最低 API 24，包含 
 .\gradlew.bat :sample:assembleRelease '-Pfetchkit.probes=false' --max-workers=2 --no-configuration-cache
 ```
 
-签名产物为 `platform/android/sample/build/outputs/apk/release/fetchkit-sample-<VERSION>-release.apk`，可附到 GitHub
-Release。SDK、示例 App 的 `versionName` 和文件名统一读取根目录 `VERSION`；`versionCode` 在 sample 配置中独立维护，
+签名产物为 `platform/android/sample/build/outputs/apk/release/fetchkit-sample-<VERSION>-release.apk`
+，可附到 GitHub
+Release。SDK、示例 App 的 `versionName` 和文件名统一读取根目录 `VERSION`；`versionCode` 在 sample
+配置中独立维护，
 用于 Android 安装升级排序。完整版本包括预发布后缀，普通构建使用以下名称：
 
-| 产物 | 文件名 |
-|------|--------|
-| SDK AAR | `fetchkit-<VERSION>-debug.aar` / `fetchkit-<VERSION>-release.aar` |
+| 产物       | 文件名                                                                          |
+|------------|---------------------------------------------------------------------------------|
+| SDK AAR    | `fetchkit-<VERSION>-debug.aar` / `fetchkit-<VERSION>-release.aar`               |
 | Sample APK | `fetchkit-sample-<VERSION>-debug.apk` / `fetchkit-sample-<VERSION>-release.apk` |
 
-AAR 仍在 `platform/android/sdk/build/outputs/aar/`，APK 仍在 sample 的 `build/outputs/apk/<buildType>/`。
+AAR 仍在 `platform/android/sdk/build/outputs/aar/`，APK 仍在 sample 的
+`build/outputs/apk/<buildType>/`。
 测试 APK 使用 AGP 默认名称；Maven 发布使用标准 `fetchkit-<VERSION>.aar`，预发布附件沿用
 `fetchkit-sample-<VERSION>.apk`。CI、测试和测量工具通过 `tools/ci/android_artifacts.py` 精确读取当前版本与变体，
 缺少产物时失败，不使用旧文件或通配匹配。命令行可定位已构建文件：
@@ -216,7 +201,8 @@ debuggable、包含两种 ABI、JNI 完整版本与 `VERSION` 一致，并对拟
 SDK 版本和 ABI 的 Debug/Release 产物，不能用 APK 总大小代表 SDK 接入增量。
 
 Release 使用完整 R8 优化，JNI 入口由 SDK consumer rules 保留。不要恢复仅优化 AndroidX/Kotlin 的实验性
-`packageScope`：该配置曾使 Kotlin 继承链跨包后失去访问权限，导致页面图标首帧绘制时出现 `IllegalAccessError`。
+`packageScope`：该配置曾使 Kotlin 继承链跨包后失去访问权限，导致页面图标首帧绘制时出现
+`IllegalAccessError`。
 签名与构建检查不能代替运行验证；上传前按 [Release 启动回归](../../tests/README.md#release-演示-apk-启动回归)
 在明确选中的设备上验证实际拟分发 APK。
 
@@ -251,4 +237,4 @@ Range/摘要。 自动 reboot 仅接受 emulator serial，不操作宿主系统�
 汇总证据见 `docs/reports/m5/`。
 `tools/release/check_release.py --preview ... --evidence ... --output ... --preview-only`
 验证本地预览；省略 `--preview-only` 为严格发布检查，缺少平台/许可门槛时返回非零。当前发布保持阻断，详情见
-[检查表](checklist.md)。最终候选需在固定提交重新构建、运行并归档同一批产物。
+[检查表](发布验收清单.md)。最终候选需在固定提交重新构建、运行并归档同一批产物。

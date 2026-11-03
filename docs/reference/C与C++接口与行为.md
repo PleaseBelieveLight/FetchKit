@@ -1,9 +1,9 @@
-# 主机 API：调度、订阅与资源存储
+# C 与 C++ 接口与行为
 
-[文档中心](../README.md) · [构建与运行](../guides/development.md)
+[文档中心](../README.md) · [构建与运行](../guides/本地构建与测试.md)
 
-状态：alpha。C ABI 增加字段后须重新编译客户端，尚未冻结发布版 ABI。
-主机实现包含多任务、重试和缓存管理；Kotlin/JNI 接入见 [Android API](android-api.md)。
+本页供 C/C++ 宿主查阅任务、订阅、事件和缓存行为。C ABI 尚未冻结，升级后须重新编译宿主。
+主机实现包含多任务、重试和缓存管理；Kotlin/JNI 接入见 [Android API](AndroidSDK接口与行为.md)。
 验证范围与缺测项见 [M3 报告](../reports/m3-baseline.md)。
 
 ## 配置与运行
@@ -137,7 +137,7 @@ InternalError，不跨 C ABI。 宿主应持续分发或明确释放订阅，不
 C provider 返回 Network/Timeout 时参与有限重试，AuthRequired/Cancelled 保留分类，其余非 Ok 返回和异常映射为 AuthRequired。
 provider 的 Cancelled 不等同于显式取消订阅，不触发未完成数据清理。
 
-准入、回滚、共享来源与竞争的详细边界见 [新请求重试契约](../design/request-retry-contract.md)。
+准入、回滚、共享来源与竞争的详细边界见 [新请求重试契约](../design/新请求重试设计与验收.md)。
 
 可重试：Network、Timeout、HTTP 408/429/500/502/503/504。证书、协议、长度/摘要、磁盘、权限和配额错误不参加普通重试。
 鉴权刷新每 generation 最多一次，与普通重试分开计数并落盘；一次协议安全重下仍遵守 M1 的限制。
@@ -194,5 +194,5 @@ trim <目标计费字节数>
 collect
 ```
 
-记录兼容见 [v2 格式](storage-record-v2.md)。Linux/sanitizer、真实小容量文件系统和设备验证的缺测项仍阻断对应保证，
+记录兼容见 [v2 格式](存储记录v2格式.md)。Linux/sanitizer、真实小容量文件系统和设备验证的缺测项仍阻断对应保证，
 不将 Windows 测试、故障注入或进程终止外推为系统重启/掉电结果。

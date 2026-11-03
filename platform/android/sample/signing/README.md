@@ -5,4 +5,4 @@
 `fetchkit-public-demo-cert.pem` 是对应的公开证书。
 
 构建命令、公开口令及升级注意事项统一见
-[演示 APK 的公开签名](../../../../docs/release/packaging.md#演示-apk-的公开签名)。
+[演示 APK 的公开签名](../../../../docs/release/SDK打包与发布.md#演示-apk-的公开签名)。
