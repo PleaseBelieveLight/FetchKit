@@ -100,7 +100,7 @@ def main():
                     return tree
             attempt += 1
             time.sleep(0.5)
-        raise AssertionError(f"Release 页面未出现预期内容：{name}，请确认设备已解锁")
+        raise AssertionError(f"Release 页面未出现预期内容：{name}（预期标签：{'、'.join(sorted(required))}）")
 
     def tap(tree, text):
         # 只点击本应用中明确匹配的文字；同名文字优先选择底部导航项。
@@ -159,7 +159,7 @@ def main():
                 tap(tree, "下载")
                 tree = page(home, "downloads")
                 tap(tree, "新建下载")
-                page({"清华镜像 · Netboot", "阿里云镜像 · Netboot"}, "new-download")
+                page({"中科大镜像 · Alpine Standard", "南大镜像 · Alpine Virtual"}, "new-download")
                 report["checks"].append("new-download")
                 command(["shell", "input", "keyevent", "KEYCODE_BACK"])
                 page(home, "home-after-dialog")

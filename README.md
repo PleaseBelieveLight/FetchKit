@@ -10,16 +10,17 @@ FetchKit 是面向 Android 与 Linux 的 C++ 文件下载 SDK，提供断点续�
 
 最低支持 Android API 24，AAR 包含 `arm64-v8a` 和 `x86_64`。以下方式二选一，宿主 `minSdk` 不低于 24；
 `settings.gradle.kts` 的 `dependencyResolutionManagement.repositories` 中需保留 `google()` 和
-`mavenCentral()` 以解析运行依赖。以下示例使用 Kotlin DSL，以 `0.1.0-alpha.1` 为例；接入时统一替换为实际已发布的目标版本。
+`mavenCentral()` 以解析运行依赖。以下示例使用 Kotlin DSL。复制示例时，将 `<VERSION>` 替换为所选渠道的
+已发布版本号，保留预发布后缀，省略 Git Tag 开头的 `v`。
 
 ### 方式一：本地 AAR
 
 从 [Releases](https://github.com/PleaseBelieveLight/FetchKit/releases) 下载
-`fetchkit-0.1.0-alpha.1.aar`，放入应用模块的 `app/libs/`，在 `app/build.gradle.kts` 中添加：
+`fetchkit-<VERSION>.aar`，放入应用模块的 `app/libs/`。在 `app/build.gradle.kts` 中填入实际下载的附件名：
 
 ```kotlin
 dependencies {
-    implementation(files("libs/fetchkit-0.1.0-alpha.1.aar"))
+    implementation(files("libs/fetchkit-<VERSION>.aar"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.10")
     implementation("com.squareup.okhttp3:okhttp:5.5.1")
 }
@@ -58,11 +59,12 @@ dependencies {
    }
    ```
 
-3. 在应用模块的 `build.gradle.kts` 中添加依赖：
+3. 从 [GitHub Packages](https://github.com/PleaseBelieveLight/FetchKit/packages) 选择已发布版本，
+   在应用模块的 `build.gradle.kts` 中添加依赖：
 
    ```kotlin
    dependencies {
-       implementation("com.luofelix.fetchkit:fetchkit:0.1.0-alpha.1")
+       implementation("com.luofelix.fetchkit:fetchkit:<VERSION>")
    }
    ```
 
