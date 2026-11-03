@@ -3,7 +3,9 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         maven {
-            url = uri(providers.gradleProperty("fetchkit.repository").get())
+            val previewRepository = settingsDir.resolve("../../build/m5-maven")
+            url = providers.gradleProperty("fetchkit.repository").orNull?.let { uri(it) }
+                ?: previewRepository.toURI()
             content { includeGroup("com.luofelix.fetchkit") }
         }
         google()

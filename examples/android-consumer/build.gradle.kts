@@ -1,6 +1,8 @@
 plugins { id("com.android.application") version "9.4.1" }
 
 val coroutinesAar = providers.gradleProperty("fetchkit.coroutinesAar").orNull
+val fetchkitVersion = providers.gradleProperty("fetchkit.version")
+    .orElse(providers.fileContents(layout.projectDirectory.file("../../VERSION")).asText.map { it.trim() })
 
 java {
     toolchain {
@@ -21,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 37
         versionCode = 1
-        versionName = providers.gradleProperty("fetchkit.version").get()
+        versionName = fetchkitVersion.get()
         ndk { abiFilters += providers.gradleProperty("fetchkit.abi").orElse("arm64-v8a").get() }
     }
     buildTypes {
@@ -48,7 +50,7 @@ androidComponents {
 }
 
 dependencies {
-    implementation("com.luofelix.fetchkit:fetchkit:" + providers.gradleProperty("fetchkit.version").get())
+    implementation("com.luofelix.fetchkit:fetchkit:" + fetchkitVersion.get())
     if (coroutinesAar != null) {
         implementation(files(coroutinesAar))
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:" + providers.gradleProperty("fetchkit.coroutinesVersion").get())

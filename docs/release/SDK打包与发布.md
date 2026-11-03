@@ -88,8 +88,14 @@ AAR 文件仍须自行声明运行依赖。
 源码工程可用 `implementation(project(":coroutines"))`；`:coroutines:assembleRelease` 可构建独立 AAR，
 复制该 AAR 时需要同时声明基础 SDK 和协程运行依赖。基础 SDK 的 Maven 发布仍只包含基础 SDK。
 
-可将 [Android 独立示例](../../examples/android-consumer) 复制到仓库外，配置 Android SDK 并使用完整的
-Adoptium JDK 25：
+在 Android Studio 中查看 [Android 独立示例](../../examples/android-consumer) 时，先执行上面的本地预览发布命令，
+再通过 **File → Open** 将 `examples/android-consumer` 在新窗口作为独立 Gradle 工程打开。Gradle
+版本与根工程的
+`gradle/wrapper/gradle-wrapper.properties` 一致，Gradle JDK 使用完整的 Adoptium JDK 25，并安装示例要求的
+Android SDK。
+在源码树内打开时，示例默认使用根目录的 `VERSION` 和 `build/m5-maven`，同步后可解析 SDK 类型。
+
+也可将示例复制到仓库外，配置 Android SDK 和完整的 Adoptium JDK 25，并显式指定仓库和版本：
 
 ```sh
 gradle assembleRelease -Pfetchkit.repository=file:///absolute/path/build/m5-maven \

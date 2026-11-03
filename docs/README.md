@@ -4,6 +4,7 @@
 
 ## 构建与使用
 
+- [项目结构速览](guides/项目结构速览.md)
 - [本地构建与测试](guides/本地构建与测试.md)
 - [Android 示例操作指南](guides/Android示例操作指南.md)
 - [持续集成与预发布](guides/持续集成与预发布.md)
