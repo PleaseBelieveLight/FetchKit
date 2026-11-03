@@ -121,6 +121,11 @@ val provider = RequestProvider { context ->
 记录不保存 provider、URL、headers、Kotlin 对象或旧 token。重开后 `listTasks` 查询身份/快照，
 宿主以原约束重新提供 `DownloadRequest`，选择 `attach` 保持暂停或 `enqueue` 明确给予执行许可。
 
+已知 `persistentId` 或 `ResourceIdentity` 时，可调用 `engine.query(persistentId)` 或
+`engine.query(identity)` 异步取得 `StoredTask`。资源快照的 `taskId` 固定为 0。
+无记录时 Future 以 NotFound 完成。查询不会创建订阅、启动下载或更新 LRU。
+任务列表仍使用 `listTasks()`，查询特定订阅的状态使用 `subscription.query()`。
+
 ## 网络与 JNI
 
 正式后端使用 M0 已选择的独立 OkHttp 5.5.1；本阶段该依赖进入普通 SDK 的运行依赖。

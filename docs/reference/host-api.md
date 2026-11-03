@@ -86,6 +86,12 @@ wait/release/close 返回 Busy。 超时只能在协作回调返回后检查，�
 generation；普通重试保持 generation。任务被 remove/过期暂存清理后重新创建时，旧订阅只保留历史查询，
 不能控制替代任务；旧订阅的取消也不会删除新任务的数据。
 
+已知资源时，使用 `fetchkit_query_task_by_id` 或 `fetchkit_query_task_by_identity` 同步取得一条
+`fetchkit_task_info`，C++ 对应 `Engine::query`。调用方初始化输出的 `struct_size`。两个入口使用资源索引，
+合并运行快照，返回的 `task_id` 固定为 0。查询不会创建订阅、运行 provider 或更新 LRU。
+无记录返回 NotFound，非法参数返回 InvalidArgument。与删除或关闭竞争时，已取得的快照仍可能返回。
+available 反映记录和过期策略，取得文件前仍需 acquire 校验和租约。
+
 ## 宿主 executor 与事件
 
 M3 采用宿主主动分发：宿主在自己选定的 executor 上调用

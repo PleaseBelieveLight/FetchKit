@@ -158,7 +158,7 @@ def main():
                 for request in fixtures[1].server.requests)
             report["m3_request_counts"] = getattr(fixtures[0].server, "m3_counts", {})
             report["no_hidden_503_retry"] = report["m3_request_counts"].get("android-no-hidden") == 1
-            recovery_cases = {"auth-request-recovery", "explicit-request-source", "provider-transient-Network", "provider-transient-Timeout",
+            recovery_cases = {"direct-task-query", "auth-request-recovery", "explicit-request-source", "provider-transient-Network", "provider-transient-Timeout",
                               "refresh-404-false", "refresh-404-true", "refresh-410-false", "refresh-410-true", "expired-page-digest-rejected"}
             executed_cases = {case["id"] for case in report["cases"] if case.get("passed")}
             report["request_recovery_cases_present"] = recovery_cases.issubset(executed_cases)

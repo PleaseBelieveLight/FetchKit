@@ -57,13 +57,25 @@ class DownloadEngine internal constructor(private val handle: Long, private val 
         if (closing.get()) { sub.releaseNative(); throw FetchKitException(Status.Closed) }
         sub
     }
+    /** 异步按 64 位小写十六进制 ID 查询资源快照。不存在时以 NotFound 完成，不创建订阅或启动下载。 */
+    fun query(persistentId: String): CompletableFuture<StoredTask> = operation {
+        decodeTask(NativeBridge.call(21, handle, texts = arrayOf(persistentId)))
+    }
+
+    /** 异步按 UTF-8 资源身份查询。快照的 taskId 为 0，读取资源仍需 acquire。 */
+    fun query(identity: ResourceIdentity): CompletableFuture<StoredTask> = operation {
+        decodeTask(NativeBridge.call(22, handle,
+            texts = arrayOf(identity.namespace, identity.key, identity.version, identity.representation)))
+    }
+
+    private fun decodeTask(row: List<String>) =
+        StoredTask(TaskSnapshot.decode(row.take(20)), ResourceIdentity(row[20], row[21], row[22], row[23]), row[24])
+
     /** 按稳定 persistentId 顺序分页；offset ≥ 0，capacity 为 1～100，不重新启动恢复任务。 */
     fun listTasks(offset: Int = 0, capacity: Int = 50): CompletableFuture<List<StoredTask>> {
         require(offset >= 0 && capacity in 1..100)
         return operation {
-            NativeBridge.call(9, handle, longArrayOf(offset.toLong(), capacity.toLong())).chunked(25).map { row ->
-                StoredTask(TaskSnapshot.decode(row.take(20)), ResourceIdentity(row[20], row[21], row[22], row[23]), row[24])
-            }
+            NativeBridge.call(9, handle, longArrayOf(offset.toLong(), capacity.toLong())).chunked(25).map(::decodeTask)
         }
     }
     /** 查询逻辑字节计费，包含孤立/隔离文件与空间预留；不能替代文件系统剩余空间检查。 */

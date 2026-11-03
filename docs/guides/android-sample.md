@@ -61,6 +61,8 @@ URL；自定义后台 URL 不允许凭证、query 或 fragment。 强制停止�
 
 ## 请求与生命周期
 
+展开任务详情和打开重新绑定面板时，示例按持久 ID 主动查询该资源。下载列表仍分页刷新。
+
 前台请求按 ResourceIdentity 分别保存，恢复/暂停不会引用另一个输入框的内容。 宿主仅在
 `noBackupFilesDir/sample-public-requests.json` 原子保存固定预设 ID 和非敏感请求约束，所有文件操作在有界后台
 executor 上执行。 SDK 的 `filesDir/fetchkit`、记录格式和备份排除规则保持原有语义。 自定义 URL

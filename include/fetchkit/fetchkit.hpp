@@ -115,6 +115,21 @@ public:
     Task attach(const fetchkit_download_request& request,const fetchkit_request_options& options) {
         fetchkit_task task=0;checkStatus(fetchkit_attach_with_options(handle_,&request,&options,&task));return Task(task);
     }
+    // 同步查询资源快照，失败抛出对应 SDK 错误，不创建订阅。
+    fetchkit_task_info query(const std::string& persistent_id) const {
+        fetchkit_task_info info{};
+        info.struct_size = sizeof(info);
+        checkStatus(fetchkit_query_task_by_id(handle_, stringView(persistent_id), &info));
+        return info;
+    }
+    fetchkit_task_info query(const std::string& resource_namespace, const std::string& resource_key,
+        const std::string& version, const std::string& representation = {}) const {
+        fetchkit_task_info info{};
+        info.struct_size = sizeof(info);
+        checkStatus(fetchkit_query_task_by_identity(handle_, stringView(resource_namespace), stringView(resource_key),
+            stringView(version), stringView(representation), &info));
+        return info;
+    }
     ResourceLease acquire(const std::string& persistent_id) {
         fetchkit_lease lease=0;checkStatus(fetchkit_resource_acquire(handle_,stringView(persistent_id),&lease));return ResourceLease(lease);
     }

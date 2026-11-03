@@ -215,6 +215,14 @@ void snapshot(std::vector<std::string>& out,const fetchkit_task_snapshot& s) {
         s.next_retry_at_ms,s.expires_at_ms,std::uint64_t(s.available),std::uint64_t(s.pinned)}) out.push_back(std::to_string(value));
     out.emplace_back(s.persistent_id);
 }
+void taskInfo(std::vector<std::string>& out, const fetchkit_task_info& item) {
+    snapshot(out, item.snapshot);
+    out.emplace_back(item.resource_namespace);
+    out.emplace_back(item.resource_key);
+    out.emplace_back(item.version);
+    out.emplace_back(item.representation_key);
+    out.emplace_back(item.address_reference);
+}
 void event(void* raw,const fetchkit_event* e) {
     auto& out=*static_cast<std::vector<std::string>*>(raw);
     for(auto value:{std::uint64_t(e->kind),e->task_id,e->generation,std::uint64_t(e->state),std::uint64_t(e->error),e->received_bytes,e->committed_offset,
@@ -288,12 +296,20 @@ jobjectArray invoke(JNIEnv* env,jobject,jint code,jlong handle,jlongArray raw_nu
             shape(0,0);checked(fetchkit_task_release(handle));releaseProvider(handle);
             break;
         }
+        case 21: case 22: {
+            shape(0, code == 21 ? 1 : 4);
+            fetchkit_task_info item{};
+            item.struct_size = sizeof(item);
+            if (code == 21) checked(fetchkit_query_task_by_id(handle, view(t[0]), &item));
+            else checked(fetchkit_query_task_by_identity(handle, view(t[0]), view(t[1]), view(t[2]), view(t[3]), &item));
+            taskInfo(output, item);
+            break;
+        }
         case 9: {
             shape(2,0);if(n[0]>UINT32_MAX || !n[1] || n[1]>100) throw Failure(FETCHKIT_INVALID_ARGUMENT);
             std::vector<fetchkit_task_info> items(n[1]);for(auto& item:items) item.struct_size=sizeof(item);
             std::uint32_t count=0;checked(fetchkit_list_tasks(handle,n[0],items.data(),items.size(),&count));
-            for(std::uint32_t i=0;i<count;++i) {const auto& item=items[i];snapshot(output,item.snapshot);
-                for(auto value:{item.resource_namespace,item.resource_key,item.version,item.representation_key,item.address_reference}) output.emplace_back(value);}
+            for (std::uint32_t i = 0; i < count; ++i) taskInfo(output, items[i]);
             break;
         }
         case 10: {

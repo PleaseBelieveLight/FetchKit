@@ -209,6 +209,26 @@ class DownloadIntegrationTest {
                 val done = engine.enqueue(r).await().awaitStopped().await()
                 assertEquals(TaskState.Completed, done.state); assertEquals(Integrity.DigestVerified, done.integrity)
             } }
+            test("direct-task-query") { withEngine("direct-query") { engine ->
+                val identity = ResourceIdentity("查询", "资源-🚀", "v1", "原件")
+                assertError(Status.NotFound) { engine.query(identity).await() }
+                assertError(Status.InvalidArgument) { engine.query("../bad").await() }
+                val sub = engine.enqueue(request("direct-query", "$base/m4/a2-query-$runId").copy(identity = identity)).await()
+                waitFor(sub) { it.receivedBytes >= 1024 }
+                val running = engine.query(identity).await()
+                assertEquals(identity, running.identity)
+                assertEquals(0L, running.snapshot.taskId)
+                assertEquals(TaskState.Running, running.snapshot.state)
+                val paused = sub.pause().await()
+                sub.releaseAsync().await()
+                val stored = engine.query(paused.persistentId).await()
+                assertEquals(TaskState.Paused, stored.snapshot.state)
+                assertEquals(0, stored.snapshot.subscriberCount)
+                assertEquals(paused.generation, stored.snapshot.generation)
+                assertEquals(paused.committedOffset, stored.snapshot.committedOffset)
+                engine.remove(paused.persistentId).await()
+                assertError(Status.NotFound) { engine.query(identity).await() }
+            } }
             test("unknown-limit") { withEngine("unknown-limit", max = 1024) { engine ->
                 val done = engine.enqueue(request("unknown-limit", expected = null)).await().awaitStopped().await()
                 assertEquals(Status.QuotaExceeded, done.error); assertFalse(done.available)

@@ -212,6 +212,16 @@ fetchkit_status fetchkit_enqueue_with_options(fetchkit_engine engine, const fetc
     const fetchkit_request_options* options, fetchkit_task* task) FETCHKIT_NOEXCEPT;
 fetchkit_status fetchkit_attach_with_options(fetchkit_engine engine, const fetchkit_download_request* request,
     const fetchkit_request_options* options, fetchkit_task* task) FETCHKIT_NOEXCEPT;
+/* 同步查询资源任务。调用方设置 output->struct_size，成功后返回快照，task_id 固定为 0。
+ * ID 为 64 位小写十六进制。身份使用 UTF-8，namespace/key/version 必填，上限分别为 256/1024/256 字节，
+ * representation 可空，上限为 1024 字节。不存在返回 NotFound，关闭返回 Closed，非法参数返回 InvalidArgument。
+ * 查询不创建订阅、不授予执行许可、不更新 LRU。available 依据记录和过期策略，读取仍需 acquire。
+ * 与删除/关闭竞争时，已取得的快照仍可返回。 */
+fetchkit_status fetchkit_query_task_by_id(fetchkit_engine engine, fetchkit_string persistent_id,
+    fetchkit_task_info* output) FETCHKIT_NOEXCEPT;
+fetchkit_status fetchkit_query_task_by_identity(fetchkit_engine engine, fetchkit_string resource_namespace,
+    fetchkit_string resource_key, fetchkit_string version, fetchkit_string representation_key,
+    fetchkit_task_info* output) FETCHKIT_NOEXCEPT;
 /* 按稳定 ID 顺序分页，capacity 为 1～100；打开引擎时已同步完成扫描修复。 */
 fetchkit_status fetchkit_list_tasks(fetchkit_engine engine, uint32_t offset, fetchkit_task_info* items, uint32_t capacity, uint32_t* count) FETCHKIT_NOEXCEPT;
 fetchkit_status fetchkit_engine_storage_stats(fetchkit_engine engine, fetchkit_storage_stats* stats) FETCHKIT_NOEXCEPT;

@@ -40,6 +40,7 @@ import java.util.Locale
 
 @Composable
 internal fun DownloadApp() {
+    val context = LocalContext.current
     val newDownloadLabel = "新建下载"
     var page by rememberSaveable { mutableIntStateOf(0) }
     var adding by rememberSaveable { mutableStateOf(false) }
@@ -72,7 +73,11 @@ internal fun DownloadApp() {
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         when (page) {
-            0 -> DownloadsPage(Modifier.padding(padding), { adding = true }, { restoring = it })
+            0 -> DownloadsPage(Modifier.padding(padding), { adding = true }, { row ->
+                SampleDownloads.queryTask(context, row).whenCompleteAsync({ latest, error ->
+                    if (error != null) SampleDownloads.showError(error) else restoring = latest
+                }, SampleDownloads.main)
+            })
             1 -> StoragePage(Modifier.padding(padding))
             else -> GuidePage(Modifier.padding(padding))
         }
@@ -212,7 +217,7 @@ private fun TaskCard(row: StoredTask, onRestore: (StoredTask) -> Unit) {
                 }) { SampleIcon("play", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(if (s.state == TaskState.Failed) "更新地址并重试" else if (known) "恢复下载" else "重新绑定") }
             }
             if (s.available) OutlinedButton(enabled = enabled, onClick = { SampleDownloads.read(context, row) }) { Text("租约读取") }
-            TextButton(onClick = { details = !details }) { Text(if (details) "收起详情" else "任务详情") }
+            TextButton(onClick = { details = !details; if (details) SampleDownloads.refreshTask(context, row) }) { Text(if (details) "收起详情" else "任务详情") }
         }
         if (details) {
             HorizontalDivider()

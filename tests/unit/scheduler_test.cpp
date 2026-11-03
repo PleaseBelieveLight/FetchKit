@@ -318,6 +318,71 @@ struct ProviderFailure {std::atomic<int> calls{0};fetchkit_status status=FETCHKI
 fetchkit_status transientProvider(void* raw,const fetchkit_request_context*,fetchkit_request_builder*) {
     auto& state=*static_cast<ProviderFailure*>(raw);return ++state.calls==1 ? state.status : FETCHKIT_OK;
 }
+void directTaskQuery(const std::string& root) {
+    auto transport = std::make_shared<FakeTransport>();
+    fetchkit_engine_config config;
+    fetchkit_engine_config_init(&config);
+    config.storage_root = {root.data(), root.size()};
+    config.max_download_bytes = 65536;
+    config.storage_capacity_bytes = 16 * 1024 * 1024;
+    config.staging_retention_ms = 86400000;
+    const auto view = [](const std::string& value) { return fetchkit_string{value.data(), value.size()}; };
+    const std::string url = "https://fixture/query";
+    const std::string key = u8"资源-🚀";
+    transport->set(url, {65536});
+    fetchkit_download_request request;
+    fetchkit_download_request_init(&request);
+    const std::string resource_namespace = "query", version = "1";
+    request.resource_namespace = view(resource_namespace);
+    request.resource_key = view(key);
+    request.version = view(version);
+    request.url = view(url);
+    fetchkit_engine engine = 0;
+    require(createEngineWithTransport(&config, &engine, transport) == FETCHKIT_OK, "query fixture open");
+    fetchkit_task_info info{};
+    info.struct_size = sizeof(info);
+    const auto queryIdentity = [&] {
+        return fetchkit_query_task_by_identity(engine, request.resource_namespace, request.resource_key,
+            request.version, request.representation_key, &info);
+    };
+    require(queryIdentity() == FETCHKIT_NOT_FOUND, "missing identity");
+    require(fetchkit_query_task_by_id(engine, view("../bad"), &info) == FETCHKIT_INVALID_ARGUMENT, "invalid id");
+    fetchkit_task sub = 0;
+    require(fetchkit_enqueue(engine, &request, &sub) == FETCHKIT_OK, "query fixture enqueue");
+    fetchkit_task_snapshot done{};
+    done.struct_size = sizeof(done);
+    require(fetchkit_task_wait(sub, 10000, &done) == FETCHKIT_OK && done.state == FETCHKIT_COMPLETED, "query fixture completion");
+    require(queryIdentity() == FETCHKIT_OK && info.snapshot.task_id == 0 && info.snapshot.available &&
+        info.snapshot.generation == done.generation && info.resource_key == key, "identity snapshot");
+    const std::string id = info.snapshot.persistent_id;
+    require(fetchkit_task_release(sub) == FETCHKIT_OK, "query fixture release");
+    fetchkit_status close_query = FETCHKIT_INTERNAL_ERROR;
+    std::thread closing_reader([&] { close_query = queryIdentity(); });
+    const auto closed = fetchkit_engine_close(engine);
+    closing_reader.join();
+    require(closed == FETCHKIT_OK && (close_query == FETCHKIT_OK || close_query == FETCHKIT_CLOSED), "query close race");
+    require(fetchkit_query_task_by_id(engine, view(id), &info) == FETCHKIT_CLOSED, "closed query");
+    require(createEngineWithTransport(&config, &engine, transport) == FETCHKIT_OK, "query fixture reopen");
+    require(fetchkit_query_task_by_id(engine, view(id), &info) == FETCHKIT_OK && info.snapshot.subscriber_count == 0 &&
+        info.snapshot.generation == done.generation && transport->count(url) == 1, "reopen query started work");
+    require(fetchkit_resource_set_expiry(engine, view(id), 1) == FETCHKIT_OK &&
+        queryIdentity() == FETCHKIT_OK && !info.snapshot.available, "expired query availability");
+    fetchkit_status concurrent = FETCHKIT_INTERNAL_ERROR;
+    std::thread reader([&] { concurrent = queryIdentity(); });
+    const auto removed = fetchkit_resource_remove(engine, view(id));
+    reader.join();
+    require(removed == FETCHKIT_OK && (concurrent == FETCHKIT_OK || concurrent == FETCHKIT_NOT_FOUND) &&
+        queryIdentity() == FETCHKIT_NOT_FOUND, "query removal race");
+    require(fetchkit_enqueue(engine, &request, &sub) == FETCHKIT_OK, "query fixture recreate");
+    require(fetchkit_task_wait(sub, 10000, &done) == FETCHKIT_OK && done.state == FETCHKIT_COMPLETED, "query fixture republish");
+    require(fetchkit_task_release(sub) == FETCHKIT_OK, "query fixture release after republish");
+    std::thread trim_reader([&] { concurrent = queryIdentity(); });
+    const auto trimmed = fetchkit_storage_trim(engine, 0);
+    trim_reader.join();
+    require(trimmed == FETCHKIT_OK && (concurrent == FETCHKIT_OK || concurrent == FETCHKIT_NOT_FOUND) &&
+        queryIdentity() == FETCHKIT_NOT_FOUND, "query trim race");
+    require(fetchkit_engine_close(engine) == FETCHKIT_OK, "query fixture final close");
+}
 void requestPolicyCAbi(const std::string& root) {
     auto transport=std::make_shared<FakeTransport>();fetchkit_engine_config c;fetchkit_engine_config_init(&c);
     c.storage_root={root.data(),root.size()};c.max_download_bytes=65536;c.storage_capacity_bytes=16*1024*1024;c.staging_retention_ms=86400000;
@@ -530,7 +595,7 @@ int main(int argc,char** argv) {
         {"event-backpressure",events},{"slow-callback-close",slowCallback},{"persistent-retry",retryPersistence},
         {"retry-budget",retryBudget},{"quota-reservations",quota},{"unknown-length-quota",unknownQuota},
         {"auth-request-recovery",authRecovery},{"explicit-request-source",requestSourceRetry},
-        {"request-retry-budget",requestRetryBudget},{"request-source-release-barrier",requestRetryHandoff},{"request-policy-c-abi",requestPolicyCAbi},
+        {"request-retry-budget",requestRetryBudget},{"request-source-release-barrier",requestRetryHandoff},{"request-policy-c-abi",requestPolicyCAbi},{"direct-task-query",directTaskQuery},
         {"request-retry-admission",requestRetryAdmission},{"request-retry-close-race",requestRetryCloseRace},
         {"lru-pin-expiry-lease",cache},{"staging-recount-retention",retention},{"retry-date-policy",dates},
         {"expired-pinned-refresh",expiredRefresh},{"retained-subscription-bound",subscriberLimit},
@@ -541,5 +606,5 @@ int main(int argc,char** argv) {
         try {item.second(std::string(argv[1])+"/"+run+"/"+item.first);std::cout<<item.first<<": passed\n";}
         catch(const std::exception& error){std::cerr<<item.first<<": "<<error.what()<<'\n';return 1;}
     }
-    std::cout<<"28 scheduler/storage suites passed\n";return 0;
+    std::cout<<"29 scheduler/storage suites passed\n";return 0;
 }

@@ -99,6 +99,34 @@ fetchkit_status readSnapshot(const std::shared_ptr<Subscription>& task, fetchkit
     return ready ? FETCHKIT_OK : FETCHKIT_TIMEOUT;
 }
 
+void fillTaskInfo(const std::shared_ptr<Engine>& engine, const std::shared_ptr<storage::ResourceStore>& store,
+    const storage::Record& r, fetchkit_task_info& item) {
+    item={}; item.struct_size=sizeof(item);
+    auto& s=item.snapshot; s.struct_size=sizeof(s); s.state=r.state; s.generation=r.generation;
+    s.received_bytes=s.committed_offset=r.committed; s.total_known=r.total.has_value(); s.total_bytes=r.total.value_or(0);
+    s.integrity=r.integrity; s.error=r.error;
+    s.can_resume=r.state==FETCHKIT_PAUSED || (r.state==FETCHKIT_FAILED && (r.error==FETCHKIT_NETWORK || r.error==FETCHKIT_TIMEOUT));
+    s.retry_count=r.retry_count;s.next_retry_at_ms=r.next_retry_at_ms;s.expires_at_ms=r.expires_at_ms;s.pinned=r.pinned;
+    if(const auto live=engine->liveSnapshot(r.id)) s=*live;
+    // Runtime progress may be newer, but policy changes are committed by the store.
+    s.expires_at_ms=r.expires_at_ms;s.pinned=r.pinned;
+    s.available=store->available(r.id);
+    auto copy=[](auto& out,const std::string& value) { std::memcpy(out,value.c_str(),value.size()+1); };
+    copy(s.persistent_id,r.id); copy(item.resource_namespace,r.request.resource_namespace);
+    copy(item.resource_key,r.request.resource_key); copy(item.version,r.request.version);
+    copy(item.representation_key,r.request.representation_key); copy(item.address_reference,r.request.reference);
+}
+
+fetchkit_status queryTask(fetchkit_engine id, const std::string& persistent_id, fetchkit_task_info* output) {
+    if (!output || output->struct_size < sizeof(*output)) return FETCHKIT_INVALID_ARGUMENT;
+    const auto engine = engineFor(id);
+    const auto store = engine->storage();
+    const auto record = store->find(persistent_id);
+    if (!record || record->state == FETCHKIT_REMOVED) return FETCHKIT_NOT_FOUND;
+    fillTaskInfo(engine, store, *record, *output);
+    return FETCHKIT_OK;
+}
+
 }
 
 extern "C" {
@@ -288,6 +316,24 @@ fetchkit_status fetchkit_task_retry(fetchkit_task id,const fetchkit_download_req
         return engine->retry(sub,copyRequest(input,true,options));
     });
 }
+fetchkit_status fetchkit_query_task_by_id(fetchkit_engine id, fetchkit_string input, fetchkit_task_info* output) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        const auto persistent_id = text(input, 64, true);
+        if (!storage::validId(persistent_id)) return FETCHKIT_INVALID_ARGUMENT;
+        return queryTask(id, persistent_id, output);
+    });
+}
+fetchkit_status fetchkit_query_task_by_identity(fetchkit_engine id, fetchkit_string resource_namespace,
+    fetchkit_string resource_key, fetchkit_string version, fetchkit_string representation_key, fetchkit_task_info* output) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        DownloadRequest request;
+        request.resource_namespace = text(resource_namespace, 256, true);
+        request.resource_key = text(resource_key, 1024, true);
+        request.version = text(version, 256, true);
+        request.representation_key = text(representation_key, 1024);
+        return queryTask(id, storage::resourceId(request), output);
+    });
+}
 fetchkit_status fetchkit_list_tasks(fetchkit_engine id,std::uint32_t offset,fetchkit_task_info* items,std::uint32_t capacity,std::uint32_t* count) noexcept {
     if (count) *count=0;
     return boundary([&]() -> fetchkit_status {
@@ -296,20 +342,7 @@ fetchkit_status fetchkit_list_tasks(fetchkit_engine id,std::uint32_t offset,fetc
         const auto engine=engineFor(id);const auto store=engine->storage();
         const auto records=store->list(offset,capacity);
         for (std::size_t i=0;i<records.size();++i) {
-            const auto& r=records[i]; auto& item=items[i]; item={}; item.struct_size=sizeof(item);
-            auto& s=item.snapshot; s.struct_size=sizeof(s); s.state=r.state; s.generation=r.generation;
-            s.received_bytes=s.committed_offset=r.committed; s.total_known=r.total.has_value(); s.total_bytes=r.total.value_or(0);
-            s.integrity=r.integrity; s.error=r.error;
-            s.can_resume=r.state==FETCHKIT_PAUSED || (r.state==FETCHKIT_FAILED && (r.error==FETCHKIT_NETWORK || r.error==FETCHKIT_TIMEOUT));
-            s.retry_count=r.retry_count;s.next_retry_at_ms=r.next_retry_at_ms;s.expires_at_ms=r.expires_at_ms;s.pinned=r.pinned;
-            if(const auto live=engine->liveSnapshot(r.id)) s=*live;
-            // Runtime progress may be newer, but policy changes are committed by the store.
-            s.expires_at_ms=r.expires_at_ms;s.pinned=r.pinned;
-            s.available=store->available(r.id);
-            auto copy=[](auto& out,const std::string& value) { std::memcpy(out,value.c_str(),value.size()+1); };
-            copy(s.persistent_id,r.id); copy(item.resource_namespace,r.request.resource_namespace);
-            copy(item.resource_key,r.request.resource_key); copy(item.version,r.request.version);
-            copy(item.representation_key,r.request.representation_key); copy(item.address_reference,r.request.reference);
+            fillTaskInfo(engine, store, records[i], items[i]);
         }
         *count=static_cast<std::uint32_t>(records.size()); return FETCHKIT_OK;
     });

@@ -148,6 +148,16 @@ internal object SampleDownloads {
         }, io)
     }
 
+    fun queryTask(context: Context, row: StoredTask): CompletableFuture<StoredTask> =
+        engine(context).thenCompose { it.query(row.snapshot.persistentId) }
+
+    fun refreshTask(context: Context, row: StoredTask) {
+        queryTask(context, row).whenCompleteAsync({ latest, error ->
+            if (error != null) showError(error)
+            else rows = rows.map { if (it == row) latest else it }
+        }, main)
+    }
+
     fun requestFor(row: StoredTask): DownloadRequest? = requests[row.identity]
     fun title(row: StoredTask): String = downloadPresets.firstOrNull { resourceKey(it.url) == row.identity.key }?.title
         ?: "自定义资源 · ${row.identity.key.take(8)}"

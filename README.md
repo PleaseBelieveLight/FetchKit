@@ -196,6 +196,7 @@ C++ 核心决定下载与存储策略；Android 层负责 JNI、网络适配，�
 | `subscription.retry(request)`                               | 暂停或鉴权/网络/超时/HTTP 失败后换请求，保留检查点和普通重试预算             |
 | `subscription.cancel()` / `releaseAsync()`                   | 取消或静默释放当前订阅；最后显式取消清理未完成任务，最后释放尽力保留检查点 |
 | `engine.listTasks()`                                         | 分页列出持久化任务，由宿主重新提供请求并决定是否恢复                       |
+| `engine.query(persistentId)` / `query(identity)`              | 异步查询单条资源快照，不绑定订阅或启动下载                                 |
 | `engine.acquire(id)`                                         | 获取有效 Completed 对象的只读租约，读取后调用 `lease.releaseAsync()`       |
 | `engine.pin(...)` / `setExpiry(...)` / `remove(...)`         | 管理资源保留、过期与删除，遵守活动任务和租约保护                           |
 | `engine.storageStats()` / `trimTo(...)` / `collectStaging()` | 查询配额账本、按 LRU 回收与清理过期暂存                                    |
