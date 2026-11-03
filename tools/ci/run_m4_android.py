@@ -158,18 +158,27 @@ def main():
                 for request in fixtures[1].server.requests)
             report["m3_request_counts"] = getattr(fixtures[0].server, "m3_counts", {})
             report["no_hidden_503_retry"] = report["m3_request_counts"].get("android-no-hidden") == 1
-            recovery_cases = {"direct-task-query", "auth-request-recovery", "explicit-request-source", "provider-transient-Network", "provider-transient-Timeout",
+            recovery_cases = {"jobscheduler-user-pause", "direct-task-query", "auth-request-recovery", "explicit-request-source", "provider-transient-Network", "provider-transient-Timeout",
                               "refresh-404-false", "refresh-404-true", "refresh-410-false", "refresh-410-true", "expired-page-digest-rejected"}
             executed_cases = {case["id"] for case in report["cases"] if case.get("passed")}
             report["request_recovery_cases_present"] = recovery_cases.issubset(executed_cases)
             fresh_requests = [r for r in requests if r["path"].startswith(("/m4/a1-auth-fresh-", "/m4/a1-source-fresh-"))]
             report["request_recovery_exact_range"] = len(fresh_requests) == 2 and all(
                 r.get("range") == "bytes=1024-" and r.get("if_range") == '"m1-v1"' for r in fresh_requests)
+            job_stop = report.get("job_stop", {})
+            stopped_requests = [r for r in requests if r["path"] == f"/m4/job-{run_id}"]
+            paused_requests = [r for r in requests if r["path"] == f"/m4/job-pause-{run_id}"]
+            report["job_pause_single_request"] = len(paused_requests) == 1
+            report["job_stop_exact_range"] = job_stop.get("trigger") == "scheduler-cancel" or (
+                job_stop.get("resumed") is True and len(stopped_requests) == 2 and
+                stopped_requests[1].get("range") == f"bytes={job_stop.get('checkpoint_bytes')}-" and
+                stopped_requests[1].get("if_range") == '"m1-v1"')
             report["fixture_certificate_sha256"] = hashlib.sha256(cert.read_bytes()).hexdigest()
             report["passed"] = (report["passed"] and report["junit_passed"] and
                 not report["identity_request_failures"] and not report["ambient_cookie_sent"] and
                 not report["peer_credentials_sent"] and report["no_hidden_503_retry"] and report["request_recovery_cases_present"] and
-                report["request_recovery_exact_range"])
+                report["request_recovery_exact_range"] and report["job_pause_single_request"] and
+                report["job_stop_exact_range"])
             (args.output / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
             print(json.dumps({key: report[key] for key in ("api", "abi", "failure_count", "fixture_requests", "passed")}, ensure_ascii=False))
             print("Failed cases:", [case["id"] for case in report["cases"] if not case["passed"]])

@@ -577,12 +577,6 @@ class DownloadIntegrationTest {
                         if (running) SystemClock.sleep(20)
                     } while (running && SystemClock.elapsedRealtime() - started < 10000)
                     assertFalse("System stop did not reach onStopJob", running)
-                    context.getSystemService(android.app.job.JobScheduler::class.java).cancel(DownloadJobService.JOB_ID)
-                    if (activity != null) {
-                        val current = activity
-                        instrumentation.runOnMainSync { current?.finish() }
-                        instrumentation.waitForIdleSync()
-                    }
                     SampleDownloads.stop().await()
                     val reopened = SampleDownloads.engine(context).await()
                     try {
@@ -592,10 +586,76 @@ class DownloadIntegrationTest {
                             .put("trigger", if (timeoutSupported) "shell-timeout" else "scheduler-cancel")
                             .put("uidt", Build.VERSION.SDK_INT >= 34).put("checkpoint_bytes", row.snapshot.committedOffset)
                             .put("milliseconds", SystemClock.elapsedRealtime() - started))
-                        reopened.remove(row.snapshot.persistentId).await()
+                        if (timeoutSupported) {
+                            shell("cmd jobscheduler run -f ${context.packageName} ${DownloadJobService.JOB_ID}")
+                            val resumeDeadline = SystemClock.elapsedRealtime() + 15000
+                            var completed: StoredTask? = null
+                            while (SystemClock.elapsedRealtime() < resumeDeadline) {
+                                val latest = runCatching {
+                                    SampleDownloads.engine(context).await().query(row.identity).await()
+                                }.getOrNull()
+                                if (latest?.snapshot?.state == TaskState.Completed) {
+                                    completed = latest
+                                    break
+                                }
+                                SystemClock.sleep(20)
+                            }
+                            assertTrue("System must resume the permitted job", requireNotNull(completed).snapshot.generation >
+                                row.snapshot.generation)
+                            report.getJSONObject("job_stop").put("resumed", true)
+                            while (SystemClock.elapsedRealtime() < resumeDeadline) {
+                                instrumentation.runOnMainSync { running = SampleDownloads.jobRunning }
+                                if (!running) break
+                                SystemClock.sleep(20)
+                            }
+                            assertFalse("Resumed job must finish", running)
+                            SampleDownloads.stop().await()
+                        }
+                        SampleDownloads.engine(context).await().remove(row.snapshot.persistentId).await()
                     } finally { SampleDownloads.stop().await() }
                 } finally {
                     context.getSystemService(android.app.job.JobScheduler::class.java).cancel(DownloadJobService.JOB_ID)
+                    activity?.let { current -> instrumentation.runOnMainSync { current.finish() } }
+                    SampleDownloads.stop().await()
+                }
+            }
+            test("jobscheduler-user-pause") {
+                val scheduler = context.getSystemService(android.app.job.JobScheduler::class.java)
+                val request = SampleDownloads.request("$base/m4/job-pause-$runId", hash(content()), "job-pause-$runId", false)
+                var activity: android.app.Activity? = null
+                try {
+                    if (Build.VERSION.SDK_INT >= 34) activity = instrumentation.startActivitySync(
+                        android.content.Intent(context, MainActivity::class.java).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                    assertTrue(DownloadJobService.schedule(context, request, false))
+                    val job = requireNotNull(scheduler.getPendingJob(DownloadJobService.JOB_ID))
+                    assertFalse(job.extras.containsKey("url"))
+                    instrumentation.uiAutomation.executeShellCommand(
+                        "cmd jobscheduler run -f ${context.packageName} ${job.id}"
+                    ).use { android.os.ParcelFileDescriptor.AutoCloseInputStream(it).readBytes() }
+                    val deadline = SystemClock.elapsedRealtime() + 15000
+                    var row: StoredTask? = null
+                    while (SystemClock.elapsedRealtime() < deadline) {
+                        row = runCatching { SampleDownloads.engine(context).await().query(request.identity).await() }.getOrNull()
+                        if (row != null && row.snapshot.receivedBytes >= 1024) break
+                        SystemClock.sleep(20)
+                    }
+                    val running = requireNotNull(row)
+                    assertTrue(running.snapshot.receivedBytes >= 1024)
+                    val paused = java.util.concurrent.atomic.AtomicReference<CompletableFuture<*>>()
+                    instrumentation.runOnMainSync {
+                        paused.set(DownloadJobService.withdraw(context, setOf(request.identity)) {
+                            SampleDownloads.bind(context, request, false).thenCompose { it.pause() }
+                        })
+                    }
+                    paused.get().await()
+                    assertNull(scheduler.getPendingJob(job.id))
+                    SampleDownloads.stop().await()
+                    val restored = SampleDownloads.engine(context).await().query(request.identity).await()
+                    assertEquals(TaskState.Paused, restored.snapshot.state)
+                    assertTrue(restored.snapshot.committedOffset >= 1024)
+                    SampleDownloads.engine(context).await().remove(restored.snapshot.persistentId).await()
+                } finally {
+                    scheduler.cancel(DownloadJobService.JOB_ID)
                     activity?.let { current -> instrumentation.runOnMainSync { current.finish() } }
                     SampleDownloads.stop().await()
                 }

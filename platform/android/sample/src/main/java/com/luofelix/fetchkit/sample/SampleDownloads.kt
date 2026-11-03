@@ -122,9 +122,13 @@ internal object SampleDownloads {
     private fun addSubscription(context: Context, request: DownloadRequest, start: Boolean): CompletableFuture<DownloadSubscription> {
         val permission = epoch
         return engine(context).thenComposeAsync({ engine ->
-            if (start) engine.enqueue(request) else engine.attach(request)
+            if (epoch != permission) failed(FetchKitException(Status.Closed))
+            else if (start) engine.enqueue(request) else engine.attach(request)
         }, io).thenComposeAsync({ sub ->
-            if (!start) CompletableFuture.completedFuture(sub)
+            if (epoch != permission) sub.releaseAsync().thenCompose<DownloadSubscription> {
+                failed(FetchKitException(Status.Closed))
+            }
+            else if (!start) CompletableFuture.completedFuture(sub)
             else sub.query().thenCompose { snapshot ->
                 if (snapshot.canRetryWithRequest) sub.retry(request.copy(expiresAtMs = snapshot.expiresAtMs)).thenApply { sub }
                 else CompletableFuture.completedFuture(sub)
@@ -180,23 +184,32 @@ internal object SampleDownloads {
         when (action) {
             "subscribe" -> addSubscription(context, request, false).thenApply { Unit }
             "resume" -> bind(context, request, true).thenApply { Unit }
-            "pause" -> bind(context, request, false).thenCompose { it.pause() }.thenApply { Unit }
+            "pause" -> DownloadJobService.withdraw(context, setOf(row.identity)) {
+                bind(context, request, false).thenCompose { it.pause() }.thenApply { Unit }
+            }
             else -> {
                 val bindings = subscriptions[row.identity]
                 val binding = bindings?.lastOrNull()
                     ?: return@perform failed<Unit>(IllegalArgumentException("此任务没有本页面持有的订阅，请先恢复或添加订阅"))
-                val done = if (action == "cancel") binding.subscription.cancel().thenApply { Unit }
-                    else CompletableFuture.completedFuture(Unit)
-                done.thenCompose { binding.observation.close(); binding.subscription.releaseAsync() }.thenApply {
-                    bindings.remove(binding); Unit
+                val release = {
+                    val done = if (action == "cancel") binding.subscription.cancel().thenApply { Unit }
+                        else CompletableFuture.completedFuture(Unit)
+                    done.thenCompose { binding.observation.close(); binding.subscription.releaseAsync() }.thenApply {
+                        bindings.remove(binding)
+                        Unit
+                    }
                 }
+                if (action == "cancel" && bindings.size == 1) DownloadJobService.withdraw(context, setOf(row.identity), release)
+                else release()
             }
         }
     }
 
     fun pauseAll(context: Context) = perform(context, "已暂停全部前台任务并保存检查点") {
-        rows.filter { !it.snapshot.state.stopped }.mapNotNull { subscriptions[it.identity]?.firstOrNull()?.subscription }
-            .fold(CompletableFuture.completedFuture(Unit)) { future, sub -> future.thenCompose { sub.pause().thenApply { Unit } } }
+        DownloadJobService.withdraw(context, rows.mapTo(mutableSetOf()) { it.identity }) {
+            rows.filter { !it.snapshot.state.stopped }.mapNotNull { subscriptions[it.identity]?.firstOrNull()?.subscription }
+                .fold(CompletableFuture.completedFuture(Unit)) { future, sub -> future.thenCompose { sub.pause().thenApply { Unit } } }
+        }
     }
 
     fun resumeAll(context: Context) = start(context, rows.filter {
