@@ -257,20 +257,26 @@ class DownloadIntegrationTest {
                 val done = engine.enqueue(r).await().awaitStopped().await()
                 assertEquals(Status.AuthRequired, done.error); assertEquals(2, done.requestCount); assertEquals(1, refreshes.get())
             } }
-            test("known-limit-auth-rebind") { withEngine("auth-rebind") { engine ->
-                // A0 特征测试只证明缺口存在；A1 改为新请求成功恢复的回归断言。
-                val old = request("auth-rebind", "$base/m1/auth-fail").copy(provider = RequestProvider { c -> RequestInfo(c.proposedUrl) })
+            test("auth-request-recovery") { withEngine("auth-rebind") { engine ->
+                val expired = AtomicInteger()
+                val old = request("auth-rebind", "$base/m4/a1-auth-$runId").copy(provider = RequestProvider { c ->
+                    RequestInfo(if (expired.get() == 1) "$base/m1/auth-fail" else c.proposedUrl)
+                })
                 val first = engine.enqueue(old).await()
+                waitFor(first) { it.receivedBytes >= 1024 }
+                assertEquals(1024L, first.pause().await().committedOffset)
+                expired.set(1); first.resume().await()
                 val failed = first.awaitStopped().await()
                 assertEquals(Status.AuthRequired, failed.error)
-                val second = engine.enqueue(old.copy(request = RequestInfo("$base/m1/normal"), provider = null)).await()
-                val rebound = second.query().await()
-                assertEquals(failed.generation, rebound.generation)
-                assertEquals(Status.AuthRequired, rebound.error)
-                assertError(Status.Busy) { second.resume().await() }
-                assertEquals(2, rebound.requestCount)
+                assertEquals(1024L, failed.committedOffset)
+                first.retry(old.copy(request = RequestInfo("$base/m4/a1-auth-fresh-$runId"), provider = null)).await()
+                val done = first.awaitStopped().await()
+                assertEquals(TaskState.Completed, done.state)
+                assertEquals(failed.generation + 1, done.generation)
+                assertEquals(Integrity.DigestVerified, done.integrity)
+                assertEquals(content().size.toLong() to hash(content()), readHash(engine, done.persistentId))
             } }
-            test("known-limit-request-source") { withEngine("request-source") { engine ->
+            test("explicit-request-source") { withEngine("request-source") { engine ->
                 val oldCalls = AtomicInteger(); val newCalls = AtomicInteger()
                 val old = request("request-source", "$base/m4/a0-source-$runId").copy(provider = RequestProvider { c ->
                     oldCalls.incrementAndGet(); RequestInfo(c.proposedUrl)
@@ -278,13 +284,45 @@ class DownloadIntegrationTest {
                 val first = engine.enqueue(old).await()
                 waitFor(first) { it.receivedBytes >= 1024 }
                 assertEquals(TaskState.Paused, first.pause().await().state)
-                val fresh = old.copy(request = RequestInfo("$base/m1/normal"), provider = RequestProvider { c ->
+                val fresh = old.copy(request = RequestInfo("$base/m4/a1-source-fresh-$runId"), provider = RequestProvider { c ->
                     newCalls.incrementAndGet(); RequestInfo(c.proposedUrl)
                 })
-                val second = engine.enqueue(fresh).await()
+                val second = engine.attach(fresh).await()
+                second.retry(fresh).await()
                 assertEquals(TaskState.Completed, second.awaitStopped().await().state)
-                assertEquals(2, oldCalls.get()); assertEquals(0, newCalls.get())
+                assertEquals(1, oldCalls.get()); assertEquals(1, newCalls.get())
                 assertEquals(content().size.toLong() to hash(content()), readHash(engine, second.query().await().persistentId))
+            } }
+            for (status in listOf(Status.Network, Status.Timeout)) test("provider-transient-${status.name}") {
+                withEngine("provider-transient-${status.name}", retries = 1) { engine ->
+                    val calls = AtomicInteger()
+                    val r = request("typed-provider", "$base/m1/normal").copy(provider = RequestProvider { c ->
+                        if (calls.incrementAndGet() == 1) throw RequestProviderException(status)
+                        RequestInfo(c.proposedUrl)
+                    })
+                    val done = engine.enqueue(r).await().awaitStopped().await()
+                    assertEquals(TaskState.Completed, done.state); assertEquals(1, done.retryCount); assertEquals(2, calls.get())
+                }
+            }
+            for (status in listOf(404, 410)) for (enabled in listOf(false, true)) test("refresh-$status-$enabled") {
+                withEngine("refresh-$status-$enabled") { engine ->
+                    val refreshes = AtomicInteger()
+                    val r = request("refresh-$status", "$base/m4/expired-$status").copy(
+                        refreshHttpStatuses = if (enabled) setOf(status) else emptySet(), provider = RequestProvider { c ->
+                            val headers = if (c.reason == RequestReason.AuthRefresh) {
+                                refreshes.incrementAndGet(); mapOf("X-Refreshed" to "synthetic")
+                            } else emptyMap()
+                            RequestInfo(c.proposedUrl, headers)
+                        })
+                    val done = engine.enqueue(r).await().awaitStopped().await()
+                    assertEquals(if (enabled) TaskState.Completed else TaskState.Failed, done.state)
+                    assertEquals(if (enabled) 1 else 0, refreshes.get())
+                    if (!enabled) assertEquals(Status.HttpStatus, done.error)
+                }
+            }
+            test("expired-page-digest-rejected") { withEngine("expired-page") { engine ->
+                val done = engine.enqueue(request("expired-page", "$base/m4/expired-page")).await().awaitStopped().await()
+                assertEquals(Status.IntegrityMismatch, done.error); assertFalse(done.available)
             } }
             test("ambient-credentials-and-cross-origin") {
                 val oldCookie = CookieHandler.getDefault(); val authCalls = AtomicInteger()

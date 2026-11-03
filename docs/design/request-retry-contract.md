@@ -2,16 +2,17 @@
 
 [文档中心](../README.md) · [功能补齐计划](android-sdk-completeness-plan.md)
 
-2026-11-02，A0 固定 A1 的实施与验收边界。以下为待实现契约；现有公开调用仍以
+2026-11-02，A0 固定 A1 的实施与验收边界，A1 按本契约实现。公开调用以
 [主机 API](../reference/host-api.md) 和 [Android API](../reference/android-api.md) 为准。
-不在 A0 导出未实现的函数，也不把已知缺口的特征测试称为恢复能力验收。
+验证结果按对应阶段报告判断；A0 的特征测试不代表恢复能力验收。
 
 ## 接口与准入
 
-新增 C ABI `fetchkit_task_retry(task, request, options)`、C++ RAII 包装和 Kotlin
+接口为 C ABI `fetchkit_task_retry(task, request, options)`、C++ RAII 包装和 Kotlin
 `DownloadSubscription.retry(request): CompletableFuture<Unit>`。
 options 为可空、带 struct_size 的独立请求选项，空值沿用默认策略；原请求结构、枚举编码和 enqueue/attach 保持兼容。
-新增带 options 的 enqueue/attach 入口；Kotlin 新选项有默认值，bridge 的有界编码与 SDK 同步升级。
+带 options 的入口为 `fetchkit_enqueue_with_options` / `fetchkit_attach_with_options`；
+Kotlin 新选项有默认值，bridge 的有界编码与 SDK 同步升级。
 
 | 共享状态 / 订阅状态 | 新请求重试结果 |
 |--------------------|----------------|

@@ -56,7 +56,9 @@ typedef struct fetchkit_request_context {
 typedef struct fetchkit_request_builder fetchkit_request_builder;
 /* 在 transport worker 上执行，不持 SDK 核心锁；借用参数仅在本次回调内有效，setter 立即复制。
  * provider 须协作检查取消，不能阻塞等待 SDK 工作线程；宿主须保持 user_data 有效，
- * 直到对应订阅 release 或 engine close 完成。 */
+ * 直到对应订阅成功 retry 替换、release 或 engine close 完成。
+ * 返回 Network/Timeout 可有限重试；AuthRequired/Cancelled 保留分类；其他非 Ok 值及异常映射为 AuthRequired。
+ * provider 的 Cancelled 不等于显式取消订阅，不触发最后取消清理。 */
 typedef fetchkit_status (*fetchkit_request_provider)(
     void* user_data, const fetchkit_request_context* context, fetchkit_request_builder* builder);
 
@@ -108,6 +110,13 @@ typedef struct fetchkit_download_request {
     uint32_t pin_on_create; /* Persist retention atomically with task admission. */
     uint32_t reserved3;
 } fetchkit_download_request;
+
+/* 本进程请求策略，不持久化。默认 401/403 刷新；最多额外指定 404、410（不得重复）。 */
+typedef struct fetchkit_request_options {
+    uint32_t struct_size;
+    uint32_t refresh_http_status_count;
+    uint32_t refresh_http_statuses[2];
+} fetchkit_request_options;
 
 typedef struct fetchkit_task_snapshot {
     uint32_t struct_size;
@@ -188,6 +197,7 @@ fetchkit_status fetchkit_set_log_level(uint32_t level) FETCHKIT_NOEXCEPT;
 
 void fetchkit_engine_config_init(fetchkit_engine_config* config) FETCHKIT_NOEXCEPT;
 void fetchkit_download_request_init(fetchkit_download_request* request) FETCHKIT_NOEXCEPT;
+void fetchkit_request_options_init(fetchkit_request_options* options) FETCHKIT_NOEXCEPT;
 const char* fetchkit_status_name(fetchkit_status status) FETCHKIT_NOEXCEPT;
 fetchkit_status fetchkit_engine_create(const fetchkit_engine_config* config, fetchkit_engine* engine) FETCHKIT_NOEXCEPT;
 /* close/release 等待 SDK 自有 I/O 与 provider 静止；在 provider 线程调用返回 Busy，避免自等待。
@@ -197,6 +207,11 @@ fetchkit_status fetchkit_engine_close(fetchkit_engine engine) FETCHKIT_NOEXCEPT;
 fetchkit_status fetchkit_enqueue(fetchkit_engine engine, const fetchkit_download_request* request, fetchkit_task* task) FETCHKIT_NOEXCEPT;
 /* attach 重新绑定凭证/约束但不启动恢复任务；同身份 enqueue 则显式给予执行许可。 */
 fetchkit_status fetchkit_attach(fetchkit_engine engine, const fetchkit_download_request* request, fetchkit_task* task) FETCHKIT_NOEXCEPT;
+/* options 可为 NULL；输入在调用期间借用并立即复制，其余语义分别同 enqueue/attach。 */
+fetchkit_status fetchkit_enqueue_with_options(fetchkit_engine engine, const fetchkit_download_request* request,
+    const fetchkit_request_options* options, fetchkit_task* task) FETCHKIT_NOEXCEPT;
+fetchkit_status fetchkit_attach_with_options(fetchkit_engine engine, const fetchkit_download_request* request,
+    const fetchkit_request_options* options, fetchkit_task* task) FETCHKIT_NOEXCEPT;
 /* 按稳定 ID 顺序分页，capacity 为 1～100；打开引擎时已同步完成扫描修复。 */
 fetchkit_status fetchkit_list_tasks(fetchkit_engine engine, uint32_t offset, fetchkit_task_info* items, uint32_t capacity, uint32_t* count) FETCHKIT_NOEXCEPT;
 fetchkit_status fetchkit_engine_storage_stats(fetchkit_engine engine, fetchkit_storage_stats* stats) FETCHKIT_NOEXCEPT;
@@ -215,6 +230,14 @@ fetchkit_status fetchkit_task_wait(fetchkit_task task, uint32_t timeout_ms, fetc
 /* pause/resume 影响共享任务；控制返回 Ok 仅表示请求已接受，须查询/等待 Paused 才确认检查点成功。 */
 fetchkit_status fetchkit_task_pause(fetchkit_task task) FETCHKIT_NOEXCEPT;
 fetchkit_status fetchkit_task_resume(fetchkit_task task) FETCHKIT_NOEXCEPT;
+/* 原子替换本订阅请求并许可共享任务的新 generation；仅 Paused 或 AuthRequired/Network/Timeout/HttpStatus
+ * 的 Failed 可重试，其他状态返回 Busy。身份、长度/摘要/引用及 expires_at_ms 须一致，pin_on_create 不重新应用。
+ * 保留检查点、普通重试预算和 Retry-After；本订阅成为本轮首选 provider，取消/释放后交接给其他有效订阅。
+ * 旧 provider 在成功后不再访问；输入在调用期间借用，provider_user_data 须保持到下次成功替换或 release/close。
+ * 失效订阅返回 Cancelled，释放/关闭/旧任务返回 Closed；worker 内调用返回 Busy。Ok 仅表示已获执行许可。
+ * options 可为 NULL；失败不更换请求/代次/检查点。调用可能同步校验，Android 包装在 IO 线程执行。 */
+fetchkit_status fetchkit_task_retry(fetchkit_task task, const fetchkit_download_request* request,
+    const fetchkit_request_options* options) FETCHKIT_NOEXCEPT;
 /* cancel 只撤销本订阅，最后一个显式取消才清理共享未完成数据；已完成对象保留。 */
 fetchkit_status fetchkit_task_cancel(fetchkit_task task) FETCHKIT_NOEXCEPT;
 /* release 静默解除订阅；最后一个释放时停止 I/O 并尽力保留检查点，区别于显式 cancel。 */

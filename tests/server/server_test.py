@@ -62,5 +62,32 @@ class ServerTest(unittest.TestCase):
         self.assertNotIn("secret-sentinel", repr(self.fixture.server.requests))
 
 
+class RequestRefreshServerTest(unittest.TestCase):
+    get = ServerTest.get
+    @classmethod
+    def setUpClass(cls):
+        from m4_fixture import M4Handler
+        cls.fixture = RunningFixture(handler=M4Handler).__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.fixture.__exit__()
+
+    def test_expired_status_requires_explicit_refreshed_request(self):
+        for status in (404, 410):
+            with self.subTest(status=status):
+                expired = self.get(f"/m4/expired-{status}")
+                self.assertEqual(status, expired.status)
+                self.assertEqual(b"expired", expired.read())
+                refreshed = self.get(f"/m4/expired-{status}", {"X-Refreshed": "synthetic"})
+                self.assertEqual(200, refreshed.status)
+                self.assertEqual(CONTENT, refreshed.read())
+
+    def test_expired_page_is_http_success_with_different_content(self):
+        response = self.get("/m4/expired-page")
+        self.assertEqual(200, response.status)
+        self.assertEqual(b"expired", response.read())
+
+
 if __name__ == "__main__":
     unittest.main()

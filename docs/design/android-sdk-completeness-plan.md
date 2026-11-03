@@ -6,7 +6,7 @@
 本计划承接现有 C++、Kotlin/JNI 和 sample，描述后续工作；接口名称均为草案，完成对应实现与验收前不属于现有
 API。
 当前契约仍以 [主机 API](../reference/host-api.md)、[Android API](../reference/android-api.md)
-和 [传输契约](../reference/transport-contract.md) 为准。本次仅制定计划，未重新构建或执行运行时测试。
+和 [传输契约](../reference/transport-contract.md) 为准。实施进度与实测以末尾清单和对应阶段报告为准。
 
 ## 1. 目标与交付顺序
 
@@ -238,7 +238,7 @@ arm64。
 ## 9. 阶段完成清单
 
 - [x] A0：状态转换、请求来源、预算和生命周期契约固定，主机失败复现通过；[结果与 Android 未执行项](../reports/android-request-recovery-a0.md)。
-- [ ] A1：旧链接失效后可用新请求重试，检查点、共享订阅、凭证与取消屏障符合契约。
+- [x] A1：新请求重试已实现，主机与 API 31 模拟器验证通过；[结果与剩余平台门槛](../reports/android-request-recovery-a1.md)。
 - [ ] A2：无订阅可直接查询持久化任务，不启动下载、不改变资源生命周期。
 - [ ] 第一批交付：A1/A2 对应主机、Android、外部接入及文档检查有当前候选证据，缺测项明确。
 - [ ] A3：多任务与网络协调不覆盖用户意图，系统停止后恢复经过明确许可。

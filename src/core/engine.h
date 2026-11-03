@@ -34,6 +34,7 @@ struct Task : public std::enable_shared_from_this<Task> {
     storage::Record record;
     std::weak_ptr<storage::ResourceStore> store;
     std::vector<std::weak_ptr<Subscription>> subscribers; // 由 engine mutex 保护。
+    std::weak_ptr<Subscription> request_source; // 显式 retry 选定本轮来源；失效后回退最早有效订阅。
     bool finishing = false, processing = false, queued = false, refresh = false;
     std::uint64_t retry_after_ms = 0;
     std::uint64_t retry_monotonic_at = 0;
@@ -68,6 +69,7 @@ public:
     std::shared_ptr<Subscription> enqueue(DownloadRequest request, std::uint64_t id,
         const std::function<void(const std::shared_ptr<Subscription>&)>& publish = {}, bool start = true);
     fetchkit_status control(const std::shared_ptr<Task>& task, StopReason reason, bool resume = false);
+    fetchkit_status retry(const std::shared_ptr<Subscription>& sub, DownloadRequest request);
     fetchkit_status cancel(const std::shared_ptr<Subscription>& sub, fetchkit_status error = FETCHKIT_CANCELLED);
     fetchkit_status release(const std::shared_ptr<Subscription>& sub);
     fetchkit_status close();

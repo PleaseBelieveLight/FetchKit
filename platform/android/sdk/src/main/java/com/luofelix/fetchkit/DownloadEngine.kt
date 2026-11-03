@@ -46,6 +46,9 @@ class DownloadEngine internal constructor(private val handle: Long, private val 
     fun enqueue(request: DownloadRequest): CompletableFuture<DownloadSubscription> = bind(request, true)
     /** 重新绑定请求与约束，恢复记录保持暂停；已运行的共享任务继续运行。 */
     fun attach(request: DownloadRequest): CompletableFuture<DownloadSubscription> = bind(request, false)
+    internal fun retryNative(token: Long, request: DownloadRequest) {
+        NativeBridge.call(20, token, request.numbers() + handle, request.texts(), request.provider?.let(::NativeProvider))
+    }
     private fun bind(request: DownloadRequest, start: Boolean) = operation {
         val token = NativeBridge.call(if (start) 2 else 3, handle, request.numbers(), request.texts(),
             request.provider?.let(::NativeProvider))[0].toLong()
@@ -138,6 +141,18 @@ class DownloadSubscription internal constructor(private val engine: DownloadEngi
     }
     /** 恢复共享任务并创建新 generation，影响所有订阅；完成 Future 只表示控制请求已接受。 */
     fun resume(): CompletableFuture<Unit> = engine.operation { NativeBridge.call(6, taskId); Unit }
+    /**
+     * 原子替换本订阅请求并许可共享任务的新轮次；只允许 Paused 或鉴权/网络/超时/HTTP 失败。
+     * 身份、原长度/摘要/业务引用与当前 expiresAtMs 必须一致；不重新应用 pinOnCreate。
+     * 保留检查点、普通重试预算和 Retry-After。本订阅成为本轮首选 provider，取消/释放后交接。
+     * Future 成功仅表示已许可执行；状态用 query/observe 确认，活动或完成的任务返回 Busy。
+     */
+    fun retry(request: DownloadRequest): CompletableFuture<Unit> = engine.operation {
+        synchronized(releaseLock) {
+            if (released.get()) throw FetchKitException(Status.Closed)
+            engine.retryNative(taskId, request)
+        }
+    }
     /** 撤销本订阅；最后一个显式取消才清理共享未完成数据。返回快照不代表共享 I/O 已静止。 */
     fun cancel(): CompletableFuture<TaskSnapshot> = engine.operation { NativeBridge.call(7, taskId); queryNative() }
     /**

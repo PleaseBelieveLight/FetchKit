@@ -113,8 +113,25 @@ InternalError，不跨 C ABI。 宿主应持续分发或明确释放订阅，不
 
 ## 重试与恢复
 
-后续的新请求重试准入、请求来源和预算规则已在 [A0 契约](../design/request-retry-contract.md) 固定；
-该新增接口待 A1 实现，以下仍描述当前 API。
+`fetchkit_task_retry(task, request, options)` 原子替换调用订阅的请求，并允许共享任务开始新 generation。
+仅 Paused 或 AuthRequired/Network/Timeout/HttpStatus 的 Failed 可重试；活动、等待重试或已完成的任务返回 Busy。
+同一身份的长度、可信摘要、require_digest、业务引用及当前 expires_at_ms 须一致；pin_on_create 不重新应用。
+新 generation 保留检查点、普通自动重试预算及 Retry-After，只有鉴权刷新额度按新轮次重新获得一次。
+已耗尽普通预算时，显式 retry 仍给予一次请求机会，但不会恢复自动重试额度。
+
+调用订阅成为首选请求来源，其他订阅继续观察同一个共享任务；首选取消/释放后回退到最早的有效订阅。
+成功返回后旧 provider 不再访问；provider 用户数据应保持有效至下次成功替换、release 或 close 完成。
+原 enqueue/attach 不覆盖已有订阅请求，原 resume 也不隐式替换凭证。
+已失效订阅返回 Cancelled，已释放/关闭返回 Closed；内部 worker 同步调用 retry 返回 Busy。
+失败不改变请求、generation 或已提交前缀；Ok 只代表获准执行，实际结果仍须 query/wait/dispatch。
+
+`fetchkit_request_options_init` 初始化本进程选项，默认 401/403 刷新；`refresh_http_statuses` 最多额外填写
+404、410 各一次，通过 enqueue_with_options / attach_with_options 或 retry 提交；NULL 使用默认策略。
+默认 404/410 仍是普通 HttpStatus，不会自动换链。全部刷新状态共用每 generation 一次额度；选项不写入记录。
+C provider 返回 Network/Timeout 时参与有限重试，AuthRequired/Cancelled 保留分类，其余非 Ok 返回和异常映射为 AuthRequired。
+provider 的 Cancelled 不等同于显式取消订阅，不触发未完成数据清理。
+
+准入、回滚、共享来源与竞争的详细边界见 [新请求重试契约](../design/request-retry-contract.md)。
 
 可重试：Network、Timeout、HTTP 408/429/500/502/503/504。证书、协议、长度/摘要、磁盘、权限和配额错误不参加普通重试。
 鉴权刷新每 generation 最多一次，与普通重试分开计数并落盘；一次协议安全重下仍遵守 M1 的限制。

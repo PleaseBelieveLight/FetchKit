@@ -80,8 +80,14 @@ class RequestContext internal constructor(
     /** 仅用于当前 provider 的协作取消；调用范围结束后返回 true，不能复用 token 控制后续请求。 */
     fun isCancelled(): Boolean = cancelled()
 }
-/** 在 native worker 上获取最新请求；需协作检查取消，禁止阻塞等待 engine API Future。异常映射为 AuthRequired。 */
+/** 在 native worker 上获取最新请求；需协作检查取消，禁止阻塞等待 engine API Future。
+ * RequestProviderException 保留受限分类，其他异常映射为 AuthRequired。 */
 fun interface RequestProvider { fun provide(context: RequestContext): RequestInfo }
+
+/** provider 的受限失败分类；Network/Timeout 参与有限重试，Cancelled 不等同于显式取消订阅。 */
+class RequestProviderException(val status: Status) : RuntimeException("FetchKit provider: $status") {
+    init { require(status in setOf(Status.Network, Status.Timeout, Status.AuthRequired, Status.Cancelled)) }
+}
 
 /**
  * 下载约束与临时请求。expectedLength=null 表示未知，0 表示空文件；摘要为空或可信的 64 位 SHA-256 十六进制串。
@@ -99,15 +105,21 @@ data class DownloadRequest(
     val expiresAtMs: Long = 0,
     val pinOnCreate: Boolean = false,
     val provider: RequestProvider? = null,
+    /** 额外触发一次鉴权刷新的 HTTP 状态，仅允许 404/410；默认 401/403 始终有效，不持久化。 */
+    val refreshHttpStatuses: Set<Int> = emptySet(),
 ) {
-    init { require(expectedLength == null || expectedLength >= 0); require(expiresAtMs >= 0) }
+    init {
+        require(expectedLength == null || expectedLength >= 0); require(expiresAtMs >= 0)
+        require(refreshHttpStatuses.all { it == 404 || it == 410 })
+    }
     override fun toString(): String = "DownloadRequest(request=<已隐藏>, expectedLength=$expectedLength, " +
         "requireDigest=$requireDigest, expiresAtMs=$expiresAtMs, pinOnCreate=$pinOnCreate, hasProvider=${provider != null})"
     internal fun texts(): Array<String> = arrayOf(identity.namespace, identity.key, identity.version,
         identity.representation, addressReference, request.url, expectedSha256) +
         request.headers.flatMap { listOf(it.key, it.value) }
     internal fun numbers() = longArrayOf(if (expectedLength != null) 1 else 0, expectedLength ?: 0,
-        if (requireDigest) 1 else 0, expiresAtMs, if (pinOnCreate) 1 else 0)
+        if (requireDigest) 1 else 0, expiresAtMs, if (pinOnCreate) 1 else 0,
+        (if (404 in refreshHttpStatuses) 1L else 0L) or (if (410 in refreshHttpStatuses) 2L else 0L))
 }
 
 /**
@@ -123,6 +135,9 @@ data class TaskSnapshot(
     val requestCount: Int, val retryCount: Int, val subscriberCount: Int, val nextRetryAtMs: Long,
     val expiresAtMs: Long, val available: Boolean, val pinned: Boolean, val persistentId: String,
 ) {
+    /** 快照所示状态允许尝试新请求重试；实际准入仍检查并发活动、订阅有效性和队列容量。 */
+    val canRetryWithRequest: Boolean get() = state == TaskState.Paused || (state == TaskState.Failed &&
+        error in setOf(Status.AuthRequired, Status.Network, Status.Timeout, Status.HttpStatus))
     companion object {
         internal const val WIDTH = 20
         internal fun decode(v: List<String>): TaskSnapshot {

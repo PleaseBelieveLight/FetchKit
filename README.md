@@ -193,6 +193,7 @@ C++ 核心决定下载与存储策略；Android 层负责 JNI、网络适配，�
 | `engine.enqueue(request)` / `attach(request)`                | 创建独立订阅；前者给予执行许可，后者只绑定，恢复记录保持暂停               |
 | `subscription.observe(...)` / `query()`                      | 观察事件或查询状态、进度、检查点与错误                                     |
 | `subscription.pause()` / `resume()`                          | 控制共享任务；仅 `Paused` 确认检查点成功                                   |
+| `subscription.retry(request)`                               | 暂停或鉴权/网络/超时/HTTP 失败后换请求，保留检查点和普通重试预算             |
 | `subscription.cancel()` / `releaseAsync()`                   | 取消或静默释放当前订阅；最后显式取消清理未完成任务，最后释放尽力保留检查点 |
 | `engine.listTasks()`                                         | 分页列出持久化任务，由宿主重新提供请求并决定是否恢复                       |
 | `engine.acquire(id)`                                         | 获取有效 Completed 对象的只读租约，读取后调用 `lease.releaseAsync()`       |

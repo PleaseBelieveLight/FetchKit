@@ -1,5 +1,6 @@
 #include "core/engine.h"
 #include "core/retry_policy.h"
+#include "core/engine_factory.h"
 #include <algorithm>
 #include <array>
 #include <fstream>
@@ -29,6 +30,7 @@ public:
     std::mutex mutex;
     std::map<std::string,Plan> plans;
     std::map<std::string,unsigned int> calls;
+    std::vector<transport::Request> requests;
     std::atomic<int> active{0},peak{0};
     std::atomic<bool> gate{false};
     void set(const std::string& url,Plan plan) {std::lock_guard<std::mutex> lock(mutex);plans[url]=std::move(plan);}
@@ -36,9 +38,10 @@ public:
         if(url.empty()) throw std::invalid_argument("empty");return {url,"https://fixture:443",true};
     }
     unsigned int count(const std::string& url) {std::lock_guard<std::mutex> lock(mutex);return calls[url];}
+    transport::Request lastRequest() {std::lock_guard<std::mutex> lock(mutex);return requests.back();}
     transport::Result execute(const transport::Request& request,transport::Sink& sink,transport::Cancellation& cancellation) override {
         Plan plan;unsigned int call;
-        {std::lock_guard<std::mutex> lock(mutex);plan=plans.at(request.url);call=++calls[request.url];}
+        {std::lock_guard<std::mutex> lock(mutex);plan=plans.at(request.url);call=++calls[request.url];requests.push_back(request);}
         const auto running=++active;int previous=peak.load();while(previous<running && !peak.compare_exchange_weak(previous,running)) {}
         struct Exit {std::atomic<int>& active;~Exit(){--active;}} exit{active};
         if(call<=plan.failures) {
@@ -182,10 +185,11 @@ void retryBudget(const std::string& root) {
     engine->close();engine=std::make_shared<Engine>(cfg,transport);sub=engine->enqueue(r,2);
     require(done(sub).retry_count==3 && transport->count(r.request.url)==5,"restart reset spent budget");engine->close();
 }
-void authRecoveryBaseline(const std::string& root) {
-    // A0 特征测试：明确记录当前缺口；A1 用新请求重试成功的断言替换此基线。
+void authRecovery(const std::string& root) {
     for(const auto status:{401,403}) {
         auto transport=std::make_shared<FakeTransport>();auto old=request("expired");
+        old.expected_length=65536;old.require_digest=true;
+        old.expected_sha256="1f8745f0d2d1387ec1af2211a3cf417b2e9e885e853472649c1d979d0e9370e3";
         std::atomic<int> refreshes{0};
         old.provider=[&](const ProviderContext& context,RequestData&,transport::Cancellation&) {
             if(context.reason==FETCHKIT_REQUEST_AUTH_REFRESH) ++refreshes;
@@ -208,10 +212,22 @@ void authRecoveryBaseline(const std::string& root) {
         require(engine->control(second->task,StopReason::None,true)==FETCHKIT_BUSY,"A0 changed: auth failure now resumes");
         require(transport->count(fresh.request.url)==0 && transport->count(old.request.url)==3,"baseline unexpected HTTP request");
         require(engine->storage()->find(failed.persistent_id)->committed==1024,"baseline lost saved prefix");
+        auto conflict=fresh;conflict.expected_length=1;bool invalid=false;
+        try {engine->retry(second,conflict);} catch(const Failure& error) {invalid=error.code==FETCHKIT_INVALID_ARGUMENT;}
+        require(invalid && read(second).generation==failed.generation,"retry conflict mutated task");
+        require(engine->retry(second,fresh)==FETCHKIT_OK,"fresh auth request rejected");completed(second);
+        const auto restored=read(second);const auto sent=transport->lastRequest();
+        require(restored.generation==failed.generation+1 && restored.integrity==FETCHKIT_DIGEST_VERIFIED,"retry generation or digest");
+        require(transport->count(fresh.request.url)==1 && transport->count(old.request.url)==3 && transport->peak==1,"retry did not select new source");
+        require(std::any_of(sent.headers.begin(),sent.headers.end(),[](const auto& h){return h.name=="Range" && h.value=="bytes=1024-";}),"retry lost exact Range");
+        require(std::any_of(sent.headers.begin(),sent.headers.end(),[](const auto& h){return h.name=="If-Range" && h.value=="\"unit-v1\"";}),"retry lost If-Range");
+        auto lease=engine->storage()->acquire(restored.persistent_id);std::array<std::uint8_t,65536> bytes{};
+        require(lease->read(0,bytes.data(),bytes.size())==bytes.size() && std::all_of(bytes.begin(),bytes.end(),[](auto b){return b=='x';}),"retry lease content");
+        require(engine->retry(second,fresh)==FETCHKIT_BUSY,"completed task restarted");
         engine->close();
     }
 }
-void requestSourceBaseline(const std::string& root) {
+void requestSourceRetry(const std::string& root) {
     auto transport=std::make_shared<FakeTransport>();auto old=request("old-source");
     std::atomic<int> old_calls{0},fresh_calls{0};
     old.provider=[&](const ProviderContext&,RequestData&,transport::Cancellation&) {++old_calls;};
@@ -223,10 +239,119 @@ void requestSourceBaseline(const std::string& root) {
     auto fresh=old;fresh.request.url="https://fixture/new-source";
     fresh.provider=[&](const ProviderContext&,RequestData&,transport::Cancellation&) {++fresh_calls;};
     transport->set(fresh.request.url,{65536});transport->gate=true;
-    auto second=engine->enqueue(fresh,2);completed(second);
-    require(old_calls==2 && fresh_calls==0,"A0 changed: new subscription takes request ownership");
-    require(transport->count(old.request.url)==2 && transport->count(fresh.request.url)==0,"baseline source selection changed");
+    auto second=engine->enqueue(fresh,2,{},false);
+    require(engine->retry(second,fresh)==FETCHKIT_OK,"explicit source retry");completed(second);
+    require(old_calls==1 && fresh_calls==1,"retry ignored selected provider");
+    require(transport->count(old.request.url)==1 && transport->count(fresh.request.url)==1,"retry source selection changed");
     engine->close();
+}
+void requestRetryBudget(const std::string& root) {
+    auto clock=std::make_shared<ManualClock>();auto cfg=configFor(root);cfg.clock=clock;cfg.max_retries=1;
+    auto transport=std::make_shared<FakeTransport>();auto old=request("retry-wait");
+    transport->set(old.request.url,{65536,false,false,100,503,"120"});
+    auto engine=std::make_shared<Engine>(cfg,transport);auto sub=engine->enqueue(old,1);
+    eventually([&]{return read(sub).state==FETCHKIT_RETRY_WAITING;},"retry wait not reached");
+    require(engine->retry(sub,old)==FETCHKIT_BUSY,"running retry wait replaced");
+    const auto due=read(sub).next_retry_at_ms;
+    require(engine->control(sub->task,StopReason::Pause)==FETCHKIT_OK,"retry wait pause");done(sub);
+    auto fresh=old;fresh.request.url="https://fixture/new-wait";transport->set(fresh.request.url,{65536,false,false,100,0});
+    require(engine->retry(sub,fresh)==FETCHKIT_OK,"retry while paused");
+    require(read(sub).retry_count==1 && read(sub).next_retry_at_ms==due && transport->count(fresh.request.url)==0,"retry cleared budget or wait");
+    clock->now=due;engine->wake();require(done(sub).error==FETCHKIT_NETWORK,"new request failed unexpectedly");
+    require(transport->count(fresh.request.url)==1 && read(sub).retry_count==1,"new request obtained extra automatic retries");
+    require(engine->retry(sub,fresh)==FETCHKIT_OK,"manual attempt after exhaustion");
+    require(done(sub).error==FETCHKIT_NETWORK && transport->count(fresh.request.url)==2 && read(sub).retry_count==1,"manual attempt reset budget");
+    engine->close();
+}
+void requestRetryHandoff(const std::string& root) {
+    auto transport=std::make_shared<FakeTransport>();auto old=request("handoff");transport->set(old.request.url,{65536,true});
+    auto engine=std::make_shared<Engine>(configFor(root),transport);auto first=engine->enqueue(old,1);
+    eventually([&]{return read(first).received_bytes==1024;},"handoff initial prefix");
+    require(engine->control(first->task,StopReason::Pause)==FETCHKIT_OK,"handoff pause");done(first);
+    std::atomic<bool> entered{false},retired{false};std::atomic<int> calls{0};
+    auto fresh=old;fresh.provider=[&](const ProviderContext&,RequestData&,transport::Cancellation& cancel) {
+        require(!retired,"released retry provider accessed");++calls;entered=true;
+        while(!cancel.isCancelled()) cancel.waitFor(std::chrono::milliseconds(2));throw Failure(FETCHKIT_CANCELLED);
+    };
+    auto second=engine->enqueue(fresh,2,{},false);
+    require(engine->retry(second,fresh)==FETCHKIT_OK,"handoff retry");eventually([&]{return entered.load();},"selected retry provider not entered");
+    transport->gate=true;require(engine->release(second)==FETCHKIT_OK,"retry provider release barrier");retired=true;
+    completed(first);require(calls==1,"retired provider used again");
+    require(engine->retry(second,old)==FETCHKIT_CLOSED,"released retry handle accepted");engine->close();
+}
+void requestRetryAdmission(const std::string& root) {
+    auto cfg=configFor(root);cfg.max_active=1;cfg.max_queued=1;
+    auto transport=std::make_shared<FakeTransport>();auto old=request("admission");transport->set(old.request.url,{65536,true});
+    auto engine=std::make_shared<Engine>(cfg,transport);auto sub=engine->enqueue(old,1);
+    eventually([&]{return read(sub).received_bytes==1024;},"admission prefix");
+    require(engine->retry(sub,old)==FETCHKIT_BUSY,"active retry accepted");
+    require(engine->control(sub->task,StopReason::Pause)==FETCHKIT_OK,"admission pause");const auto paused=done(sub);
+    auto fresh=old;fresh.request.url="https://fixture/admission-new";transport->set(fresh.request.url,{65536});
+    auto wrong=fresh;wrong.resource_key="wrong";require(engine->retry(sub,wrong)==FETCHKIT_INVALID_ARGUMENT,"identity replacement accepted");
+    wrong=fresh;wrong.expires_at_ms=1;require(engine->retry(sub,wrong)==FETCHKIT_INVALID_ARGUMENT,"expiry overwritten by retry");
+    wrong=fresh;wrong.request.url.clear();require(engine->retry(sub,wrong)==FETCHKIT_INVALID_ARGUMENT,"empty request accepted");
+    auto active=request("blocker");transport->set(active.request.url,{65536,true});auto blocker=engine->enqueue(active,2);
+    eventually([&]{return read(blocker).received_bytes==1024;},"admission blocker");
+    auto pending=request("pending");transport->set(pending.request.url,{65536});auto queued=engine->enqueue(pending,3);
+    require(engine->retry(sub,fresh)==FETCHKIT_BUSY,"queue full retry accepted");
+    require(read(sub).generation==paused.generation && sub->request.request.url==old.request.url && read(sub).committed_offset==1024,"failed admission mutated old request");
+    require(engine->cancel(queued)==FETCHKIT_OK,"admission cancel pending");
+    eventually([&]{const auto status=engine->retry(sub,fresh);require(status==FETCHKIT_OK || status==FETCHKIT_BUSY,"retry queue admission");return status==FETCHKIT_OK;},"admission pending cleanup");
+    require(engine->retry(sub,fresh)==FETCHKIT_BUSY,"queued retry accepted twice");
+    require(engine->cancel(sub)==FETCHKIT_OK && engine->retry(sub,old)==FETCHKIT_CANCELLED,"cancelled retry accepted");
+    engine->close();
+}
+void requestRetryCloseRace(const std::string& root) {
+    for(int round=0;round<6;++round) {
+        auto transport=std::make_shared<FakeTransport>();auto r=request("race");transport->set(r.request.url,{65536,true});
+        auto engine=std::make_shared<Engine>(configFor(root+'/'+std::to_string(round)),transport);auto sub=engine->enqueue(r,1);
+        eventually([&]{return read(sub).received_bytes==1024;},"retry race prefix");
+        require(engine->control(sub->task,StopReason::Pause)==FETCHKIT_OK,"retry race pause");done(sub);
+        std::atomic<bool> begin{false};fetchkit_status result=FETCHKIT_INTERNAL_ERROR;
+        std::thread retry([&]{while(!begin) std::this_thread::yield();try {result=engine->retry(sub,r);} catch(const Failure& e) {result=e.code;}});
+        begin=true;require(engine->close()==FETCHKIT_OK,"retry close race");retry.join();
+        require(result==FETCHKIT_OK || result==FETCHKIT_CLOSED,"unexpected retry/close result");
+        require(transport->active==0,"retry I/O survived close");
+    }
+}
+struct ProviderFailure {std::atomic<int> calls{0};fetchkit_status status=FETCHKIT_NETWORK;};
+fetchkit_status transientProvider(void* raw,const fetchkit_request_context*,fetchkit_request_builder*) {
+    auto& state=*static_cast<ProviderFailure*>(raw);return ++state.calls==1 ? state.status : FETCHKIT_OK;
+}
+void requestPolicyCAbi(const std::string& root) {
+    auto transport=std::make_shared<FakeTransport>();fetchkit_engine_config c;fetchkit_engine_config_init(&c);
+    c.storage_root={root.data(),root.size()};c.max_download_bytes=65536;c.storage_capacity_bytes=16*1024*1024;c.staging_retention_ms=86400000;
+    c.max_retries=1;c.retry_base_delay_ms=1;c.retry_max_delay_ms=1;
+    fetchkit_engine engine=0;require(createEngineWithTransport(&c,&engine,transport)==FETCHKIT_OK,"C API fixture open");
+    const auto view=[](const std::string& s){return fetchkit_string{s.data(),s.size()};};
+    for(const auto status:{FETCHKIT_NETWORK,FETCHKIT_TIMEOUT,FETCHKIT_AUTH_REQUIRED,FETCHKIT_CANCELLED,FETCHKIT_INTERNAL_ERROR}) {
+        const auto key=std::to_string(status),url="https://fixture/provider-"+key;
+        transport->set(url,{65536});fetchkit_download_request r;fetchkit_download_request_init(&r);
+        r.resource_namespace=view(root);r.resource_key=view(key);r.version=view(key);r.url=view(url);
+        ProviderFailure failure;failure.status=status;r.provider=transientProvider;r.provider_user_data=&failure;
+        fetchkit_task sub=0;require(fetchkit_enqueue(engine,&r,&sub)==FETCHKIT_OK,"C API provider enqueue");
+        fetchkit_task_snapshot s{};s.struct_size=sizeof(s);require(fetchkit_task_wait(sub,10000,&s)==FETCHKIT_OK,"C API provider wait");
+        if(status==FETCHKIT_NETWORK || status==FETCHKIT_TIMEOUT) require(s.state==FETCHKIT_COMPLETED && s.retry_count==1,"typed provider transient not retried");
+        else require(s.error==(status==FETCHKIT_CANCELLED ? FETCHKIT_CANCELLED : FETCHKIT_AUTH_REQUIRED),"provider compatibility mapping");
+        require(fetchkit_task_release(sub)==FETCHKIT_OK,"provider release");
+    }
+    for(const auto status:{404,410}) for(const auto enabled:{false,true}) {
+        const auto key=std::to_string(status)+(enabled ? "-enabled" : "-default"),url="https://fixture/"+key;
+        transport->set(url,{65536,false,false,1,status});fetchkit_download_request r;fetchkit_download_request_init(&r);
+        r.resource_namespace=view(root);r.resource_key=view(key);r.version=view(key);r.url=view(url);
+        ProviderFailure failure;failure.calls=1;r.provider=transientProvider;r.provider_user_data=&failure;
+        fetchkit_request_options options;fetchkit_request_options_init(&options);
+        if(enabled) {options.refresh_http_status_count=1;options.refresh_http_statuses[0]=status;}
+        fetchkit_task sub=0;require(fetchkit_enqueue_with_options(engine,&r,&options,&sub)==FETCHKIT_OK,"refresh policy enqueue");
+        fetchkit_task_snapshot s{};s.struct_size=sizeof(s);require(fetchkit_task_wait(sub,10000,&s)==FETCHKIT_OK,"refresh policy wait");
+        require(enabled ? s.state==FETCHKIT_COMPLETED : s.error==FETCHKIT_HTTP_STATUS,"refresh opt-in classification");
+        if(!enabled) {require(fetchkit_task_retry(sub,&r,nullptr)==FETCHKIT_OK,"explicit HTTP failure retry");
+            require(fetchkit_task_wait(sub,10000,&s)==FETCHKIT_OK && s.state==FETCHKIT_COMPLETED,"explicit HTTP failure recovery");}
+        require(fetchkit_task_release(sub)==FETCHKIT_OK,"refresh policy release");
+        options.refresh_http_status_count=2;options.refresh_http_statuses[0]=404;options.refresh_http_statuses[1]=404;
+        require(fetchkit_enqueue_with_options(engine,&r,&options,&sub)==FETCHKIT_INVALID_ARGUMENT && sub==0,"duplicate refresh status accepted");
+    }
+    require(fetchkit_engine_close(engine)==FETCHKIT_OK,"C API fixture close");
 }
 void quota(const std::string& root) {
     auto cfg=configFor(root);cfg.capacity_bytes=storage::ResourceStore::metadataBudget()*3+131072;
@@ -404,7 +529,9 @@ int main(int argc,char** argv) {
         {"parallelism-and-control",concurrency},{"shared-subscriptions",sharing},{"provider-lifetime",providerLifetime},
         {"event-backpressure",events},{"slow-callback-close",slowCallback},{"persistent-retry",retryPersistence},
         {"retry-budget",retryBudget},{"quota-reservations",quota},{"unknown-length-quota",unknownQuota},
-        {"known-limit-auth-rebind",authRecoveryBaseline},{"known-limit-request-source",requestSourceBaseline},
+        {"auth-request-recovery",authRecovery},{"explicit-request-source",requestSourceRetry},
+        {"request-retry-budget",requestRetryBudget},{"request-source-release-barrier",requestRetryHandoff},{"request-policy-c-abi",requestPolicyCAbi},
+        {"request-retry-admission",requestRetryAdmission},{"request-retry-close-race",requestRetryCloseRace},
         {"lru-pin-expiry-lease",cache},{"staging-recount-retention",retention},{"retry-date-policy",dates},
         {"expired-pinned-refresh",expiredRefresh},{"retained-subscription-bound",subscriberLimit},
         {"callback-reentrancy",reentrancy},{"64-bit-ledger",largeLedger},{"cancel-pause-release-close-races",closeRaces},
@@ -414,5 +541,5 @@ int main(int argc,char** argv) {
         try {item.second(std::string(argv[1])+"/"+run+"/"+item.first);std::cout<<item.first<<": passed\n";}
         catch(const std::exception& error){std::cerr<<item.first<<": "<<error.what()<<'\n';return 1;}
     }
-    std::cout<<"23 scheduler/storage suites passed (including 2 A0 known-limit baselines)\n";return 0;
+    std::cout<<"28 scheduler/storage suites passed\n";return 0;
 }

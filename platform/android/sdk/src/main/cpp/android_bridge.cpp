@@ -193,10 +193,16 @@ fetchkit_status provide(void* raw,const fetchkit_request_context* context,fetchk
             static_cast<jlong>(token),static_cast<jint>(context->reason),static_cast<jlong>(context->task_id),
             static_cast<jlong>(context->generation),static_cast<jint>(context->http_status),url,origin,reference));
         if(env->ExceptionCheck()) {env->ExceptionClear();return FETCHKIT_AUTH_REQUIRED;}
-        const auto values=strings(env,result,129);
-        if(values.empty() || values.size()%2!=1) return FETCHKIT_INVALID_ARGUMENT;
-        checked(fetchkit_request_set_url(builder,view(values[0])));
-        for(std::size_t i=1;i<values.size();i+=2) checked(fetchkit_request_set_header(builder,view(values[i]),view(values[i+1])));
+        const auto values=strings(env,result,130);
+        if(values.empty()) return FETCHKIT_INVALID_ARGUMENT;
+        if(values.size()==1) {
+            for(const auto status:{FETCHKIT_NETWORK,FETCHKIT_TIMEOUT,FETCHKIT_AUTH_REQUIRED,FETCHKIT_CANCELLED})
+                if(values[0]==std::to_string(status)) return status;
+            return FETCHKIT_AUTH_REQUIRED;
+        }
+        if(values[0]!="0" || values.size()%2!=0) return FETCHKIT_INVALID_ARGUMENT;
+        checked(fetchkit_request_set_url(builder,view(values[1])));
+        for(std::size_t i=2;i<values.size();i+=2) checked(fetchkit_request_set_header(builder,view(values[i]),view(values[i+1])));
         return FETCHKIT_OK;
     } catch(const Failure& e) {return e.code;} catch(...) {return FETCHKIT_INTERNAL_ERROR;}
 }
@@ -239,9 +245,9 @@ jobjectArray invoke(JNIEnv* env,jobject,jint code,jlong handle,jlongArray raw_nu
             output.push_back(std::to_string(result));break;
         }
         case 1: shape(0,0);checked(fetchkit_engine_close(handle));break;
-        case 2: case 3: {
-            if(n.size()!=5 || t.size()<7 || t.size()>135 || t.size()%2!=1) throw Failure(FETCHKIT_INVALID_ARGUMENT);
-            if(n[0]>1 || n[2]>1 || n[4]>1) throw Failure(FETCHKIT_INVALID_ARGUMENT);
+        case 2: case 3: case 20: {
+            if(n.size()!=(code==20 ? 7U : 6U) || t.size()<7 || t.size()>135 || t.size()%2!=1) throw Failure(FETCHKIT_INVALID_ARGUMENT);
+            if(n[0]>1 || n[2]>1 || n[4]>1 || n[5]>3) throw Failure(FETCHKIT_INVALID_ARGUMENT);
             fetchkit_download_request r;fetchkit_download_request_init(&r);
             r.resource_namespace=view(t[0]);r.resource_key=view(t[1]);r.version=view(t[2]);r.representation_key=view(t[3]);
             r.address_reference=view(t[4]);r.url=view(t[5]);r.expected_sha256=view(t[6]);r.expected_length_known=n[0];
@@ -249,9 +255,25 @@ jobjectArray invoke(JNIEnv* env,jobject,jint code,jlong handle,jlongArray raw_nu
             std::vector<fetchkit_header> fields;
             for(std::size_t i=7;i<t.size();i+=2) fields.push_back({view(t[i]),view(t[i+1])});
             r.headers=fields.data();r.header_count=fields.size();
+            fetchkit_request_options options;fetchkit_request_options_init(&options);
+            if(n[5]&1) options.refresh_http_statuses[options.refresh_http_status_count++]=404;
+            if(n[5]&2) options.refresh_http_statuses[options.refresh_http_status_count++]=410;
             std::shared_ptr<Provider> provider;
-            if(raw_provider) {provider=std::make_shared<Provider>();provider->java=std::make_shared<GlobalRef>(env,raw_provider);provider->engine=handle;r.provider=provide;r.provider_user_data=provider.get();}
-            fetchkit_task result=0;checked(code==2 ? fetchkit_enqueue(handle,&r,&result) : fetchkit_attach(handle,&r,&result));
+            if(raw_provider) {provider=std::make_shared<Provider>();provider->java=std::make_shared<GlobalRef>(env,raw_provider);
+                provider->engine=code==20 ? n[6] : handle;r.provider=provide;r.provider_user_data=provider.get();}
+            if(code==20) {
+                // 先预留注册表节点；成功替换后不允许因分配失败丢失新 provider。Kotlin 与 release 共用屏障。
+                bool inserted=false;
+                {std::lock_guard<std::mutex> lock(provider_mutex);inserted=providers.try_emplace(handle,nullptr).second;}
+                const auto status=fetchkit_task_retry(handle,&r,&options);
+                std::shared_ptr<Provider> previous;
+                {std::lock_guard<std::mutex> lock(provider_mutex);
+                    if(status==FETCHKIT_OK) {previous=std::move(providers.at(handle));providers.at(handle)=std::move(provider);}
+                    else if(inserted) providers.erase(handle);
+                }
+                checked(status);break;
+            }
+            fetchkit_task result=0;checked(code==2 ? fetchkit_enqueue_with_options(handle,&r,&options,&result) : fetchkit_attach_with_options(handle,&r,&options,&result));
             returned.kind=2;returned.token=result;
             returned.provider=provider;
             if(provider) {std::lock_guard<std::mutex> lock(provider_mutex);providers.emplace(result,provider);}

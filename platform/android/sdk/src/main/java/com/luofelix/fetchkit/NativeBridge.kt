@@ -27,9 +27,10 @@ internal class NativeProvider(private val provider: RequestProvider) {
             provider.provide(RequestContext(RequestReason.entries[reason], task, generation, status,
                 url, origin, reference) { NativeBridge.providerCancelled(scope) })
         } catch (failure: Throwable) {
+            if (failure is RequestProviderException) return arrayOf(failure.status.ordinal.toString())
             if (!NativeBridge.providerCancelled(scope)) SdkLog.error(DiagnosticEvent.ProviderFailed, failure, task, generation)
             throw failure // JNI 保留原有 AuthRequired 映射，日志不改变 provider 契约。
         }
-        return arrayOf(value.url) + value.headers.flatMap { listOf(it.key, it.value) }
+        return arrayOf("0", value.url) + value.headers.flatMap { listOf(it.key, it.value) }
     }
 }

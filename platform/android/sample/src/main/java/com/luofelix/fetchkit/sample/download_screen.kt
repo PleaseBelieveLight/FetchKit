@@ -206,10 +206,10 @@ private fun TaskCard(row: StoredTask, onRestore: (StoredTask) -> Unit) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (!s.state.stopped) OutlinedButton(enabled = enabled && known && s.state != TaskState.Pausing,
                 onClick = { SampleDownloads.control(context, row, "pause") }) { SampleIcon("pause", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("暂停") }
-            if (s.canResume || s.state == TaskState.Paused) {
+            if (s.canRetryWithRequest) {
                 Button(enabled = enabled, onClick = {
-                    if (known) SampleDownloads.control(context, row, "resume") else onRestore(row)
-                }) { SampleIcon("play", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(if (known) "恢复下载" else "重新绑定") }
+                    if (known && s.state == TaskState.Paused) SampleDownloads.control(context, row, "resume") else onRestore(row)
+                }) { SampleIcon("play", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(if (s.state == TaskState.Failed) "更新地址并重试" else if (known) "恢复下载" else "重新绑定") }
             }
             if (s.available) OutlinedButton(enabled = enabled, onClick = { SampleDownloads.read(context, row) }) { Text("租约读取") }
             TextButton(onClick = { details = !details }) { Text(if (details) "收起详情" else "任务详情") }
@@ -224,7 +224,7 @@ private fun TaskCard(row: StoredTask, onRestore: (StoredTask) -> Unit) {
             KeyValue("完整性", integrityLabel(s.integrity))
             KeyValue("可读取 / 过期时间", "${if (s.available) "是" else "否"} / ${formatTime(s.expiresAtMs)}")
             Hint("暂停确认后检查点才持久化；续传时校验 Range 和资源版本，不支持时安全重下。")
-            if (s.state == TaskState.Failed && !s.canResume) Hint("该错误不可直接续传。请到存储页移除资源，检查地址及校验参数后重新创建。")
+            if (s.state == TaskState.Failed && !s.canRetryWithRequest) Hint("该错误不可直接重试。请到存储页移除资源，检查地址及校验参数后重新创建。")
             @OptIn(ExperimentalLayoutApi::class)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 TextButton(enabled = enabled && known && SampleDownloads.subscriptionCount(row) < 4,
@@ -243,14 +243,15 @@ private fun TaskCard(row: StoredTask, onRestore: (StoredTask) -> Unit) {
 @Composable
 private fun NewDownloadSheet(restoring: StoredTask?, onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val original = restoring?.let { SampleDownloads.requestFor(it) }
     var selected by remember { mutableStateOf(setOf(downloadPresets.firstOrNull {
         resourceKey(it.url) == restoring?.identity?.key
     }?.id ?: downloadPresets.first().id)) }
     var custom by remember { mutableStateOf(restoring != null && downloadPresets.none { resourceKey(it.url) == restoring.identity.key }) }
-    var url by rememberSaveable { mutableStateOf("") }
+    var url by rememberSaveable { mutableStateOf(original?.request?.url ?: "") }
     var version by rememberSaveable { mutableStateOf(restoring?.identity?.version ?: "v1") }
-    var digest by rememberSaveable { mutableStateOf("") }
-    var length by rememberSaveable { mutableStateOf("") }
+    var digest by rememberSaveable { mutableStateOf(original?.expectedSha256 ?: "") }
+    var length by rememberSaveable { mutableStateOf(original?.expectedLength?.toString() ?: "") }
     var pinned by rememberSaveable { mutableStateOf(false) }
     var advanced by rememberSaveable { mutableStateOf(restoring != null) }
     var background by rememberSaveable { mutableStateOf(false) }
@@ -271,7 +272,7 @@ private fun NewDownloadSheet(restoring: StoredTask?, onDismiss: () -> Unit) {
                 Surface(shape = RoundedCornerShape(16.dp), color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
                     modifier = Modifier.fillMaxWidth().testTag("preset-${preset.id}").toggleable(checked, role = Role.Checkbox, onValueChange = {
                         selected = if (restoring != null) setOf(preset.id) else if (checked) selected - preset.id else selected + preset.id
-                        digest = ""; length = ""
+                        if (restoring == null) { digest = ""; length = "" }
                     })) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked, null)
@@ -285,7 +286,7 @@ private fun NewDownloadSheet(restoring: StoredTask?, onDismiss: () -> Unit) {
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("使用自定义地址（可选）", Modifier.weight(1f))
-                Switch(custom, { custom = it; digest = ""; length = "" })
+                Switch(custom, { custom = it; if (restoring == null) { digest = ""; length = "" } })
             }
             if (custom) OutlinedTextField(url, { url = it }, Modifier.fillMaxWidth(), label = { Text("HTTP(S) 下载地址") },
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
@@ -294,10 +295,10 @@ private fun NewDownloadSheet(restoring: StoredTask?, onDismiss: () -> Unit) {
             if (advanced) {
                 OutlinedTextField(version, { version = it }, Modifier.fillMaxWidth(), label = { Text("业务版本") }, singleLine = true, enabled = restoring == null)
                 if (count == 1) {
-                    OutlinedTextField(digest, { digest = it }, Modifier.fillMaxWidth(), label = { Text("可信 SHA-256（可选）") }, singleLine = true,
+                    OutlinedTextField(digest, { digest = it }, Modifier.fillMaxWidth(), label = { Text("可信 SHA-256（可选）") }, singleLine = true, readOnly = original != null,
                         supportingText = { Text("填写后必须通过摘要校验才会发布；测试地址未提供可信摘要") })
                     OutlinedTextField(length, { length = it }, Modifier.fillMaxWidth(), label = { Text("预期字节数（可选）") },
-                        singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        singleLine = true, readOnly = original != null, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                 } else Hint("批量资源使用各自响应长度；如需可信 SHA-256，请逐个新建并填写。")
                 ToggleRow("长期保留", "从创建起阻止 SDK 的 LRU 淘汰", pinned, { pinned = it })
             }

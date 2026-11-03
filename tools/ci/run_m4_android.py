@@ -158,13 +158,18 @@ def main():
                 for request in fixtures[1].server.requests)
             report["m3_request_counts"] = getattr(fixtures[0].server, "m3_counts", {})
             report["no_hidden_503_retry"] = report["m3_request_counts"].get("android-no-hidden") == 1
-            recovery_cases = {"known-limit-auth-rebind", "known-limit-request-source"}
+            recovery_cases = {"auth-request-recovery", "explicit-request-source", "provider-transient-Network", "provider-transient-Timeout",
+                              "refresh-404-false", "refresh-404-true", "refresh-410-false", "refresh-410-true", "expired-page-digest-rejected"}
             executed_cases = {case["id"] for case in report["cases"] if case.get("passed")}
             report["request_recovery_cases_present"] = recovery_cases.issubset(executed_cases)
+            fresh_requests = [r for r in requests if r["path"].startswith(("/m4/a1-auth-fresh-", "/m4/a1-source-fresh-"))]
+            report["request_recovery_exact_range"] = len(fresh_requests) == 2 and all(
+                r.get("range") == "bytes=1024-" and r.get("if_range") == '"m1-v1"' for r in fresh_requests)
             report["fixture_certificate_sha256"] = hashlib.sha256(cert.read_bytes()).hexdigest()
             report["passed"] = (report["passed"] and report["junit_passed"] and
                 not report["identity_request_failures"] and not report["ambient_cookie_sent"] and
-                not report["peer_credentials_sent"] and report["no_hidden_503_retry"] and report["request_recovery_cases_present"])
+                not report["peer_credentials_sent"] and report["no_hidden_503_retry"] and report["request_recovery_cases_present"] and
+                report["request_recovery_exact_range"])
             (args.output / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
             print(json.dumps({key: report[key] for key in ("api", "abi", "failure_count", "fixture_requests", "passed")}, ensure_ascii=False))
             print("Failed cases:", [case["id"] for case in report["cases"] if not case["passed"]])

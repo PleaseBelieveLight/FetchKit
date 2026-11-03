@@ -54,6 +54,10 @@ public:
     }
     fetchkit_status pause() { return fetchkit_task_pause(handle_); }
     fetchkit_status resume() { return fetchkit_task_resume(handle_); }
+    // 替换本订阅请求并许可共享任务的新轮次；不清空检查点、普通重试预算或 Retry-After。
+    fetchkit_status retry(const fetchkit_download_request& request,const fetchkit_request_options* options=nullptr) {
+        return fetchkit_task_retry(handle_,&request,options);
+    }
     fetchkit_status cancel() { return fetchkit_task_cancel(handle_); }
     std::uint32_t dispatch(fetchkit_event_callback callback,void* user,std::uint32_t maximum=64) {
         std::uint32_t count=0;checkStatus(fetchkit_task_dispatch(handle_,callback,user,maximum,&count));return count;
@@ -104,6 +108,12 @@ public:
     }
     Task attach(const fetchkit_download_request& request) {
         fetchkit_task task=0;checkStatus(fetchkit_attach(handle_,&request,&task));return Task(task);
+    }
+    Task enqueue(const fetchkit_download_request& request,const fetchkit_request_options& options) {
+        fetchkit_task task=0;checkStatus(fetchkit_enqueue_with_options(handle_,&request,&options,&task));return Task(task);
+    }
+    Task attach(const fetchkit_download_request& request,const fetchkit_request_options& options) {
+        fetchkit_task task=0;checkStatus(fetchkit_attach_with_options(handle_,&request,&options,&task));return Task(task);
     }
     ResourceLease acquire(const std::string& persistent_id) {
         fetchkit_lease lease=0;checkStatus(fetchkit_resource_acquire(handle_,stringView(persistent_id),&lease));return ResourceLease(lease);

@@ -23,6 +23,7 @@ struct RequestData {
     std::vector<transport::Header> headers;
     std::vector<std::string> explicitly_set_headers;
     std::string origin_before_provider; // Internal provenance, never exposed to host setters.
+    std::uint32_t refresh_http_mask = 0; // 本轮来源的额外刷新状态：bit 0=404，bit 1=410；不持久化。
 };
 
 struct ProviderContext {

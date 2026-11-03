@@ -268,8 +268,14 @@ void Engine::provide(const std::shared_ptr<Task>& task,const ProviderContext& co
         auto provider_cancel=std::make_shared<transport::Cancellation>();
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            for(const auto& weak:task->subscribers) if(const auto sub=weak.lock()) if(!sub->inactive && !sub->released &&
-                (!sub->request.request.url.empty() || sub->request.provider)) {selected=sub;break;}
+            const auto usable=[](const std::shared_ptr<Subscription>& sub) {
+                return sub && !sub->inactive && !sub->released && (!sub->request.request.url.empty() || sub->request.provider);
+            };
+            selected=task->request_source.lock();
+            if(!usable(selected)) {
+                selected.reset();
+                for(const auto& weak:task->subscribers) if(auto sub=weak.lock()) if(usable(sub)) {selected=std::move(sub);break;}
+            }
             if(!selected) throw Failure(FETCHKIT_CANCELLED);
             std::lock_guard<std::mutex> sub_lock(selected->mutex);
             ++selected->provider_calls;selected->provider_cancellation=provider_cancel;
@@ -278,6 +284,7 @@ void Engine::provide(const std::shared_ptr<Task>& task,const ProviderContext& co
         std::exception_ptr failure;
         try {
             data=context.reason==FETCHKIT_REQUEST_INITIAL ? selected->request.request : original;
+            data.refresh_http_mask=selected->request.request.refresh_http_mask;
             data.origin_before_provider=data.url;
             auto selected_context=context;selected_context.task_id=selected->id;
             if(selected->request.provider) selected->request.provider(selected_context,data,*provider_cancel);
@@ -292,6 +299,73 @@ void Engine::provide(const std::shared_ptr<Task>& task,const ProviderContext& co
         return;
     }
     throw Failure(FETCHKIT_CANCELLED);
+}
+
+fetchkit_status Engine::retry(const std::shared_ptr<Subscription>& sub,DownloadRequest request) {
+    if(onWorker()) return FETCHKIT_BUSY;
+    validateHeaders(request.request.headers);
+    if(request.request.url.empty() && !request.provider) return FETCHKIT_INVALID_ARGUMENT;
+    if(!request.request.url.empty()) {
+        try {const auto url=transport_->resolveUrl("",request.request.url);if(!config_.allow_http && !url.secure) return FETCHKIT_INVALID_ARGUMENT;}
+        catch(const std::invalid_argument&) {return FETCHKIT_INVALID_ARGUMENT;}
+    }
+    if(request.expected_length && *request.expected_length>config_.max_bytes) return FETCHKIT_QUOTA_EXCEEDED;
+    const auto id=storage::resourceId(request);
+    auto cancellation=std::make_shared<transport::Cancellation>();
+    // request 在所有锁析构后才销毁，避免旧 provider 捕获对象的析构函数在 SDK 锁下重入。
+    std::lock_guard<std::mutex> admission(admission_mutex_);
+    const auto store=storage();
+    const auto record=store->find(id);
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(closing_ || sub->released) return FETCHKIT_CLOSED;
+    if(sub->inactive) return FETCHKIT_CANCELLED;
+    const auto task=sub->task;
+    std::lock_guard<std::mutex> task_lock(task->mutex);
+    const auto current=identities_.find(task->snapshot.persistent_id);
+    if(current==identities_.end() || current->second!=task) return FETCHKIT_CLOSED;
+    if(id!=task->snapshot.persistent_id) return FETCHKIT_INVALID_ARGUMENT;
+    constraints(task->request,request);
+    if(!record) return FETCHKIT_NOT_FOUND;
+    if(request.expires_at_ms!=record->expires_at_ms) return FETCHKIT_INVALID_ARGUMENT;
+    auto next=task->snapshot;
+    const bool allowed=next.state==FETCHKIT_PAUSED || (next.state==FETCHKIT_FAILED &&
+        (next.error==FETCHKIT_AUTH_REQUIRED || next.error==FETCHKIT_NETWORK || next.error==FETCHKIT_TIMEOUT || next.error==FETCHKIT_HTTP_STATUS));
+    if(!allowed || task->processing || task->queued || task->finishing) return FETCHKIT_BUSY;
+    if(pending_.size()>=config_.max_queued || next.generation>=UINT64_MAX-1) return FETCHKIT_BUSY;
+    ++next.generation;next.error=FETCHKIT_OK;next.http_status=0;next.platform_code=0;next.request_count=0;next.can_resume=0;
+    next.state=next.next_retry_at_ms>config_.clock->nowMs() ? FETCHKIT_RETRY_WAITING : FETCHKIT_QUEUED;
+    const auto deadline=next.next_retry_at_ms ? std::max(task->retry_monotonic_at,monotonicDeadline(config_,next.next_retry_at_ms)) : 0;
+    struct PreparedEvent {
+        std::shared_ptr<Subscription> sub;
+        std::unique_lock<std::mutex> lock;
+        std::deque<fetchkit_event> events;
+        bool overflow=false;
+    };
+    std::vector<PreparedEvent> events;
+    // 准入提交前复制有界事件队列并预分配节点；bad_alloc 不能留下新请求却没有执行许可的半事务。
+    for(const auto& weak:task->subscribers) if(const auto peer=weak.lock()) {
+        if(peer->released || peer->inactive || peer->suppressed) continue;
+        // 保持各订阅锁直至提交，防止 dispatch 在复制与 swap 之间消费事件后又被重复放回。
+        PreparedEvent prepared{peer,std::unique_lock<std::mutex>(peer->mutex),peer->events};
+        auto event=eventFor(next,FETCHKIT_EVENT_STATE,peer->id);
+        if(prepared.events.size()>=64) {
+            prepared.overflow=true;prepared.events.clear();event.kind=FETCHKIT_EVENT_SUBSCRIPTION_ERROR;
+            event.state=FETCHKIT_FAILED;event.error=FETCHKIT_SUBSCRIPTION_OVERFLOW;
+        }
+        prepared.events.push_back(event);events.push_back(std::move(prepared));
+    }
+    pending_.push_back(task);
+    try {store->protect(id,false,true);}
+    catch(...) {pending_.pop_back();throw;}
+    using std::swap;swap(sub->request,request);
+    task->request_source=sub;task->snapshot=next;task->record.auth_refreshes=0;
+    task->cancellation=std::move(cancellation);task->stop.store(StopReason::None);task->queued=true;task->retry_monotonic_at=deadline;
+    for(auto& prepared:events) {
+        if(prepared.overflow) {prepared.sub->inactive=true;prepared.sub->error=FETCHKIT_SUBSCRIPTION_OVERFLOW;}
+        prepared.sub->events.swap(prepared.events);
+    }
+    if(!liveCount(task)) {task->stop.store(StopReason::Pause);task->cancellation->cancel();}
+    task->changed.notify_all();changed_.notify_all();return FETCHKIT_OK;
 }
 
 fetchkit_status Engine::control(const std::shared_ptr<Task>& task,StopReason reason,bool resume) {

@@ -56,8 +56,28 @@ FetchKit.setLogLevel(LogLevel.Off)   // 排障结束后关闭
 
 ## 订阅、事件与恢复
 
-失败后更新请求并保留检查点的新增接口，见 [A0 契约](../design/request-retry-contract.md)；
-该接口待 A1 实现，下面的示例仍使用现有 API。
+持有订阅后可用 `retry(request)` 更新临时请求并明确允许新一轮执行，保留已提交检查点：
+
+```kotlin
+val refreshed = originalRequest.copy(
+    request = RequestInfo(currentSignedUrl),
+    expiresAtMs = latestSnapshot.expiresAtMs,
+)
+subscription.retry(refreshed).thenCompose { subscription.awaitStopped() }
+    .thenAcceptAsync({ result -> /* 检查 state/error/integrity */ }, mainExecutor)
+```
+
+仅 Paused 或 AuthRequired/Network/Timeout/HttpStatus 的 Failed 可调用；`snapshot.canRetryWithRequest`
+表示快照状态允许尝试，实际准入仍可能因竞争/队列容量返回 Busy。
+身份、原长度/摘要/requireDigest/业务引用和当前 expiresAtMs 须一致，pinOnCreate 不重新应用。
+新 generation 保留普通重试预算与 Retry-After；鉴权刷新每 generation 最多一次。
+调用订阅成为共享任务的首选 provider，取消/释放后交接；retry 成功后旧 provider 不再访问。
+正在运行时先等待 pause 完成；Future 成功仅代表获准执行，query/observe/awaitStopped 才呈现结果。
+
+`DownloadRequest.refreshHttpStatuses` 可显式增加 404/410 刷新；默认只处理 401/403。
+`expiresAtMs` 始终是资源可用期限，不是 URL 有效期，签名更新仍由 provider 按业务引用完成。
+HTTP 200 错误页面不能凭状态码识别，关键资源应配置可信 SHA-256。
+请求来源和回滚边界见 [新请求重试契约](../design/request-retry-contract.md)。
 
 `DownloadSubscription` 是独立订阅；相同身份共享一个 writer。`pause` / `resume` 影响共享任务，
 `cancel` 仅撤销当前订阅，`releaseAsync` 静默释放；最后订阅释放保留暂停记录，最后显式取消清理未完成任务。
@@ -93,7 +113,9 @@ val provider = RequestProvider { context ->
 }
 ```
 
-不要在 provider 内阻塞等待 engine API Future，组合控制使用异步调用。provider 异常映射为 AuthRequired；
+不要在 provider 内阻塞等待 engine API Future，组合控制使用异步调用。
+可抛出 `RequestProviderException(Status.Network)` / `Timeout` 参与有限重试，或 AuthRequired / Cancelled；
+其他异常映射为 AuthRequired。provider 的 Cancelled 不等同于显式取消订阅，不清理未完成数据；
 解除订阅等待已经进入的 provider 返回，之后不再访问其用户对象。
 `isCancelled` 使用调用范围内的整数注册表，范围结束后返回 true，不暴露 native 指针。
 记录不保存 provider、URL、headers、Kotlin 对象或旧 token。重开后 `listTasks` 查询身份/快照，

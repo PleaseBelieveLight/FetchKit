@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-02",
+  "stage": "A1",
+  "base_commit": "40675dcbd34275a0c7300f1c6b905e45549d2b1e",
+  "version": "0.2.0-beta.3",
+  "source_state": "uncommitted A1 implementation",
+  "source_fingerprint_sha256": "9c45e6f13b577b25e1d55980c3df97497ccb11be005d3acb7fd5b17c3be5cd0d",
+  "source_files": {
+    "include/fetchkit/fetchkit.h": "fc38c88ee68d720a7394af4a983819566dbe850bdf0aa3cb7b3bfa49fd2c9a09",
+    "include/fetchkit/fetchkit.hpp": "4f6c954cc9273d4991d56454df74d561d5245fd871d8504cac679b84aef15687",
+    "platform/android/sample/src/androidTest/java/com/luofelix/fetchkit/sample/DownloadIntegrationTest.kt": "7db472f338502db8487b859661c4786c6ad6c1fb44922164e364138fb5397349",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/SampleDownloads.kt": "7792f0c44993592326f54f8963031a248b65d26108bc4cb54b0415312ccdaffb",
+    "platform/android/sample/src/main/java/com/luofelix/fetchkit/sample/download_screen.kt": "1438f646fcc7e61e53f178b0f69f53f5d927c499c7d083378c4e42549d919113",
+    "platform/android/sdk/src/main/cpp/android_bridge.cpp": "c260ed43ad1b3e6b9a4415d808dfee42ea45ee696767c1f486c007602bf1686b",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/DownloadEngine.kt": "e6e2a3bd181879c335b20d7441f8251a8da548b450652e601cc2cabe0f6308b9",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/Models.kt": "ee30fb9adc7a64d1d3d541823081da40340beaa11023e40cf30ba8db827ec579",
+    "platform/android/sdk/src/main/java/com/luofelix/fetchkit/NativeBridge.kt": "1f9eb56a2bb7ed8ffa412fb4872c6799e3501a90a2ef028820cc80ef10cb8e2b",
+    "platform/android/sdk/src/test/java/com/luofelix/fetchkit/ModelsTest.kt": "e7fd772a649f48e35b92b318b71c61bb9e3304db2fa46dfa11fbe49c8a33e02f",
+    "src/core/c_api.cpp": "91179889e680bd30f1e1b18c11de863f077b98aa21d0148d4ba5e169539fbcf9",
+    "src/core/download_session.cpp": "fff1c45aa573d18ea03ee285dafbfde80a0296039d02e6035e693a818bc60e8e",
+    "src/core/download_types.h": "8f7c5252eac9a6fae9edfe877e90c3760bf48e37052c597b0ecf93e6723b6c3a",
+    "src/core/engine.cpp": "24dab5998e2279d575d9be33c072c965b7ea5188068dce012f6c0f84395f7525",
+    "src/core/engine.h": "7fddc119912e0a1656123ddb098d3a8f3104d722183f825bad937f4ebfb9b58f",
+    "tests/server/m4_fixture.py": "6c35689c5ceb00469ca3ce1bbcd2b1ff895134ab7302542291218b5f9261752a",
+    "tests/server/server_test.py": "b2a0dc665d35660d788a91733000637c2eb24f0ac92ff961ad729741301fd4a4",
+    "tests/unit/c_api_test.c": "3fdc458bb252949218dc06166f6a7b7fc1e4b0669e275670e661edc5dee3b325",
+    "tests/unit/scheduler_test.cpp": "d4cabed6431868f6ebbcd3f68b06360ee33a80a8a58e290e6799d22d32e8f435",
+    "tools/ci/run_m4_android.py": "71a05896f71506402e1384fff60a948bdcc5ed1a6cb39d74b7a4e1579176e1a8"
+  },
+  "environment": {
+    "host": "Windows x64",
+    "native_compiler": "GNU 16.1.0",
+    "native_profile": "Debug; pinned curl recovery build isolated with fault injection",
+    "android_api": 31,
+    "android_abi": "x86_64",
+    "physical_device": false
+  },
+  "results": {
+    "native_unit_ctest": {
+      "passed": true,
+      "tests": 6,
+      "scheduler_suites": 28,
+      "fixture_server_cases": 10
+    },
+    "native_protocol_ctest": {
+      "passed": true,
+      "tests": 3,
+      "download_cases": 55,
+      "scheduler_cases": 21,
+      "recovery_cases": 66
+    },
+    "jvm_unit": {
+      "sdk": {
+        "classes": 3,
+        "tests": 15
+      },
+      "sample": {
+        "classes": 2,
+        "tests": 4
+      }
+    },
+    "android_matrix": {
+      "passed": true,
+      "cases": 83,
+      "run_id": "d6c74897-26c8-4ec7-aa59-36875cc9443a",
+      "fixture_requests": 186,
+      "exact_range": true,
+      "apk_sha256": {
+        "fetchkit-sample-0.2.0-beta.3-debug.apk": "bb1869667b37bb18e6fcf91dfe0fb07f403cac4a7f78e1939454a9d0a8aa892a",
+        "sample-debug-androidTest.apk": "4fa44b65df536273a308b2874dcaf0e8ec2c020af3813c3707630e47e45dfac2"
+      }
+    },
+    "sample_controls": {
+      "passed": true,
+      "junit_tests": 1,
+      "initial_readiness_check": "failed before instrumentation; original logs retained",
+      "retry_readiness_check": "passed unchanged 30-second stability gate"
+    }
+  },
+  "commands": [
+    "cmake --build build/a1-request-recovery-20261102 --parallel 1",
+    "ctest --test-dir build/a1-request-recovery-20261102 --output-on-failure --no-tests=error -j 1",
+    "ctest --test-dir build/a1-request-protocol-20261102 --output-on-failure --no-tests=error -R \"^(download_protocol|m3_protocol|download_recovery)$\" -j 1",
+    "gradlew.bat :sdk:assembleDebug :sdk:testDebugUnitTest :sample:assembleDebug :sample:testDebugUnitTest :sample:assembleDebugAndroidTest -Pfetchkit.probes=false --offline --max-workers=1 --no-daemon --no-configuration-cache \"-Dorg.gradle.jvmargs=-Xmx1024m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8\" -Pkotlin.compiler.execution.strategy=in-process",
+    "python tools/ci/run_m4_android.py --serial emulator-5554 --skip-build --output build/a1-request-recovery-20261102/android-device",
+    "adb -s emulator-5554 shell am instrument -w -r -e class com.luofelix.fetchkit.sample.SampleControlsTest com.luofelix.fetchkit.test/androidx.test.runner.AndroidJUnitRunner"
+  ],
+  "logs": [
+    {
+      "file": "build/a1-request-recovery-20261102/host-ctest.log",
+      "sha256": "983a258261b4896a612f6c6a9bd3023511c7e6ae230ed301965e75fead803ae4"
+    },
+    {
+      "file": "build/a1-request-recovery-20261102/protocol-ctest.log",
+      "sha256": "7eb4bade98d1172c884d92f8b751628ac7d52bc573d652223c0b47f772afeae1"
+    },
+    {
+      "file": "build/a1-request-recovery-20261102/android-gradle.log",
+      "sha256": "4eb0e1983934b0c2a2feb6463d86fe5fcc99b0c3df8381fe229f7bbf05374ec7"
+    },
+    {
+      "file": "build/a1-request-recovery-20261102/android-device/report.json",
+      "sha256": "e543d8379370c2d40b6f5f3568b78c94e46bf26faaff6df1aa402ccd9090968f"
+    },
+    {
+      "file": "build/a1-request-recovery-20261102/sample-controls-ready.json",
+      "sha256": "ba699b6a6345b313bce8e1717387cdec5929de0be6084b81e74778bea8748f76"
+    },
+    {
+      "file": "build/a1-request-recovery-20261102/sample-controls-ready-retry.json",
+      "sha256": "8b8f1750c5b66505764e2d8d8f4a1188a16e43fc71a3ff147258035f486f467c"
+    },
+    {
+      "file": "build/a1-request-recovery-20261102/sample-controls-retry.log",
+      "sha256": "2cc32ed32c8b151fb0eb6b60bcf6193d7b1597e24f53b93652427558f64ab08c"
+    }
+  ],
+  "not_run": [
+    "Linux acceptance and sanitizers",
+    "physical arm64",
+    "API 24 and target API matrix",
+    "actual Android >4 GiB",
+    "physical reboot or power loss",
+    "Release/R8 external consumer and native installation"
+  ],
+  "release_acceptance": false
+}

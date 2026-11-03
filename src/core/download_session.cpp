@@ -177,7 +177,9 @@ public:
                 if (!location || location->empty()) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
                 location_ = *location; action_ = Action::Redirect; return false;
             }
-            if (response.status == 401 || response.status == 403) { action_ = Action::Refresh; return false; }
+            if (response.status == 401 || response.status == 403 ||
+                (response.status == 404 && (request_.refresh_http_mask & 1)) ||
+                (response.status == 410 && (request_.refresh_http_mask & 2))) { action_ = Action::Refresh; return false; }
             if (response.status == 416) {
                 if (!request_offset_) throw Failure(FETCHKIT_PROTOCOL_MISMATCH);
                 action_ = Action::Restart; return false;

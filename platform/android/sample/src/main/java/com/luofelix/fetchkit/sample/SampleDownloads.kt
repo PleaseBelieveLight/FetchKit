@@ -102,7 +102,10 @@ internal object SampleDownloads {
                 return failed(FetchKitException(Status.InvalidArgument))
             if (!start) return CompletableFuture.completedFuture(existing)
             return existing.query().thenCompose { snapshot ->
-                if (snapshot.canResume) existing.resume().thenApply { existing }
+                if (snapshot.canRetryWithRequest) {
+                    val updated = request.copy(expiresAtMs = snapshot.expiresAtMs)
+                    existing.retry(updated).thenApplyAsync({ requests[request.identity] = updated; savePublicRequests(context); existing }, io)
+                }
                 else if (snapshot.state == TaskState.Completed && !snapshot.available) {
                     // Expired/evicted objects must be explicitly enqueued, not resumed on a historical token.
                     subscriptions.remove(request.identity).orEmpty().fold(CompletableFuture.completedFuture(Unit)) { future, binding ->
@@ -120,6 +123,12 @@ internal object SampleDownloads {
         val permission = epoch
         return engine(context).thenComposeAsync({ engine ->
             if (start) engine.enqueue(request) else engine.attach(request)
+        }, io).thenComposeAsync({ sub ->
+            if (!start) CompletableFuture.completedFuture(sub)
+            else sub.query().thenCompose { snapshot ->
+                if (snapshot.canRetryWithRequest) sub.retry(request.copy(expiresAtMs = snapshot.expiresAtMs)).thenApply { sub }
+                else CompletableFuture.completedFuture(sub)
+            }.whenComplete { _, error -> if (error != null) sub.releaseAsync() }
         }, io).thenComposeAsync({ sub ->
             synchronized(this) {
                 if (epoch != permission) return@thenComposeAsync sub.releaseAsync().thenCompose<DownloadSubscription> {

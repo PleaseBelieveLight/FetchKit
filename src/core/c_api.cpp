@@ -123,6 +123,9 @@ void fetchkit_download_request_init(fetchkit_download_request* request) noexcept
     *request = {};
     request->struct_size = sizeof(*request);
 }
+void fetchkit_request_options_init(fetchkit_request_options* options) noexcept {
+    if(options) {*options={};options->struct_size=sizeof(*options);}
+}
 
 const char* fetchkit_status_name(fetchkit_status status) noexcept {
     static const char* names[] = {"Ok", "InvalidArgument", "NotSupported", "Closed", "Busy", "Network", "Timeout",
@@ -195,47 +198,63 @@ fetchkit_status fetchkit_engine_close(fetchkit_engine id) noexcept {
     return status;
 }
 
-static fetchkit_status enqueueInternal(fetchkit_engine id, const fetchkit_download_request* input, fetchkit_task* output, bool start) noexcept {
-    if (output) *output = 0;
+static DownloadRequest copyRequest(const fetchkit_download_request* input,bool start,const fetchkit_request_options* options) {
+    if (!input || input->struct_size < sizeof(*input) || input->expected_length_known > 1 || input->reserved ||
+        input->header_count > 64 || (input->header_count && !input->headers) ||
+        input->expected_length > static_cast<std::uint64_t>(INT64_MAX) || input->reserved2 || input->require_digest>1 || input->expires_at_ms>INT64_MAX ||
+        input->pin_on_create>1 || input->reserved3) throw Failure(FETCHKIT_INVALID_ARGUMENT);
+    DownloadRequest request;
+    request.resource_namespace = text(input->resource_namespace, 256, true);
+    request.resource_key = text(input->resource_key, 1024, true);
+    request.version = text(input->version, 256, true);
+    request.representation_key = text(input->representation_key, 1024);
+    request.reference = text(input->address_reference, 2048);
+    request.request.url = text(input->url, 16384, start && !input->provider);
+    request.expected_sha256=transport::lowerAscii(text(input->expected_sha256,64));
+    request.require_digest=input->require_digest!=0;
+    request.expires_at_ms=input->expires_at_ms;
+    request.pin_on_create=input->pin_on_create!=0;
+    if ((!request.expected_sha256.empty() && (request.expected_sha256.size()!=64 ||
+        request.expected_sha256.find_first_not_of("0123456789abcdef")!=std::string::npos)) ||
+        (request.require_digest && request.expected_sha256.empty())) throw Failure(FETCHKIT_INVALID_ARGUMENT);
+    if (input->expected_length_known) request.expected_length = input->expected_length;
+    for (std::uint32_t i = 0; i < input->header_count; ++i) {
+        request.request.headers.push_back({text(input->headers[i].name, 256, true), text(input->headers[i].value, 8192)});
+    }
+    validateHeaders(request.request.headers);
+    if(options) {
+        if(options->struct_size<sizeof(*options) || options->refresh_http_status_count>2) throw Failure(FETCHKIT_INVALID_ARGUMENT);
+        for(std::uint32_t i=0;i<options->refresh_http_status_count;++i) {
+            const auto status=options->refresh_http_statuses[i];
+            const auto bit=status==404 ? 1U : status==410 ? 2U : 0U;
+            if(!bit || (request.request.refresh_http_mask&bit)) throw Failure(FETCHKIT_INVALID_ARGUMENT);
+            request.request.refresh_http_mask|=bit;
+        }
+    }
+    if (input->provider) {
+        const auto provider = input->provider;
+        void* const user = input->provider_user_data;
+        request.provider = [provider, user](const ProviderContext& context, RequestData& data, transport::Cancellation& cancellation) {
+            const std::string proposed_url = data.url;
+            fetchkit_request_context public_context{sizeof(fetchkit_request_context), context.reason, context.task_id,
+                context.generation, context.http_status, 0, view(proposed_url), view(context.previous_origin), view(context.reference)};
+            fetchkit_request_builder builder{&data, &cancellation, FETCHKIT_OK};
+            fetchkit_status status = FETCHKIT_AUTH_REQUIRED;
+            try { status = provider(user, &public_context, &builder); } catch (...) { throw Failure(FETCHKIT_AUTH_REQUIRED); }
+            if (builder.error) throw Failure(builder.error);
+            if (status != FETCHKIT_OK) throw Failure(status==FETCHKIT_CANCELLED || status==FETCHKIT_NETWORK ||
+                status==FETCHKIT_TIMEOUT || status==FETCHKIT_AUTH_REQUIRED ? status : FETCHKIT_AUTH_REQUIRED);
+        };
+    }
+    return request;
+}
+static fetchkit_status enqueueInternal(fetchkit_engine id,const fetchkit_download_request* input,fetchkit_task* output,
+    bool start,const fetchkit_request_options* options=nullptr) noexcept {
+    if(output) *output=0;
     return boundary([&]() -> fetchkit_status {
-        if (!input || !output || input->struct_size < sizeof(*input) || input->expected_length_known > 1 || input->reserved ||
-            input->header_count > 64 || (input->header_count && !input->headers) ||
-            input->expected_length > static_cast<std::uint64_t>(INT64_MAX) || input->reserved2 || input->require_digest>1 || input->expires_at_ms>INT64_MAX ||
-            input->pin_on_create>1 || input->reserved3) return FETCHKIT_INVALID_ARGUMENT;
-        auto engine = engineFor(id);
-        DownloadRequest request;
-        request.resource_namespace = text(input->resource_namespace, 256, true);
-        request.resource_key = text(input->resource_key, 1024, true);
-        request.version = text(input->version, 256, true);
-        request.representation_key = text(input->representation_key, 1024);
-        request.reference = text(input->address_reference, 2048);
-        request.request.url = text(input->url, 16384, start && !input->provider);
-        request.expected_sha256=transport::lowerAscii(text(input->expected_sha256,64));
-        request.require_digest=input->require_digest!=0;
-        request.expires_at_ms=input->expires_at_ms;
-        request.pin_on_create=input->pin_on_create!=0;
-        if ((!request.expected_sha256.empty() && (request.expected_sha256.size()!=64 ||
-            request.expected_sha256.find_first_not_of("0123456789abcdef")!=std::string::npos)) ||
-            (request.require_digest && request.expected_sha256.empty())) return FETCHKIT_INVALID_ARGUMENT;
-        if (input->expected_length_known) request.expected_length = input->expected_length;
-        for (std::uint32_t i = 0; i < input->header_count; ++i) {
-            request.request.headers.push_back({text(input->headers[i].name, 256, true), text(input->headers[i].value, 8192)});
-        }
-        validateHeaders(request.request.headers);
-        if (input->provider) {
-            const auto provider = input->provider;
-            void* const user = input->provider_user_data;
-            request.provider = [provider, user](const ProviderContext& context, RequestData& data, transport::Cancellation& cancellation) {
-                const std::string proposed_url = data.url;
-                fetchkit_request_context public_context{sizeof(fetchkit_request_context), context.reason, context.task_id,
-                    context.generation, context.http_status, 0, view(proposed_url), view(context.previous_origin), view(context.reference)};
-                fetchkit_request_builder builder{&data, &cancellation, FETCHKIT_OK};
-                fetchkit_status status = FETCHKIT_AUTH_REQUIRED;
-                try { status = provider(user, &public_context, &builder); } catch (...) { throw Failure(FETCHKIT_AUTH_REQUIRED); }
-                if (builder.error) throw Failure(builder.error);
-                if (status != FETCHKIT_OK) throw Failure(status == FETCHKIT_CANCELLED ? FETCHKIT_CANCELLED : FETCHKIT_AUTH_REQUIRED);
-            };
-        }
+        if(!output) return FETCHKIT_INVALID_ARGUMENT;
+        auto request=copyRequest(input,start,options);
+        auto engine=engineFor(id);
         const auto task_id = registry().allocate();
         { std::lock_guard<std::mutex> lock(registry().mutex); registry().tasks.emplace(task_id, nullptr); }
         try {
@@ -255,6 +274,19 @@ fetchkit_status fetchkit_enqueue(fetchkit_engine id,const fetchkit_download_requ
 }
 fetchkit_status fetchkit_attach(fetchkit_engine id,const fetchkit_download_request* input,fetchkit_task* output) noexcept {
     return enqueueInternal(id,input,output,false);
+}
+fetchkit_status fetchkit_enqueue_with_options(fetchkit_engine id,const fetchkit_download_request* input,
+    const fetchkit_request_options* options,fetchkit_task* output) noexcept {return enqueueInternal(id,input,output,true,options);}
+fetchkit_status fetchkit_attach_with_options(fetchkit_engine id,const fetchkit_download_request* input,
+    const fetchkit_request_options* options,fetchkit_task* output) noexcept {return enqueueInternal(id,input,output,false,options);}
+fetchkit_status fetchkit_task_retry(fetchkit_task id,const fetchkit_download_request* input,const fetchkit_request_options* options) noexcept {
+    return boundary([&]() -> fetchkit_status {
+        const auto sub=taskFor(id);const auto engine=sub->task->owner.lock();
+        if(!engine || sub->released) return FETCHKIT_CLOSED;
+        if(sub->inactive) return FETCHKIT_CANCELLED;
+        if(engine->onWorker()) return FETCHKIT_BUSY;
+        return engine->retry(sub,copyRequest(input,true,options));
+    });
 }
 fetchkit_status fetchkit_list_tasks(fetchkit_engine id,std::uint32_t offset,fetchkit_task_info* items,std::uint32_t capacity,std::uint32_t* count) noexcept {
     if (count) *count=0;

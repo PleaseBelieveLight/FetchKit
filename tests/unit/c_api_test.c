@@ -15,6 +15,9 @@ int main(int argc, char** argv) {
     fetchkit_task_snapshot snapshot = {0};
     fetchkit_download_request request;
     fetchkit_task task = 0;
+    fetchkit_request_options options;
+    fetchkit_request_options_init(&options);
+    CHECK(options.struct_size == sizeof(options) && options.refresh_http_status_count == 0);
     CHECK(argc == 2);
     fetchkit_engine_config_init(&config);
     CHECK(fetchkit_engine_create(&config, &engine) == FETCHKIT_INVALID_ARGUMENT && engine == 0);
@@ -83,6 +86,7 @@ int main(int argc, char** argv) {
     snapshot.struct_size = sizeof(snapshot);
     CHECK(fetchkit_task_query(UINT64_MAX, &snapshot) == FETCHKIT_CLOSED);
     CHECK(fetchkit_task_release(UINT64_MAX) == FETCHKIT_CLOSED);
+    CHECK(fetchkit_task_retry(UINT64_MAX, NULL, NULL) == FETCHKIT_CLOSED);
     CHECK(fetchkit_request_set_url(NULL, view("https://localhost/")) == FETCHKIT_INVALID_ARGUMENT);
     return 0;
 }

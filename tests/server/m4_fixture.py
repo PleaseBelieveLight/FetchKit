@@ -11,6 +11,11 @@ class M4Handler(M3Handler):
             return super().handle_get(path, query)
         if path == "/m4/nonascii-etag":
             return self.respond(200, CONTENT, etag='"\x80"')
+        if path in ("/m4/expired-404", "/m4/expired-410"):
+            status = 200 if self.headers.get("X-Refreshed") == "synthetic" else int(path.rsplit("-", 1)[1])
+            return self.respond(status, CONTENT if status == 200 else b"expired")
+        if path == "/m4/expired-page":
+            return self.respond(200, b"expired")
         if path == "/m4/request-unicode":
             actual = self.headers.get("X-Text", "").encode("latin-1")
             return self.respond(200 if actual == "中文".encode("utf-8") else 400, CONTENT)
