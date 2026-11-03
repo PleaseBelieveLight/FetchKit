@@ -5,6 +5,13 @@ import org.junit.Test
 import java.net.URI
 
 class SampleModelsTest {
+    @Test fun backgroundJobSlotsDoNotReplacePendingOrRunningJobs() {
+        assertEquals(4100, selectDownloadJobId(false, setOf(4101)))
+        assertNull(selectDownloadJobId(false, setOf(4100)))
+        assertEquals(4103, selectDownloadJobId(true, setOf(4100, 4101, 4102, 4104)))
+        assertNull(selectDownloadJobId(true, (4101..4115).toSet()))
+    }
+
     @Test fun presetsAreDistinctAndKeepQueryParameters() {
         val requests = downloadPresets.map { it.request() }
         assertEquals(3, requests.map { it.identity }.toSet().size)

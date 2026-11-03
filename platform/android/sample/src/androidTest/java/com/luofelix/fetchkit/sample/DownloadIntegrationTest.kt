@@ -556,6 +556,8 @@ class DownloadIntegrationTest {
                         if (!running) SystemClock.sleep(20)
                     }
                     assertTrue("System did not start the job", running)
+                    assertFalse("Active custom job slot must not be replaced",
+                        DownloadJobService.schedule(context, jobUrl, hash(content()), "$version-replacement", false, false))
                     val engine = SampleDownloads.engine(context).await()
                     var stored = engine.listTasks().await().firstOrNull { it.identity.version == version }
                     while ((stored == null || stored.snapshot.receivedBytes < 1024) && SystemClock.elapsedRealtime() < deadline) {

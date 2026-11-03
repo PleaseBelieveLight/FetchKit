@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.PersistableBundle
 import java.net.URI
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import com.luofelix.fetchkit.DownloadRequest
 import com.luofelix.fetchkit.FetchKitException
@@ -23,15 +24,23 @@ import java.util.concurrent.CompletableFuture
 class DownloadJobService : JobService() {
     private var active: JobParameters? = null
     override fun onStartJob(params: JobParameters): Boolean {
-        active = params
-        SampleDownloads.jobRunning = true
+        val waitingForEngine = active != null
         if (Build.VERSION.SDK_INT >= 34 && params.isUserInitiatedJob) {
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(NotificationChannel("downloads", "文件下载", NotificationManager.IMPORTANCE_LOW))
             val notification = Notification.Builder(this, "downloads").setSmallIcon(android.R.drawable.stat_sys_download)
-                .setContentTitle("FetchKit 正在下载").setContentText("可在应用内暂停或取消").setOngoing(true).build()
-            setNotification(params, 4101, notification, JOB_END_NOTIFICATION_POLICY_REMOVE)
+                .setContentTitle("FetchKit 下载")
+                .setContentText(if (waitingForEngine) "等待其他后台下载释放引擎" else "可在应用内暂停或取消")
+                .setOngoing(true).build()
+            setNotification(params, params.jobId, notification, JOB_END_NOTIFICATION_POLICY_REMOVE)
         }
+        // 同一个存储目录只有一个引擎。将额外许可交回系统重排，避免关闭正在使用的引擎。
+        if (waitingForEngine) {
+            jobFinished(params, true)
+            return true
+        }
+        active = params
+        SampleDownloads.jobRunning = true
         val request = try {
             val preset = downloadPresets.firstOrNull { it.id == params.extras.getString("preset") }
             val base = if (preset != null) preset.request(params.extras.getString("version") ?: "v1",
@@ -46,11 +55,13 @@ class DownloadJobService : JobService() {
             return false
         }
         val manager = getSystemService(ConnectivityManager::class.java)
-        val selected = (if (Build.VERSION.SDK_INT >= 28) params.network else null) ?: manager.allNetworks.firstOrNull { network ->
+        fun meetsConstraint(network: Network): Boolean {
             val caps = manager.getNetworkCapabilities(network)
-            caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
                 (!params.extras.getBoolean("unmetered") || caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED))
         }
+        val selected = if (Build.VERSION.SDK_INT >= 28) params.network?.takeIf(::meetsConstraint)
+            else manager.allNetworks.firstOrNull(::meetsConstraint)
         if (selected == null) {
             SampleDownloads.main.execute {
                 if (active === params) {
@@ -77,19 +88,21 @@ class DownloadJobService : JobService() {
         return true
     }
     override fun onStopJob(params: JobParameters): Boolean {
+        val reschedule = Build.VERSION.SDK_INT < 31 || params.stopReason != JobParameters.STOP_REASON_USER
+        if (active?.jobId != params.jobId) return reschedule
         active = null
         SampleDownloads.jobRunning = false
         SampleDownloads.stop()
-        return Build.VERSION.SDK_INT < 31 || params.stopReason != JobParameters.STOP_REASON_USER
+        return reschedule
     }
     companion object {
-        const val JOB_ID = 4100
+        const val JOB_ID = CUSTOM_DOWNLOAD_JOB_ID
         fun schedule(context: Context, url: String, digest: String, version: String, pin: Boolean, unmetered: Boolean): Boolean {
             // Persist only public addresses; signed/private URLs need a host provider.
             return schedule(context, SampleDownloads.request(url, digest, version, pin), unmetered)
         }
+        @Synchronized
         internal fun schedule(context: Context, request: DownloadRequest, unmetered: Boolean): Boolean {
-            require(!SampleDownloads.jobRunning) { "已有后台任务正在执行，请先暂停或取消该任务" }
             val preset = downloadPresets.firstOrNull {
                 request.addressReference == "sample-preset:${it.id}" && request.request.url == it.url
             }
@@ -101,17 +114,26 @@ class DownloadJobService : JobService() {
             // The static application UA is reconstructed by sampleRequest, never stored in extras.
             require(request.provider == null && (request.request.headers.isEmpty() ||
                 request.request.headers == mapOf("User-Agent" to sampleUserAgent)))
+            val scheduler = context.getSystemService(JobScheduler::class.java)
+            val service = ComponentName(context, DownloadJobService::class.java)
+            val scheduled = scheduler.allPendingJobs
+            if (preset != null && scheduled.any {
+                    it.service == service && it.extras.getString("preset") == preset.id &&
+                        it.extras.getString("version") == request.identity.version
+                }) return false
+            val jobId = selectDownloadJobId(preset != null, scheduled.mapTo(mutableSetOf()) { it.id })
+                ?: return false
             val extras = PersistableBundle().apply {
                 if (preset != null) putString("preset", preset.id) else putString("url", request.request.url)
                 putString("sha256", request.expectedSha256); putString("version", request.identity.version)
                 putBoolean("pin", request.pinOnCreate); putBoolean("unmetered", unmetered)
                 request.expectedLength?.let { putLong("length", it) }
             }
-            val job = JobInfo.Builder(JOB_ID, ComponentName(context, DownloadJobService::class.java))
+            val job = JobInfo.Builder(jobId, service)
                 .setRequiredNetworkType(if (unmetered) JobInfo.NETWORK_TYPE_UNMETERED else JobInfo.NETWORK_TYPE_ANY)
                 .setExtras(extras)
             if (Build.VERSION.SDK_INT >= 34) job.setUserInitiated(true)
-            return context.getSystemService(JobScheduler::class.java).schedule(job.build()) == JobScheduler.RESULT_SUCCESS
+            return scheduler.schedule(job.build()) == JobScheduler.RESULT_SUCCESS
         }
     }
 }

@@ -11,6 +11,14 @@ import java.util.Locale
 // Identify the host application explicitly instead of relying on OkHttp's default UA.
 internal const val sampleUserAgent = "FetchKitSample/1.0"
 
+internal const val CUSTOM_DOWNLOAD_JOB_ID = 4100
+
+/** 保留自定义地址的旧槽位，预设任务从独立的有界区间分配。 */
+internal fun selectDownloadJobId(usesPreset: Boolean, occupied: Set<Int>): Int? {
+    if (!usesPreset) return CUSTOM_DOWNLOAD_JOB_ID.takeUnless(occupied::contains)
+    return (CUSTOM_DOWNLOAD_JOB_ID + 1..CUSTOM_DOWNLOAD_JOB_ID + 15).firstOrNull { it !in occupied }
+}
+
 internal data class DownloadPreset(val id: String, val title: String, val size: String, val url: String) {
     fun request(version: String = "v1", digest: String = "", pinned: Boolean = false) =
         sampleRequest(url, digest, version, pinned).copy(addressReference = "sample-preset:$id")
