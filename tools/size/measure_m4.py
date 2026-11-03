@@ -19,6 +19,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ndk", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=ROOT / "build/m4-size-arm64")
+    parser.add_argument("--offline", action="store_true")
+    parser.add_argument("--max-workers", type=int, default=2)
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -26,7 +28,9 @@ def main():
 
     def gradle(arguments, log):
         command = (["cmd.exe", "/d", "/c", str(ROOT / "gradlew.bat")] if sys.platform == "win32"
-                   else ["sh", str(ROOT / "gradlew")]) + arguments + ["--max-workers=2"]
+                   else ["sh", str(ROOT / "gradlew")]) + arguments + [f"--max-workers={args.max_workers}"]
+        if args.offline:
+            command.append("--offline")
         commands.append(command)
         with log.open("w", encoding="utf-8") as stream:
             subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=900, check=True)

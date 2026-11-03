@@ -37,6 +37,16 @@ def instrumentation_passed(output):
     return bool(match and int(match.group(1)) == 4 and "FAILURES" not in output)
 
 
+def read_instrumentation_log(adb, device_log):
+    for attempt in range(3):
+        try:
+            return subprocess.run(adb + ["exec-out", "cat", device_log], capture_output=True, text=True, timeout=20)
+        except subprocess.TimeoutExpired:
+            if attempt == 2:
+                raise
+            print("ADB instrumentation log read timed out; retrying", file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--serial", required=True)
@@ -125,7 +135,7 @@ def main():
             deadline = time.monotonic() + 1800
             log_text = ""
             while time.monotonic() < deadline:
-                read = subprocess.run(adb + ["exec-out", "cat", device_log], capture_output=True, text=True, timeout=20)
+                read = read_instrumentation_log(adb, device_log)
                 if read.returncode == 0:
                     log_text = read.stdout
                     if instrumentation_finished(log_text):

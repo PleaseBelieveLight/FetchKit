@@ -3,6 +3,7 @@ package com.luofelix.fetchkit.sizehost;
 import android.app.Activity;
 import android.widget.TextView;
 import com.luofelix.fetchkit.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.security.MessageDigest;
 import java.util.Collections;
@@ -27,7 +28,7 @@ final class Integration {
             if (openError != null) { report(activity, text, runId, false, 0, events.get()); return; }
             DownloadRequest request = new DownloadRequest(new ResourceIdentity("release", "resource", runId, ""),
                 new RequestInfo(url, Collections.emptyMap()), "public-test-resource", null, sha, true, 0L, true,
-                context -> new RequestInfo(context.getProposedUrl(), Collections.emptyMap()));
+                context -> new RequestInfo(context.getProposedUrl(), Collections.emptyMap()), Collections.emptySet());
             engine.enqueue(request).thenCompose(sub -> {
                 sub.observe(Runnable::run, event -> { events.incrementAndGet(); return Unit.INSTANCE; });
                 return sub.awaitStopped();
@@ -43,15 +44,22 @@ final class Integration {
                         if (block.length == 0) break;
                         digest.update(block); bytes += block.length;
                     }
-                    StringBuilder actual = new StringBuilder();
-                    for (byte value : digest.digest()) actual.append(String.format(java.util.Locale.ROOT, "%02x", value & 255));
-                    if (!sha.equals(actual.toString())) throw new IllegalStateException();
+                    if (!sha.equals(hex(digest.digest()))) throw new IllegalStateException();
+                    ByteArrayOutputStream exported = new ByteArrayOutputStream();
+                    if (engine.copyTo(snapshot.getPersistentId(), exported).getCompletion().get(30, TimeUnit.SECONDS) != bytes ||
+                        !sha.equals(hex(digest.digest(exported.toByteArray())))) throw new IllegalStateException();
+                    CoroutineCheck.verify(engine, request, snapshot);
                     return bytes;
                 } catch (Exception error) { throw new java.util.concurrent.CompletionException(error); }
                 finally { if (lease != null) lease.releaseAsync().join(); }
             })).whenComplete((bytes, error) -> engine.closeAsync().whenComplete((ignored, closeError) ->
                 report(activity, text, runId, error == null && closeError == null, bytes == null ? 0 : bytes, events.get())));
         });
+    }
+    private static String hex(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        for (byte value : bytes) result.append(String.format(java.util.Locale.ROOT, "%02x", value & 255));
+        return result.toString();
     }
     private static void report(Activity activity, TextView text, String runId, boolean passed, long bytes, int events) {
         try {

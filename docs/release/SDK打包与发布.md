@@ -33,9 +33,9 @@ AAR。
 独立工程只需：
 
 ```cmake
-find_package(fetchkit 0.1.0 EXACT CONFIG REQUIRED)
+find_package(fetchkit 0.2.0 EXACT CONFIG REQUIRED)
 # find_package 的版本参数仅支持数字；需要区分预发布版本时另查完整版本。
-if (NOT fetchkit_VERSION_FULL STREQUAL "0.1.0-alpha.1")
+if (NOT fetchkit_VERSION_FULL STREQUAL "0.2.0-beta.3")
     message(FATAL_ERROR "Unexpected FetchKit version: ${fetchkit_VERSION_FULL}")
 endif ()
 target_link_libraries(my_app PRIVATE fetchkit::core)
@@ -103,6 +103,12 @@ python tools/ci/verify_android_package.py --repository build/m5-maven --sdk D:/A
   --adb D:/Android/Sdk/platform-tools/adb.exe --serial emulator-5554 --abi x86_64 `
   --java-home C:/path/to/full-jdk-25 --output build/m5-aar-consumer
 ```
+
+验证可选协程适配时，先构建 `:coroutines:assembleRelease`，然后在相同验证命令增加
+`--coroutines-aar platform/android/coroutines/build/outputs/aar/coroutines-release.aar`，并使用单独的输出目录。
+外部宿主会验证导出内容、协程订阅快照与租约读取，并记录完整 Release APK 大小和运行依赖树。
+内存有限时可以先加 `--build-only` 构建宿主，再启动设备并用相同的 AAR、ABI 和输出目录加
+`--skip-build` 执行。驱动复核 APK 和输入 AAR 的哈希。
 
 该示例使用 Debug key 签名本地 Release 验证 APK；只为 loopback 放行明文，没有测试 CA，不作为业务应用的发布签名或网络策略。
 构建需要完整 JDK（含 jlink），IDE 的裁剪运行时可能缺少该工具。显式 Java toolchain 的依据见

@@ -27,7 +27,7 @@ final class Integration {
             if (openError != null) { report(activity, text, runId, false, 0, events.get()); return; }
             DownloadRequest request = new DownloadRequest(new ResourceIdentity("release", "resource", runId, ""),
                 new RequestInfo(url, Collections.emptyMap()), "public-test-resource", null, sha, true, 0L, true,
-                context -> new RequestInfo(context.getProposedUrl(), Collections.emptyMap()));
+                context -> new RequestInfo(context.getProposedUrl(), Collections.emptyMap()), Collections.emptySet());
             engine.enqueue(request).thenCompose(sub -> {
                 sub.observe(Runnable::run, event -> { events.incrementAndGet(); return Unit.INSTANCE; });
                 return sub.awaitStopped();

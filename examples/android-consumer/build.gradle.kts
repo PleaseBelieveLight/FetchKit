@@ -1,5 +1,7 @@
 plugins { id("com.android.application") version "9.4.1" }
 
+val coroutinesAar = providers.gradleProperty("fetchkit.coroutinesAar").orNull
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(25))
@@ -10,7 +12,10 @@ java {
 android {
     namespace = "com.luofelix.fetchkit.sizehost"
     compileSdk { version = release(37) }
-    enableKotlin = false
+    enableKotlin = coroutinesAar != null
+    sourceSets.named("main") {
+        if (coroutinesAar == null) java.srcDir("src/future/java")
+    }
     defaultConfig {
         applicationId = "com.luofelix.fetchkit.sizehost"
         minSdk = 24
@@ -36,6 +41,16 @@ android {
     buildFeatures { buildConfig = false }
 }
 
+androidComponents {
+    onVariants { variant ->
+        if (coroutinesAar != null) variant.sources.kotlin?.addStaticSourceDirectory("src/coroutines/java")
+    }
+}
+
 dependencies {
     implementation("com.luofelix.fetchkit:fetchkit:" + providers.gradleProperty("fetchkit.version").get())
+    if (coroutinesAar != null) {
+        implementation(files(coroutinesAar))
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:" + providers.gradleProperty("fetchkit.coroutinesVersion").get())
+    }
 }
