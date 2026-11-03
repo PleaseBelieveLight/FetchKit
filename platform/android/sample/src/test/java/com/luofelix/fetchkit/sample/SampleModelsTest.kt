@@ -14,12 +14,25 @@ class SampleModelsTest {
 
     @Test fun presetsAreDistinctAndKeepQueryParameters() {
         val requests = downloadPresets.map { it.request() }
-        assertEquals(3, requests.map { it.identity }.toSet().size)
-        requests.forEach { assertEquals("utm_source=chatgpt.com", URI(it.request.url).rawQuery) }
+        assertEquals(downloadPresets.size, requests.map { it.identity }.toSet().size)
+        val ubuntu = requests.filter { "/ubuntu-releases/" in it.request.url }
+        assertEquals(3, ubuntu.size)
+        ubuntu.forEach { assertEquals("utm_source=chatgpt.com", URI(it.request.url).rawQuery) }
+        assertEquals("270 MiB", downloadPresets.first().size)
+        assertEquals("105 B", recoveryDemoFile.size)
         requests.forEach { assertEquals(sampleUserAgent, it.request.headers["User-Agent"]) }
         assertTrue(requests.all { it.expectedLength == null && !it.requireDigest })
         assertEquals(requests.first().identity, downloadPresets.first().request(pinned = true).identity)
         assertNotEquals(requests.first().identity, downloadPresets.first().request(version = "v2").identity)
+    }
+
+    @Test fun refreshAddressKeepsResourceIdentityAndUsesExplicitStatuses() {
+        val request = sampleRequest("https://example.org/expired", "a".repeat(64), "v2", false)
+        val updated = withSampleRefresh(request, "https://example.org/fresh", true)
+        assertEquals(request.identity, updated.identity)
+        assertEquals(request.expectedSha256, updated.expectedSha256)
+        assertEquals(setOf(404, 410), updated.refreshHttpStatuses)
+        assertNotNull(updated.provider)
     }
 
     @Test fun validatesOptionalDigestAndPreservesSignedAddressInMemory() {

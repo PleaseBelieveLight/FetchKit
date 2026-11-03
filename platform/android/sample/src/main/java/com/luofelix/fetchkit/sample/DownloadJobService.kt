@@ -70,6 +70,7 @@ class DownloadJobService : JobService() {
         val run = Run(params, request)
         active = run
         SampleDownloads.jobRunning = true
+        SampleDownloads.activeJobId = params.jobId
 
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onLost(network: Network) = recheck(run, network, lost = true)
@@ -160,6 +161,7 @@ class DownloadJobService : JobService() {
         run.callback = null
         active = null
         SampleDownloads.jobRunning = false
+        SampleDownloads.activeJobId = null
     }
 
     override fun onStopJob(params: JobParameters): Boolean {
@@ -182,7 +184,17 @@ class DownloadJobService : JobService() {
         }
         super.onDestroy()
     }
+    internal data class JobSummary(val id: Int, val title: String, val unmetered: Boolean, val running: Boolean)
+
     companion object {
+        internal fun summaries(context: Context): List<JobSummary> {
+            val component = ComponentName(context, DownloadJobService::class.java)
+            return context.getSystemService(JobScheduler::class.java).allPendingJobs
+                .filter { it.service == component }.sortedBy { it.id }.map { job ->
+                    val title = downloadPresets.firstOrNull { it.id == job.extras.getString("preset") }?.title ?: "自定义资源"
+                    JobSummary(job.id, title, job.extras.getBoolean("unmetered"), job.id == SampleDownloads.activeJobId)
+                }
+        }
         const val JOB_ID = CUSTOM_DOWNLOAD_JOB_ID
         private var customRequest: Pair<String, DownloadRequest>? = null
         private val withdrawing = mutableSetOf<Int>()

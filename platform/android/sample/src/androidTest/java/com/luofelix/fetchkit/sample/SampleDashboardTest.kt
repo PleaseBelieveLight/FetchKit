@@ -29,18 +29,33 @@ class SampleDashboardTest {
     @Test fun presetsAreReadyWithoutTypingAndBatchSelectionChangesAction() {
         capture("home")
         compose.onNodeWithTag("new-download").assertIsDisplayed().assertContentDescriptionEquals("新建下载").performClick()
-        compose.onNodeWithText("清华镜像 · Netboot").assertIsDisplayed()
-        compose.onNodeWithText("阿里云镜像 · Netboot").assertIsDisplayed()
-        compose.onNodeWithTag("preset-tuna-ubuntu-24-04-5-netboot").assertIsOn()
+        compose.onNodeWithText("中科大镜像 · Alpine Standard").assertIsDisplayed()
+        compose.onNodeWithText("南大镜像 · Alpine Virtual").assertIsDisplayed()
+        compose.onNodeWithTag("preset-ustc-alpine-3-22-5-standard").assertIsOn()
         capture("presets")
+        compose.onNodeWithText("更多镜像 · 大文件与快捷验证").performScrollTo().performClick()
+        compose.onNodeWithTag("preset-nju-alpine-3-22-5-extended").performScrollTo().assertIsOff()
+        compose.onNodeWithTag("preset-tuna-alpine-3-22-5-sha256").performScrollTo().assertIsOff()
+        compose.onNodeWithText("收起更多镜像").performScrollTo().performClick()
         compose.onNodeWithTag("submit-download").performScrollTo().assertIsEnabled()
         compose.onNodeWithText("开始下载 · 1 个文件", useUnmergedTree = true).assertExists()
-        compose.onNodeWithTag("preset-aliyun-ubuntu-24-04-5-netboot").performScrollTo().performClick().assertIsOn()
+        compose.onNodeWithTag("preset-nju-alpine-3-24-3-virt").performScrollTo().performClick().assertIsOn()
         compose.onNodeWithTag("submit-download").performScrollTo().assertIsEnabled()
         compose.onNodeWithText("开始下载 · 2 个文件", useUnmergedTree = true).assertExists()
-        compose.onNodeWithTag("preset-tuna-ubuntu-24-04-5-netboot").performScrollTo().performClick().assertIsOff()
-        compose.onNodeWithTag("preset-aliyun-ubuntu-24-04-5-netboot").performScrollTo().performClick().assertIsOff()
+        compose.onNodeWithTag("preset-ustc-alpine-3-22-5-standard").performScrollTo().performClick().assertIsOff()
+        compose.onNodeWithTag("preset-nju-alpine-3-24-3-virt").performScrollTo().performClick().assertIsOff()
         compose.onNodeWithTag("submit-download").performScrollTo().assertIsNotEnabled()
+    }
+
+    @Test fun directLookupValidatesIdAndShowsNotFound() {
+        compose.onNodeWithText("按 ID 查询").performClick()
+        compose.onNodeWithText("即时查询任务").assertIsDisplayed()
+        compose.onNodeWithText("查询").assertIsNotEnabled()
+        compose.onNodeWithTag("task-lookup-id").performTextInput("0".repeat(64))
+        compose.onNodeWithText("查询").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("没有找到这个任务").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("关闭").performClick()
+        compose.onNodeWithText("即时查询任务").assertDoesNotExist()
     }
 
     @Test fun storageAndGuideAreReachable() {

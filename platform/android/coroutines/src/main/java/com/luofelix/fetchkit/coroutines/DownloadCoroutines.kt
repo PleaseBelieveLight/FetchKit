@@ -9,8 +9,6 @@ import com.luofelix.fetchkit.FetchKitException
 import com.luofelix.fetchkit.ResourceLease
 import com.luofelix.fetchkit.Status
 import com.luofelix.fetchkit.TaskSnapshot
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -24,8 +22,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 等待无句柄的 Future，例如 query、pause 或导出结果。取消等待不会取消底层操作。
@@ -65,7 +66,7 @@ internal suspend fun <T : Any, R> withOwned(
                         } catch (error: FetchKitException) {
                             // API 队列可能暂满。保留所有权直到释放被接受，不把清理工作分离到全局 scope。
                             if (error.status != Status.Busy) throw error
-                            delay(10)
+                            delay(10.milliseconds)
                         }
                     }
                 }
@@ -95,9 +96,12 @@ suspend fun <R> DownloadEngine.withResourceLease(
 ): R = withOwned({ acquire(persistentId) }, ResourceLease::releaseAsync, block)
 
 /** 一个订阅 owner 持有一个桥接。null 表示尚无快照，关闭后保留最后一个值。 */
-class SnapshotObservation internal constructor(val snapshots: StateFlow<TaskSnapshot?>, private val job: Job) : AutoCloseable {
+class SnapshotObservation internal constructor(val snapshots: StateFlow<TaskSnapshot?>, private val job: Job) :
+    AutoCloseable {
     /** 停止观察，订阅仍由 owner 释放。 */
-    override fun close() { job.cancel() }
+    override fun close() {
+        job.cancel()
+    }
 }
 
 /**
@@ -118,7 +122,7 @@ fun DownloadSubscription.observeSnapshots(scope: CoroutineScope): SnapshotObserv
             } catch (error: FetchKitException) {
                 if (error.status == Status.Closed) break
                 if (error.status != Status.Busy) throw error
-                delay(10)
+                delay(10.milliseconds)
                 changed.trySend(Unit)
             }
         }

@@ -1,5 +1,8 @@
 package com.luofelix.fetchkit.sample
 
+import android.content.ContentValues
+import android.os.Build
+import android.provider.MediaStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.luofelix.fetchkit.*
@@ -58,7 +61,7 @@ class SampleControlsTest {
                                     if (line.isEmpty()) break
                                     if (line.startsWith("Range:", ignoreCase = true)) offset = line.substringAfter("bytes=").substringBefore('-').toLong()
                                 }
-                                if (requestLine.contains("/first") && offset > 0) rangeOffsets.add(offset)
+                                if (requestLine.contains("/fresh") && offset > 0) rangeOffsets.add(offset)
                                 val headers = if (offset == 0L) "HTTP/1.1 200 OK\r\n" else
                                     "HTTP/1.1 206 Partial Content\r\nContent-Range: bytes $offset-${body.size - 1}/${body.size}\r\n"
                                 val output = socket.getOutputStream()
@@ -93,13 +96,37 @@ class SampleControlsTest {
             assertEquals(2, first.query().await().subscriberCount)
             action { SampleDownloads.control(context, row, "cancel") }
             assertEquals(1, first.query().await().subscriberCount)
-            action { SampleDownloads.control(context, row, "resume") }
+            val replacement = requests[0].copy(request = requests[0].request.copy(url = "http://127.0.0.1:${server.localPort}/fresh"))
+            val recovered = java.util.concurrent.atomic.AtomicBoolean()
+            action { SampleDownloads.recover(context, replacement) { recovered.set(true) } }
+            assertTrue(recovered.get())
             assertEquals(TaskState.Completed, first.awaitStopped().await().state)
             assertEquals(TaskState.Completed, second.awaitStopped().await().state)
-            assertTrue("Resume must use Range on the first URL", rangeOffsets.contains(paused.committedOffset))
+            assertTrue("Replacement URL must receive the saved Range", rangeOffsets.contains(paused.committedOffset))
+            val queried = SampleDownloads.queryTask(context, row.snapshot.persistentId).await()
+            assertEquals(queried, SampleDownloads.queryTask(context, row.identity).await())
+            assertEquals(TaskState.Completed, queried.snapshot.state)
+            waitUntil { SampleDownloads.snapshotsFor(row)?.value?.state == TaskState.Completed }
             assertEquals(Integrity.DigestVerified, first.query().await().integrity)
             SampleDownloads.refresh(context).await()
             val complete = SampleDownloads.rows.single { it.identity == requests[0].identity }
+            if (Build.VERSION.SDK_INT >= 29) {
+                val resolver = context.contentResolver
+                val target = requireNotNull(resolver.insert(MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
+                    ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, "fetchkit-${UUID.randomUUID()}.bin")
+                        put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
+                        put(MediaStore.MediaColumns.IS_PENDING, 1)
+                    }))
+                try {
+                    instrumentation.runOnMainSync { SampleDownloads.export(context, complete.snapshot.persistentId, target) }
+                    waitUntil { SampleDownloads.exportingId == null }
+                    val exported = requireNotNull(resolver.openInputStream(target)).use { it.readBytes() }
+                    assertArrayEquals(body, exported)
+                } finally {
+                    resolver.delete(target, null, null)
+                }
+            }
             action { SampleDownloads.read(context, complete) }
             assertEquals(complete.snapshot.persistentId, SampleDownloads.leasedId)
             val engine = SampleDownloads.engine(context).await()

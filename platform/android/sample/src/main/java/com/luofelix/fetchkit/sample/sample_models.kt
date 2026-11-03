@@ -3,6 +3,10 @@ package com.luofelix.fetchkit.sample
 import com.luofelix.fetchkit.DownloadRequest
 import com.luofelix.fetchkit.RequestInfo
 import com.luofelix.fetchkit.ResourceIdentity
+import com.luofelix.fetchkit.RequestProvider
+import com.luofelix.fetchkit.RequestProviderException
+import com.luofelix.fetchkit.RequestReason
+import com.luofelix.fetchkit.Status
 import com.luofelix.fetchkit.TaskState
 import java.net.URI
 import java.security.MessageDigest
@@ -24,7 +28,23 @@ internal data class DownloadPreset(val id: String, val title: String, val size: 
         sampleRequest(url, digest, version, pinned).copy(addressReference = "sample-preset:$id")
 }
 
-internal val downloadPresets = listOf(
+internal val mainDownloadPresets = listOf(
+    DownloadPreset("ustc-alpine-3-22-5-standard", "中科大镜像 · Alpine Standard", "270 MiB",
+        "https://mirrors.ustc.edu.cn/alpine/v3.22/releases/x86_64/alpine-standard-3.22.5-x86_64.iso"),
+    DownloadPreset("nju-alpine-3-24-3-virt", "南大镜像 · Alpine Virtual", "67 MiB",
+        "https://mirrors.nju.edu.cn/alpine/v3.24/releases/x86_64/alpine-virt-3.24.3-x86_64.iso"),
+)
+
+internal val quickDownloadPresets = listOf(
+    DownloadPreset("tuna-alpine-3-22-5-sha256", "清华镜像 · Alpine 校验文件", "105 B",
+        "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.22/releases/x86_64/alpine-minirootfs-3.22.5-x86_64.tar.gz.sha256"),
+    DownloadPreset("aliyun-alpine-3-22-5-minirootfs", "阿里云镜像 · Alpine Minirootfs", "约 3.5 MiB",
+        "https://mirrors.aliyun.com/alpine/v3.22/releases/x86_64/alpine-minirootfs-3.22.5-x86_64.tar.gz"),
+)
+
+internal val largeDownloadPresets = listOf(
+    DownloadPreset("nju-alpine-3-22-5-extended", "南大镜像 · Alpine Extended", "约 1.09 GiB",
+        "https://mirrors.nju.edu.cn/alpine/v3.22/releases/x86_64/alpine-extended-3.22.5-x86_64.iso"),
     DownloadPreset("tuna-ubuntu-24-04-5-netboot", "清华镜像 · Netboot", "大小未知",
         "https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/24.04.5/ubuntu-24.04.5-netboot-amd64.tar.gz?utm_source=chatgpt.com"),
     DownloadPreset("tuna-ubuntu-24-04-5-wsl", "清华镜像 · WSL", "大小未知",
@@ -33,11 +53,17 @@ internal val downloadPresets = listOf(
         "https://mirrors.aliyun.com/ubuntu-releases/24.04.5/ubuntu-24.04.5-netboot-amd64.tar.gz?utm_source=chatgpt.com"),
 )
 
+internal val downloadPresets = mainDownloadPresets + largeDownloadPresets + quickDownloadPresets
+internal val recoveryDemoFile = quickDownloadPresets.first()
+internal val recoveryDemoAddress = recoveryDemoFile.url + ".expired-demo"
+internal val recoveryDemoKey = resourceKey(recoveryDemoAddress)
+
 internal fun resourceKey(url: String): String = MessageDigest.getInstance("SHA-256")
     .digest(url.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it.toInt() and 255) }
 
 internal fun sampleRequest(url: String, digest: String, version: String, pinned: Boolean): DownloadRequest {
-    val address = URI(url.trim())
+    val address = runCatching { URI(url.trim()) }.getOrNull()
+    requireNotNull(address) { "请输入有效的 HTTP(S) 地址" }
     require(address.scheme in setOf("https", "http") && address.host != null &&
         address.rawUserInfo == null && address.rawFragment == null) { "请输入有效的 HTTP(S) 地址，勿包含凭证或片段" }
     require(version.trim().isNotEmpty()) { "业务版本不能为空" }
@@ -46,6 +72,18 @@ internal fun sampleRequest(url: String, digest: String, version: String, pinned:
         RequestInfo(url.trim(), mapOf("User-Agent" to sampleUserAgent)),
         addressReference = "sample-session", expectedSha256 = digest.trim().lowercase(Locale.ROOT),
         requireDigest = digest.isNotBlank(), pinOnCreate = pinned)
+}
+
+internal fun withSampleRefresh(request: DownloadRequest, url: String, refreshMissing: Boolean): DownloadRequest {
+    val fresh = sampleRequest(url, "", request.identity.version, false).request
+    return request.copy(
+        refreshHttpStatuses = if (refreshMissing) setOf(404, 410) else emptySet(),
+        provider = RequestProvider { context ->
+            if (context.isCancelled()) throw RequestProviderException(Status.Cancelled)
+            if (context.reason == RequestReason.AuthRefresh) fresh
+            else RequestInfo(context.proposedUrl, request.request.headers)
+        },
+    )
 }
 
 internal fun formatBytes(bytes: Long): String {

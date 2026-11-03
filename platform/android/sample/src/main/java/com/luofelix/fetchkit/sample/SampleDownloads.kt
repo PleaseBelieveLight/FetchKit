@@ -10,6 +10,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luofelix.fetchkit.*
+import com.luofelix.fetchkit.coroutines.SnapshotObservation
+import com.luofelix.fetchkit.coroutines.observeSnapshots
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -31,12 +38,14 @@ internal object SampleDownloads {
         FetchKit.setLogLevel(LogLevel.Debug)
     }
     val main = Executor { Handler(Looper.getMainLooper()).post(it) }
+    private val observationScope = CoroutineScope(main.asCoroutineDispatcher() + CoroutineExceptionHandler { _, error -> showError(error) })
     private val io = ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, ArrayBlockingQueue(64),
         { Thread(it, "sample-requests").apply { isDaemon = true } }, ThreadPoolExecutor.AbortPolicy())
     var rows by mutableStateOf<List<StoredTask>>(emptyList()); private set
     var stats by mutableStateOf<StorageStats?>(null); private set
     var speeds by mutableStateOf<Map<String, Long>>(emptyMap()); private set
     var events by mutableStateOf<List<String>>(emptyList()); private set
+    var backgroundJobs by mutableStateOf<List<DownloadJobService.JobSummary>>(emptyList()); private set
     var message by mutableStateOf("")
     var busy by mutableStateOf(false); private set
     var leasedId by mutableStateOf<String?>(null); private set
@@ -46,6 +55,7 @@ internal object SampleDownloads {
     private var exportCancelled = false
     var visible = false
     var jobRunning = false
+    var activeJobId: Int? = null
     var displayLimit by mutableStateOf(100); private set
     private var current: CompletableFuture<DownloadEngine>? = null
     private var previousClose = CompletableFuture.completedFuture(Unit)
@@ -53,7 +63,9 @@ internal object SampleDownloads {
     private var lastSample = 0L
     private var lease: ResourceLease? = null
     private val requests = ConcurrentHashMap<ResourceIdentity, DownloadRequest>()
-    private data class Binding(val subscription: DownloadSubscription, val observation: AutoCloseable)
+    private class Binding(val subscription: DownloadSubscription, val observation: SnapshotObservation, val history: kotlinx.coroutines.Job) {
+        fun close() { history.cancel(); observation.close() }
+    }
     private val subscriptions = ConcurrentHashMap<ResourceIdentity, CopyOnWriteArrayList<Binding>>()
 
     @Synchronized fun engine(context: Context, network: android.net.Network? = null): CompletableFuture<DownloadEngine> {
@@ -81,7 +93,7 @@ internal object SampleDownloads {
         val opened = current
         val preceding = previousClose
         current = null
-        subscriptions.values.flatten().forEach { it.observation.close() }
+        subscriptions.values.flatten().forEach { it.close() }
         subscriptions.clear()
         val held = lease
         lease = null
@@ -113,7 +125,7 @@ internal object SampleDownloads {
                 else if (snapshot.state == TaskState.Completed && !snapshot.available) {
                     // Expired/evicted objects must be explicitly enqueued, not resumed on a historical token.
                     subscriptions.remove(request.identity).orEmpty().fold(CompletableFuture.completedFuture(Unit)) { future, binding ->
-                        future.thenCompose { binding.observation.close(); binding.subscription.releaseAsync() }
+                        future.thenCompose { binding.close(); binding.subscription.releaseAsync() }
                     }.thenCompose {
                         addSubscription(context, request, true)
                     }
@@ -142,13 +154,21 @@ internal object SampleDownloads {
                 if (epoch != permission) return@thenComposeAsync sub.releaseAsync().thenCompose<DownloadSubscription> {
                     failed(FetchKitException(Status.Closed))
                 }
-                val observation = sub.observe(main) { event ->
-                    if (epoch == permission && event.kind != EventKind.Progress) {
-                        val time = SimpleDateFormat("HH:mm:ss", Locale.ROOT).format(Date())
-                        events = (listOf("$time · #${event.taskId} · ${event.state.label()} · ${event.error}") + events).take(60)
+                val observation = sub.observeSnapshots(observationScope)
+                val history = observationScope.launch {
+                    var previous: Triple<Long, TaskState, Status>? = null
+                    observation.snapshots.collect { snapshot ->
+                        if (snapshot != null && epoch == permission) {
+                            val state = Triple(snapshot.generation, snapshot.state, snapshot.error)
+                            if (state != previous) {
+                                previous = state
+                                val time = SimpleDateFormat("HH:mm:ss", Locale.ROOT).format(Date())
+                                events = (listOf("$time · #${snapshot.taskId} · ${snapshot.state.label()} · ${snapshot.error}") + events).take(60)
+                            }
+                        }
                     }
                 }
-                subscriptions.computeIfAbsent(request.identity) { CopyOnWriteArrayList() }.add(Binding(sub, observation))
+                subscriptions.computeIfAbsent(request.identity) { CopyOnWriteArrayList() }.add(Binding(sub, observation, history))
                 requests[request.identity] = request
             }
             savePublicRequests(context)
@@ -159,16 +179,34 @@ internal object SampleDownloads {
     fun queryTask(context: Context, row: StoredTask): CompletableFuture<StoredTask> =
         engine(context).thenCompose { it.query(row.snapshot.persistentId) }
 
-    fun refreshTask(context: Context, row: StoredTask) {
-        queryTask(context, row).whenCompleteAsync({ latest, error ->
-            if (error != null) showError(error)
-            else rows = rows.map { if (it == row) latest else it }
-        }, main)
-    }
+    fun queryTask(context: Context, persistentId: String): CompletableFuture<StoredTask> =
+        engine(context).thenCompose { it.query(persistentId) }
+
+    fun queryTask(context: Context, identity: ResourceIdentity): CompletableFuture<StoredTask> =
+        engine(context).thenCompose { it.query(identity) }
+
+    fun snapshotsFor(row: StoredTask) = subscriptions[row.identity]?.firstOrNull()?.observation?.snapshots
+
+    fun recover(context: Context, request: DownloadRequest, onSuccess: () -> Unit) =
+        perform(context, "已提交新请求，续传结果以任务详情为准") {
+            val permission = epoch
+            bind(context, requests[request.identity] ?: request, false).thenCompose { sub ->
+                sub.query().thenCompose { snapshot ->
+                    val updated = request.copy(expiresAtMs = snapshot.expiresAtMs)
+                    if (epoch != permission) failed(FetchKitException(Status.Closed))
+                    else sub.retry(updated).thenRunAsync({
+                        if (epoch == permission) {
+                            requests[updated.identity] = updated
+                            savePublicRequests(context)
+                        }
+                    }, io)
+                }
+            }.thenAcceptAsync({ if (epoch == permission) onSuccess() }, main)
+        }
 
     fun requestFor(row: StoredTask): DownloadRequest? = requests[row.identity]
     fun title(row: StoredTask): String = downloadPresets.firstOrNull { resourceKey(it.url) == row.identity.key }?.title
-        ?: "自定义资源 · ${row.identity.key.take(8)}"
+        ?: if (row.identity.key == recoveryDemoKey) "换链演练 · Alpine 校验文件" else "自定义资源 · ${row.identity.key.take(8)}"
     fun subscriptionCount(row: StoredTask): Int = subscriptions[row.identity]?.size ?: 0
 
     fun start(context: Context, selected: List<DownloadRequest>) = perform(context, "已提交 ${selected.size} 个文件") {
@@ -198,7 +236,7 @@ internal object SampleDownloads {
                 val release = {
                     val done = if (action == "cancel") binding.subscription.cancel().thenApply { Unit }
                         else CompletableFuture.completedFuture(Unit)
-                    done.thenCompose { binding.observation.close(); binding.subscription.releaseAsync() }.thenApply {
+                    done.thenCompose { binding.close(); binding.subscription.releaseAsync() }.thenApply {
                         bindings.remove(binding)
                         Unit
                     }
@@ -244,6 +282,7 @@ internal object SampleDownloads {
                 lastSample = now
                 rows = tasks
                 stats = storage
+                backgroundJobs = DownloadJobService.summaries(context)
             }
         }, main).thenApply { Unit }
     }
@@ -258,7 +297,7 @@ internal object SampleDownloads {
     fun remove(context: Context, row: StoredTask) = perform(context, "已移除资源") {
         val bindings = subscriptions.remove(row.identity).orEmpty()
         bindings.fold(CompletableFuture.completedFuture(Unit)) { future, binding ->
-            future.thenCompose { binding.observation.close(); binding.subscription.releaseAsync() }
+            future.thenCompose { binding.close(); binding.subscription.releaseAsync() }
         }.thenCompose { engine(context) }.thenCompose { it.remove(row.snapshot.persistentId) }
             .thenRunAsync({ requests.remove(row.identity); savePublicRequests(context) }, io).thenApply { Unit }
     }
@@ -363,6 +402,7 @@ internal object SampleDownloads {
     private fun savePublicRequests(context: Context) {
         val json = JSONArray()
         requests.values.forEach { request ->
+            if (request.provider != null) return@forEach
             val preset = downloadPresets.firstOrNull { request.addressReference == "sample-preset:${it.id}" &&
                 request.request.url == it.url && request.identity.key == resourceKey(it.url) } ?: return@forEach
             val entry = JSONObject().put("preset", preset.id).put("version", request.identity.version)
