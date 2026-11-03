@@ -37,11 +37,13 @@ fi
 
 adb -s "$task_serial" uninstall com.luofelix.fetchkit
 python tools/ci/run_m4_android.py --serial "$task_serial" --skip-build --output build/ci/android-protocol
+echo '执行 SampleDashboardTest 设备回归'
 adb -s "$task_serial" shell am instrument -w -e class com.luofelix.fetchkit.sample.SampleDashboardTest \
-    com.luofelix.fetchkit.test/androidx.test.runner.AndroidJUnitRunner > build/ci/sample-dashboard.log
-grep -Fq 'OK (2 tests)' build/ci/sample-dashboard.log
-if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' build/ci/sample-dashboard.log; then
-    echo 'SampleDashboardTest 设备回归失败' >&2
+    com.luofelix.fetchkit.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | tee build/ci/sample-dashboard.log
+# 三项检查分别覆盖默认预设与多选、按 ID 查询、存储与指南导航。
+if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' build/ci/sample-dashboard.log ||
+    ! grep -Eq '^OK \(3 tests\)[[:space:]]*$' build/ci/sample-dashboard.log; then
+    echo 'SampleDashboardTest 设备回归失败：预期 3 项全部通过，详见 sample-dashboard.log' >&2
     exit 1
 fi
 python tools/ci/run_m4_recovery.py --serial "$task_serial" --skip-build --output build/ci/android-recovery
